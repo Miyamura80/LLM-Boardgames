@@ -1,0 +1,36 @@
+---
+description: Standards for using logging in the project.
+globs: 
+alwaysApply: true
+---
+## Logging Configuration
+
+This project uses a centralized logging configuration with Rust's **tracing** crate. Always use the standardized logging format by initializing the logging system in `src-tauri/src/lib.rs`.
+
+```rust
+use tracing::{info, warn, error, debug};
+
+// Initialized once in lib.rs run()
+// logging::init_logging();
+
+// Then use macros as needed
+info!("Info message");
+error!("Error message");
+debug!("Debug message");
+```
+
+The standardized format is configured in `src-tauri/src/logging.rs` and respects settings in `src-tauri/global_config.yaml`.
+
+Never configure logging directly in your files. Always use the centralized configuration to maintain consistent logging format across the entire application.
+
+If for whatever reason some log is not showing up, check the `src-tauri/global_config.yaml` file to see if the log level is enabled.
+
+```yaml
+logging:
+  levels:
+    debug: false
+    info: true
+    warning: true
+    error: true
+    critical: true
+```

@@ -1,0 +1,20 @@
+name: Lint (Biome)
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: bun install
+      - name: Run Biome
+        run: bunx @biomejs/biome check .
+      - name: Run file length check
+        run: bun run scripts/check_file_length.ts

@@ -1,0 +1,86 @@
+# cargo-deny configuration
+
+[advisories]
+ignore = [
+    # UNMAINTAINED TRANSITIVE - image encoding stack.
+    # The asset-gen crate pulls in `image` -> `ravif` -> `rav1e`, which drags in
+    # both of these. Neither has a safe upgrade upstream yet; they are build-time
+    # image tooling, not on the server/CLI request path.
+    "RUSTSEC-2024-0436", # paste is unmaintained (rav1e -> ravif -> image, via asset-gen)
+    "RUSTSEC-2026-0105", # core2 unmaintained + yanked, no safe upgrade (rav1e -> bitstream-io -> core2)
+]
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "BSD-2-Clause",
+    "Zlib",
+    "MPL-2.0",
+    "ISC",
+    "Unicode-3.0",
+    "0BSD",
+    "Apache-2.0 WITH LLVM-exception",
+    "NCSA",
+    "CDLA-Permissive-2.0",
+    "CC0-1.0",
+]
+
+[bans]
+multiple-versions = "warn"
+
+# These crates appear at multiple versions across the dependency graph (e.g.
+# proc-macro and Windows binding crates pulled in at different pins by different
+# dependents). The duplicates are tracked upstream and cannot be consolidated
+# until the relevant crates release compatible versions, so skip them here to
+# keep `cargo deny check` quiet while the warnings remain known.
+skip = [
+    "base64",
+    "bitflags",
+    "convert_case",
+    "core-foundation",
+    "getrandom",
+    "hashbrown",
+    "heck",
+    "indexmap",
+    "phf",
+    "phf_codegen",
+    "phf_generator",
+    "phf_macros",
+    "phf_shared",
+    "png",
+    "proc-macro-crate",
+    "rand",
+    "rand_chacha",
+    "rand_core",
+    "serde_spanned",
+    "siphasher",
+    "syn",
+    "thiserror",
+    "thiserror-impl",
+    "toml",
+    "toml_datetime",
+    "toml_edit",
+    "wasi",
+    "windows-link",
+    "windows-result",
+    "windows-strings",
+    "windows-sys",
+    "windows-targets",
+    "windows_aarch64_gnullvm",
+    "windows_aarch64_msvc",
+    "windows_i686_gnu",
+    "windows_i686_gnullvm",
+    "windows_i686_msvc",
+    "windows_x86_64_gnu",
+    "windows_x86_64_gnullvm",
+    "windows_x86_64_msvc",
+    "winnow",
+    "zune-core",
+    "zune-jpeg",
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

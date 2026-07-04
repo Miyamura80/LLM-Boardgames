@@ -1,0 +1,23 @@
+name: Build Verification
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: Build workspace (release)
+        run: cargo build --workspace --release

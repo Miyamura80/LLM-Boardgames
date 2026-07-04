@@ -1,0 +1,36 @@
+[[repos]]
+repo = "https://github.com/pre-commit/pre-commit-hooks"
+rev = "v4.6.0"
+hooks = [
+  { id = "check-added-large-files" },
+  { id = "check-yaml" },
+  { id = "check-json" },
+  { id = "end-of-file-fixer" },
+  { id = "trailing-whitespace" },
+]
+
+[[repos]]
+repo = "local"
+hooks = [
+  { id = "biome-check", name = "Biome Check", entry = "bunx @biomejs/biome check --write .", language = "system", pass_filenames = false, always_run = true },
+  { id = "cargo-fmt", name = "Cargo Format", entry = "cargo fmt --all", language = "system", pass_filenames = false, always_run = true },
+  { id = "cargo-clippy", name = "Cargo Clippy", entry = "cargo clippy --workspace --all-targets -- -D warnings", language = "system", pass_filenames = false, always_run = true },
+]
+
+# ── Source-size guardrails (mirror GitHub Actions) ────────────────
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "check-large-files"
+name = "fail if any source file exceeds the line-count error threshold"
+language = "system"
+entry = "scripts/check_large_files.sh"
+files = "\\.(tsx|ts|rs)$"
+
+[[repos.hooks]]
+id = "check-folder-sizes"
+name = "fail if any source folder exceeds the file-count error threshold"
+language = "system"
+entry = "scripts/check_folder_sizes.sh"
+files = "\\.(tsx|ts|rs)$"

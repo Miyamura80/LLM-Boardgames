@@ -1,0 +1,73 @@
+---
+title: Inicio Rápido
+description: Comienza con esta plantilla de Tauri + Bun
+---
+
+¡Bienvenido a la documentación! Sigue estos pasos para configurar el proyecto Tauri + React.
+
+## Inicio Rápido
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+<Steps>
+<Step>
+
+### Instalar Dependencias
+
+Instala los paquetes de Bun para ambos espacios de trabajo:
+
+```bash
+bun install
+cd docs && bun install # ejecutar en el espacio de trabajo docs al actualizar el sitio
+```
+
+El archivo `bun.lock` raíz (y `docs/bun.lock`) es la única fuente de verdad.
+
+</Step>
+
+<Step>
+
+### Configurar Ajustes
+
+Edita `src-tauri/global_config.yaml` y sobrescribe los valores con variables de entorno `APP__...` mediante `bun run tauri dev` o scripts de Bun.
+
+También puedes exponer la configuración saneada en el frontend a través del comando integrado `get_app_config` y el hook `useConfig()`.
+
+</Step>
+
+<Step>
+
+### Ejecutar la Aplicación
+
+Ejecuta el servidor de desarrollo del frontend de forma aislada o inicia Tauri de extremo a extremo.
+
+```bash
+bun run dev          # solo frontend (React + Vite)
+bun run tauri dev     # aplicación nativa con Tauri + Rust
+```
+
+</Step>
+
+<Step>
+
+### Ejecutar Pruebas
+
+Mantén el repositorio saludable con linting y pruebas:
+
+```bash
+bun run check        # linting y formato frontend/TS con Biome
+cd docs && bun run lint:links
+cd src-tauri && cargo test
+bun run knip         # linting de dependencias
+```
+
+</Step>
+</Steps>
+
+## Próximos Pasos
+
+<Cards>
+  <Card title="Aprende más sobre la Configuración" href="/docs/test" />
+  <Card title="Referencia de API" href="/docs/api" />
+  <Card title="Aprende más sobre Fumadocs" href="https://fumadocs.dev" />
+</Cards>

@@ -1,0 +1,22 @@
+[workspace]
+members = ["cargo:."]
+
+# cargo-dist (https://opensource.axo.dev/cargo-dist/) configuration.
+#
+# This is the source of truth for cross-platform release artifacts of the
+# `appctl` binary. To (re)generate the canonical GitHub Actions release pipeline
+# — which builds the shell/PowerShell installers declared below — install
+# cargo-dist and run `dist init` then `dist generate ci`; that overwrites
+# `.github/workflows/release.yml` with the officially generated workflow.
+[dist]
+cargo-dist-version = "0.28.0"
+ci = ["github"]
+installers = ["shell", "powershell"]
+targets = [
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "x86_64-unknown-linux-gnu",
+    "x86_64-pc-windows-msvc",
+]
+# Publish a GitHub Release with the built artifacts on tag push.
+install-updater = false

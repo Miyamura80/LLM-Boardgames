@@ -1,0 +1,14 @@
+target/
+node_modules/
+frontend/
+docs/
+.git/
+.github/
+*.md
+media/
+dist/
+build/
+# Never ship local secrets into the build context.
+.env
+.env.*
+!.env.example

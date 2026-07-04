@@ -1,0 +1,73 @@
+---
+title: 快速开始
+description: 使用 Tauri + Bun 模板快速入门
+---
+
+欢迎来到文档！按照以下步骤启动 Tauri + React 项目。
+
+## 快速开始
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+<Steps>
+<Step>
+
+### 安装依赖
+
+为两个工作区安装 Bun 包：
+
+```bash
+bun install
+cd docs && bun install # 更新文档站点时在 docs 工作区中运行
+```
+
+根目录 `bun.lock`（和 `docs/bun.lock`）是唯一的依赖源。
+
+</Step>
+
+<Step>
+
+### 配置设置
+
+编辑 `src-tauri/global_config.yaml`，通过 `bun run tauri dev` 或 Bun 脚本使用 `APP__...` 环境变量覆盖值。
+
+您还可以通过内置的 `get_app_config` 命令和 `useConfig()` hook 在前端暴露经过清理的配置。
+
+</Step>
+
+<Step>
+
+### 运行应用
+
+单独运行前端开发服务器或启动完整的 Tauri 应用。
+
+```bash
+bun run dev          # 仅前端（React + Vite）
+bun run tauri dev     # 由 Tauri + Rust 驱动的原生应用
+```
+
+</Step>
+
+<Step>
+
+### 运行测试
+
+通过代码检查和测试保持代码库健康：
+
+```bash
+bun run check        # 通过 Biome 进行前端/TS 代码检查和格式化
+cd docs && bun run lint:links
+cd src-tauri && cargo test
+bun run knip         # 依赖检查
+```
+
+</Step>
+</Steps>
+
+## 下一步
+
+<Cards>
+  <Card title="了解更多配置信息" href="/docs/test" />
+  <Card title="API 参考" href="/docs/api" />
+  <Card title="了解更多关于 Fumadocs" href="https://fumadocs.dev" />
+</Cards>

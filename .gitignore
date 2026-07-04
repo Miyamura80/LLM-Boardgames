@@ -1,0 +1,31 @@
+.DS_Store
+
+old_scripts/
+
+# Agent session files
+session-*.md
+
+# Overwrite global config
+.global_config.yaml
+
+# Node / Bun
+node_modules/
+docs/node_modules/
+dist/
+docs/.vite/
+
+# Rust
+target/
+src-tauri/target/
+
+# Bun lock cache
+bun.lockb
+docs/bun.lockb
+
+# Environments & secrets
+.env
+.prod.env
+opencode.json
+
+# Agent session files
+.claude/scheduled_tasks.lock

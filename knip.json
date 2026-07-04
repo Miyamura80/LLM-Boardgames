@@ -1,0 +1,16 @@
+{
+	"$schema": "https://knip.dev/schema-jsonc.json",
+	"ignoreWorkspaces": ["docs"],
+	"ignore": ["docs/source.config.ts"],
+	"ignoreDependencies": ["dependency-cruiser"],
+	"workspaces": {
+		".": {
+			"project": ["frontend/**/*.{ts,tsx}"],
+			"entry": ["frontend/src/main.tsx", "frontend/vite.config.ts"]
+		},
+		"docs": {
+			"project": ["**/*.{ts,tsx}"],
+			"entry": ["app/**/page.tsx", "app/**/layout.tsx"]
+		}
+	}
+}

@@ -1,0 +1,169 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+
+/* Brand Colors:
+   - Baseline Black  #000000  (40%)
+   - Graphene Grey   #9BA4A6  (30%)
+   - Core Cyan       #C3FFFD  (20%)
+   - Wavelength White #F9F9F9 (10%)
+*/
+
+@theme inline {
+	/* Light mode - inverted for readability */
+	--color-fd-background: #f9f9f9;
+	--color-fd-foreground: #000000;
+	--color-fd-muted: #9ba4a6;
+	--color-fd-muted-foreground: #5a6366;
+	--color-fd-primary: #000000;
+	--color-fd-primary-foreground: #f9f9f9;
+	--color-fd-secondary: #e8e8e8;
+	--color-fd-secondary-foreground: #000000;
+	--color-fd-accent: #c3fffd;
+	--color-fd-accent-foreground: #000000;
+	--color-fd-border: #9ba4a6;
+	--color-fd-ring: #c3fffd;
+	--color-fd-card: #f9f9f9;
+	--color-fd-card-foreground: #000000;
+	--color-fd-popover: #f9f9f9;
+	--color-fd-popover-foreground: #000000;
+}
+
+:root.dark {
+	--color-fd-background: #000000;
+	--color-fd-foreground: #f9f9f9;
+	--color-fd-muted: #1a1b1f;
+	--color-fd-muted-foreground: #9ba4a6;
+	--color-fd-primary: #c3fffd;
+	--color-fd-primary-foreground: #000000;
+	--color-fd-secondary: #1a1b1f;
+	--color-fd-secondary-foreground: #f9f9f9;
+	--color-fd-accent: #0d3332;
+	--color-fd-accent-foreground: #c3fffd;
+	--color-fd-border: #2a2b30;
+	--color-fd-ring: #c3fffd;
+	--color-fd-card: #1a1b1f;
+	--color-fd-card-foreground: #f9f9f9;
+	--color-fd-popover: #1a1b1f;
+	--color-fd-popover-foreground: #f9f9f9;
+}
+
+/* Sidebar dark mode overrides */
+.dark #nd-sidebar {
+	--color-fd-background: #1a1b1f;
+	--color-fd-muted: #252629;
+	--color-fd-secondary: #252629;
+	--color-fd-muted-foreground: #9ba4a6;
+	--color-fd-foreground: #f9f9f9;
+	--color-fd-secondary-foreground: #f9f9f9;
+	--color-fd-border: #2a2b30;
+	background-color: #1a1b1f;
+}
+
+/* Ensure sidebar inner elements also get dark background */
+.dark #nd-sidebar > div {
+	background-color: #1a1b1f;
+}
+
+/* Sidebar link text in dark mode */
+.dark #nd-sidebar a {
+	color: #f9f9f9;
+}
+
+.dark #nd-sidebar a:hover {
+	color: #c3fffd;
+}
+
+/* Active sidebar item */
+.dark #nd-sidebar a[data-active="true"] {
+	color: #c3fffd;
+	font-weight: 600;
+}
+
+/* Inline TOC dark mode styling - target bg-fd-card elements */
+.dark .bg-fd-card {
+	background-color: #1a1b1f;
+	border-color: #2a2b30;
+	color: #f9f9f9;
+}
+
+.dark .bg-fd-card button {
+	background-color: #1a1b1f;
+	color: #f9f9f9;
+}
+
+.dark .text-fd-muted-foreground {
+	color: #9ba4a6;
+}
+
+.dark .bg-fd-card a {
+	color: #9ba4a6;
+}
+
+.dark .bg-fd-card a:hover {
+	color: #c3fffd;
+}
+
+/* Secondary buttons (Copy Markdown, Open) dark mode styling */
+.dark .bg-fd-secondary {
+	background-color: #1a1b1f;
+	border-color: #2a2b30;
+	color: #f9f9f9;
+}
+
+.dark .bg-fd-secondary:hover {
+	background-color: #252629;
+}
+
+/* Cards dark mode styling */
+.dark [data-card] {
+	background-color: #1a1b1f;
+	border-color: #2a2b30;
+	color: #f9f9f9;
+}
+
+.dark [data-card]:hover {
+	background-color: #252629;
+}
+
+.dark [data-card] a,
+.dark [data-card] span,
+.dark [data-card] p {
+	color: #f9f9f9;
+}
+
+/* Right-side Table of Contents dark mode styling */
+.dark #nd-toc {
+	background-color: #1a1b1f;
+	border-color: #2a2b30;
+}
+
+.dark #nd-toc a {
+	color: #9ba4a6;
+}
+
+.dark #nd-toc a:hover {
+	color: #c3fffd;
+}
+
+.dark #nd-toc a[data-active="true"] {
+	color: #c3fffd;
+}
+
+/* TOC popover (mobile) dark mode styling */
+.dark [data-toc-popover] {
+	background-color: #1a1b1f;
+}
+
+.dark [data-toc-popover-content] {
+	background-color: #1a1b1f;
+	border-color: #2a2b30;
+}
+
+.dark [data-toc-popover-content] a {
+	color: #9ba4a6;
+}
+
+.dark [data-toc-popover-content] a:hover {
+	color: #c3fffd;
+}

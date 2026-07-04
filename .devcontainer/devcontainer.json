@@ -1,0 +1,37 @@
+{
+	"name": "Tauri-Template DevContainer",
+	"image": "mcr.microsoft.com/devcontainers/rust:1-1-bookworm",
+	"features": {
+		"ghcr.io/devcontainers/features/common-utils:1": {
+			"configureZsh": true
+		},
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "20"
+		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"tamasfe.even-better-toml",
+				"mkhl.direnv",
+				"rust-lang.rust-analyzer",
+				"biomejs.biome",
+				"tauri-apps.tauri-vscode"
+			],
+			"settings": {
+				"editor.formatOnSave": true,
+				"[rust]": {
+					"editor.defaultFormatter": "rust-lang.rust-analyzer"
+				},
+				"[typescript]": {
+					"editor.defaultFormatter": "biomejs.biome"
+				},
+				"[typescriptreact]": {
+					"editor.defaultFormatter": "biomejs.biome"
+				}
+			}
+		}
+	},
+	"postCreateCommand": "curl -fsSL https://bun.sh/install | bash && . $HOME/.bun/_bash && bun install",
+	"remoteUser": "vscode"
+}

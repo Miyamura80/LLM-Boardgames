@@ -1,0 +1,39 @@
+---
+description: On how to write tests
+globs: src-tauri/**/*.rs
+alwaysApply: true
+---
+## Writing tests
+
+Whenever implementing a new feature in the Rust backend, always encourage the user to write a test.
+
+Tests are typically written as unit tests within the same file or as integration tests in the `src-tauri/tests/` directory.
+
+### Unit Test structure
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_function() {
+        // Any actual test code here
+        assert!(true);
+    }
+}
+```
+
+### Serial Tests
+If a test depends on shared state (like environment variables or configuration), use the `#[serial]` attribute from the `serial_test` crate to ensure they don't run in parallel.
+
+```rust
+#[test]
+#[serial]
+fn test_with_env() {
+    // ...
+}
+```
+
+### Running Tests
+Use `make test` or `cd src-tauri && cargo test` to run tests.

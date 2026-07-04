@@ -1,0 +1,20 @@
+name: smoke test
+steps:
+  - call: "ping"
+    args: {}
+    expect_status: "pass"
+    timeout_ms: 5000
+
+  - call: "write_file"
+    args:
+      path: "/tmp/appctl_smoke_test.txt"
+      content: "written by appctl scenario runner"
+    expect_status: "pass"
+    timeout_ms: 5000
+
+  - call: "read_file"
+    args:
+      path: "/tmp/appctl_smoke_test.txt"
+    expect_status: "pass"
+
+  - probe: "filesystem"

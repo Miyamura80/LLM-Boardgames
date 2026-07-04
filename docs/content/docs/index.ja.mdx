@@ -1,0 +1,73 @@
+---
+title: クイックスタート
+description: Tauri + Bun テンプレートで始めましょう
+---
+
+ドキュメントへようこそ！以下の手順に従って Tauri + React プロジェクトを構築しましょう。
+
+## クイックスタート
+
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+
+<Steps>
+<Step>
+
+### 依存関係のインストール
+
+両方のワークスペース用に Bun パッケージをインストールします：
+
+```bash
+bun install
+cd docs && bun install # サイトを更新する際は docs ワークスペースで実行
+```
+
+ルートの `bun.lock`（および `docs/bun.lock`）が唯一の依存関係の情報源です。
+
+</Step>
+
+<Step>
+
+### 設定の構成
+
+`src-tauri/global_config.yaml` を編集し、`bun run tauri dev` または Bun スクリプトを通じて `APP__...` 環境変数で値を上書きします。
+
+組み込みの `get_app_config` コマンドと `useConfig()` フックを使用して、サニタイズされた設定をフロントエンドに公開することもできます。
+
+</Step>
+
+<Step>
+
+### アプリケーションの実行
+
+フロントエンド開発サーバーを単独で実行するか、Tauri をエンドツーエンドで起動します。
+
+```bash
+bun run dev          # フロントエンドのみ（React + Vite）
+bun run tauri dev     # Tauri + Rust によるネイティブアプリ
+```
+
+</Step>
+
+<Step>
+
+### テストの実行
+
+リンティングとテストでリポジトリを健全に保ちましょう：
+
+```bash
+bun run check        # Biome による フロントエンド/TS のリンティングとフォーマット
+cd docs && bun run lint:links
+cd src-tauri && cargo test
+bun run knip         # 依存関係のリンティング
+```
+
+</Step>
+</Steps>
+
+## 次のステップ
+
+<Cards>
+  <Card title="設定について詳しく学ぶ" href="/docs/test" />
+  <Card title="API リファレンス" href="/docs/api" />
+  <Card title="Fumadocs について詳しく学ぶ" href="https://fumadocs.dev" />
+</Cards>

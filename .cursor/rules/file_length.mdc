@@ -1,0 +1,26 @@
+---
+description: File length limits for TypeScript and Rust files
+globs: "*.ts,*.tsx,*.rs"
+alwaysApply: false
+---
+## File Length Limit
+
+TypeScript and Rust files must not exceed 500 lines. This is enforced by `make file_len_check` (part of `make ci`) and in the linter GitHub Actions workflow.
+
+This limit exists to prevent AI-generated code from becoming monolithic and forces refactoring into smaller, more modular components.
+
+If a file genuinely needs to exceed 500 lines, add it to the `exclude` list in `package.json` under `"fileLength"`. Entries must be **repo-relative paths**:
+
+```json
+{
+  "fileLength": {
+    "max_lines": 500,
+    "exclude": [
+      "src-tauri/src/bin/asset_gen.rs",
+      "src/some_large_module.ts"
+    ]
+  }
+}
+```
+
+Do not add files to the exclude list without a clear justification.

@@ -1,0 +1,46 @@
+name: Validate AGENTS.md
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - '.github/workflows/agents_validate.yaml'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - '.github/workflows/agents_validate.yaml'
+  workflow_dispatch:
+
+jobs:
+  agents_validate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Validate sections
+      run: |
+        REQUIRED_SECTIONS=("Project Overview" "Common Commands" "Architecture" "Code Style" "Configuration Pattern")
+        FILE="CLAUDE.md"
+        if [ ! -f "$FILE" ]; then
+          echo "Error: $FILE not found."
+          exit 1
+        fi
+        
+        MISSING=0
+        for section in "${REQUIRED_SECTIONS[@]}"; do
+          if ! grep -q "^## $section" "$FILE"; then
+            echo "Error: Missing section '$section' in $FILE"
+            MISSING=1
+          fi
+        done
+        
+        if [ $MISSING -eq 1 ]; then
+          exit 1
+        fi
+        echo "Validation passed."

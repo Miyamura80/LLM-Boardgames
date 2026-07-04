@@ -1,0 +1,62 @@
+name: Rust Checks
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  fmt:
+    name: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Check Formatting
+        run: cargo fmt -- --check
+
+  deny:
+    name: Cargo Deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run cargo-deny
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+          manifest-path: Cargo.toml
+          rust-version: stable
+
+  clippy-test:
+    name: Clippy + Tests
+    runs-on: ubuntu-latest
+    env:
+      CARGO_INCREMENTAL: 0
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Run Tests
+        run: cargo test --workspace
+      # `appctl init` can prune down to a single surface, so verify each
+      # feature combination compiles cleanly on its own (not just the default).
+      - name: Clippy (cli-only)
+        run: cargo clippy -p appctl --no-default-features --features cli --all-targets -- -D warnings
+      - name: Test (cli-only)
+        run: cargo test -p appctl --no-default-features --features cli
+      - name: Clippy (http-api-only)
+        run: cargo clippy -p appctl --no-default-features --features http-api --all-targets -- -D warnings
+      - name: Test (http-api-only)
+        run: cargo test -p appctl --no-default-features --features http-api
