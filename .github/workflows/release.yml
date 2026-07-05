@@ -1,8 +1,8 @@
 name: Release
 
-# Cross-platform binary release for the `appctl` server/CLI.
+# Cross-platform binary release for the `shbench` server/CLI.
 #
-# This is a functional baseline that builds `appctl` for each target and
+# This is a functional baseline that builds `shbench` for each target and
 # attaches archives to a GitHub Release. cargo-dist is adopted via
 # `dist-workspace.toml`; running `dist init && dist generate ci` regenerates
 # this file with the canonical cargo-dist pipeline (including the shell /
@@ -44,24 +44,24 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
-      - name: Build appctl
+      - name: Build shbench
         # `--locked` pins the exact Cargo.lock deps so the released binary can't
         # silently diverge from the tested dependency set.
-        run: cargo build --locked --release -p appctl --target ${{ matrix.target }}
+        run: cargo build --locked --release -p shbench --target ${{ matrix.target }}
 
       - name: Package (unix)
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          tar -czf "appctl-${{ matrix.target }}.tar.gz" \
-            -C "target/${{ matrix.target }}/release" appctl
+          tar -czf "shbench-${{ matrix.target }}.tar.gz" \
+            -C "target/${{ matrix.target }}/release" shbench
 
       - name: Package (windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Compress-Archive -Path "target/${{ matrix.target }}/release/appctl.exe" `
-            -DestinationPath "appctl-${{ matrix.target }}.zip"
+          Compress-Archive -Path "target/${{ matrix.target }}/release/shbench.exe" `
+            -DestinationPath "shbench-${{ matrix.target }}.zip"
 
       - name: Publish to GitHub Release
         uses: softprops/action-gh-release@v2
@@ -69,5 +69,5 @@ jobs:
           # Mark semver pre-release tags (e.g. v1.3.0-beta.1) as pre-releases.
           prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
-            appctl-*.tar.gz
-            appctl-*.zip
+            shbench-*.tar.gz
+            shbench-*.zip

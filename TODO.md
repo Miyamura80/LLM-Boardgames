@@ -17,7 +17,7 @@
 - [ ] UAC / admin detection (`IsUserAnAdmin`, elevation prompt handling)
 - [ ] Registry-based protocol handler checks (`HKEY_CLASSES_ROOT`)
 - [ ] Path conventions (backslashes, `%APPDATA%`, `%LOCALAPPDATA%`)
-- [ ] Named pipes as alternative to Unix sockets for `appctl serve`
+- [ ] Named pipes as alternative to Unix sockets for `shbench serve`
 - [ ] Clipboard via PowerShell `Get-Clipboard`/`Set-Clipboard`
 - [ ] Headless detection: check for interactive desktop session vs. service context
 - [ ] Windows-specific doctor checks (Windows version, build number, WSL detection)
@@ -54,6 +54,6 @@ Not applicable to a server template: PRD §8b removed the desktop `emit` command
 
 ### CLI
 
-- [ ] Shell completions generation (`appctl completions bash/zsh/fish`)
-- [ ] `appctl list` to show available commands and probes
-- [ ] Configuration file for CLI defaults (`~/.appctl.toml`)
+- [ ] Shell completions generation (`shbench completions bash/zsh/fish`)
+- [ ] `shbench list` to show available commands and probes
+- [ ] Configuration file for CLI defaults (`~/.shbench.toml`)

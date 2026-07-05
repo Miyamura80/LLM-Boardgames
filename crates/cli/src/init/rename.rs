@@ -116,7 +116,7 @@ mod tests {
         let root = dir.path();
         std::fs::write(
             root.join("README.md"),
-            "# Rust-Template\nname: rust-template",
+            "# Secret-Hitler-Evals\nname: secret-hitler-evals",
         )
         .unwrap();
 
@@ -130,13 +130,13 @@ mod tests {
     fn dry_run_does_not_write() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
-        std::fs::write(root.join("a.rs"), "// Rust-Template").unwrap();
+        std::fs::write(root.join("a.rs"), "// Secret-Hitler-Evals").unwrap();
 
         let n = apply(&cfg("Acme"), root, true).unwrap();
         assert_eq!(n, 1);
         assert_eq!(
             std::fs::read_to_string(root.join("a.rs")).unwrap(),
-            "// Rust-Template"
+            "// Secret-Hitler-Evals"
         );
     }
 
@@ -144,7 +144,7 @@ mod tests {
     fn idempotent_second_run_noops() {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
-        std::fs::write(root.join("a.toml"), "name = \"rust-template\"").unwrap();
+        std::fs::write(root.join("a.toml"), "name = \"secret-hitler-evals\"").unwrap();
 
         assert_eq!(apply(&cfg("Acme"), root, false).unwrap(), 1);
         assert_eq!(apply(&cfg("Acme"), root, false).unwrap(), 0);
@@ -155,7 +155,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
         std::fs::create_dir(root.join("target")).unwrap();
-        std::fs::write(root.join("target/x.rs"), "Rust-Template").unwrap();
+        std::fs::write(root.join("target/x.rs"), "Secret-Hitler-Evals").unwrap();
         std::fs::write(root.join("photo.png"), [0u8, 159, 146, 150]).unwrap();
 
         assert_eq!(apply(&cfg("Acme"), root, false).unwrap(), 0);

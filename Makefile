@@ -36,8 +36,8 @@ help: ## Show this help message
 ### App
 .PHONY: run build build-release dev
 
-run: ## Run the HTTP API server (appctl serve)
-	cargo run -p appctl -- serve
+run: ## Run the HTTP API server (shbench serve)
+	cargo run -p shbench -- serve
 
 build: ## Build the whole workspace (debug)
 	cargo build --workspace
@@ -81,8 +81,8 @@ setup: ## Set up dev environment from scratch (installs deps, copies .env, check
 	fi
 	@echo "$(GREEN)✅ Setup complete. Run 'make run' to start the server.$(RESET)"
 
-init: ## Onboard the template into a real project (appctl init). Bare = wizard; PROFILE=/CONFIG=/DRY_RUN=1/ARGS= for headless.
-	@cargo run -q -p appctl -- init \
+init: ## Onboard the template into a real project (shbench init). Bare = wizard; PROFILE=/CONFIG=/DRY_RUN=1/ARGS= for headless.
+	@cargo run -q -p shbench -- init \
 		$(if $(PROFILE),--profile $(PROFILE),) \
 		$(if $(CONFIG),--config $(CONFIG),) \
 		$(if $(DRY_RUN),--dry-run,) \
@@ -94,7 +94,7 @@ new: ## Scaffold a new engine command (usage: make new name=fetch_url [descripti
 		echo "Usage: make new name=<command_name> [description=\"...\"]"; \
 		exit 1; \
 	fi
-	@cargo run -q -p appctl -- new $(name) $(if $(description),--description "$(description)",)
+	@cargo run -q -p shbench -- new $(name) $(if $(description),--description "$(description)",)
 
 ### Asset Generation
 .PHONY: banner logo

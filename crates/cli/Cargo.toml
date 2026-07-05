@@ -1,22 +1,22 @@
 [package]
-name = "appctl"
+name = "shbench"
 version = "0.1.0"
 edition = "2021"
 description = "CLI + HTTP API harness for the Rust server template"
 license = "MIT"
 
 [[bin]]
-name = "appctl"
+name = "shbench"
 path = "src/main.rs"
 
 [features]
-# The template ships with every surface enabled. `appctl init` prunes a surface
+# The template ships with every surface enabled. `shbench init` prunes a surface
 # by dropping its feature from this `default` list (via toml_edit), so a
 # `cli-only` or `server-only` project compiles without the code it doesn't use.
 default = ["cli", "http-api"]
 # CLI diagnostic subcommands (doctor / call / probe / run-scenario).
 cli = []
-# The axum HTTP API (`appctl serve`) and its tower middleware stack. `app-config`
+# The axum HTTP API (`shbench serve`) and its tower middleware stack. `app-config`
 # is only read by the HTTP server, so a `cli-only` prune drops it too.
 http-api = ["dep:axum", "dep:tower", "dep:tower-http", "dep:app-config"]
 

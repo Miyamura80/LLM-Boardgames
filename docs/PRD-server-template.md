@@ -62,10 +62,10 @@ All Tauri/desktop scaffolding is removed.
         ┌──────────────────────────────────────────────────────────┐
         │  TRANSPORTS  (crates/cli — one binary, subcommands)        │
         │                                                            │
-        │   appctl call <cmd> --args '{...}'   one-shot JSON I/O     │
-        │   appctl serve --http :8080          axum HTTP API         │
-        │   appctl doctor | probe | run-scenario                     │
-        │   appctl mcp                         (LATER — stub)        │
+        │   shbench call <cmd> --args '{...}'   one-shot JSON I/O     │
+        │   shbench serve --http :8080          axum HTTP API         │
+        │   shbench doctor | probe | run-scenario                     │
+        │   shbench mcp                         (LATER — stub)        │
         └───────────────┬─────────────────────────┬──────────────────┘
                         │                          │
           optional ─────┘                          │  same registry
@@ -96,7 +96,7 @@ Cargo.toml                 # workspace: engine, config, cli
 crates/
   engine/                  # service core + typed Command registry
   config/                  # AppConfig/FrontendConfig + loader (moved from src-tauri)
-  cli/                     # `appctl` binary: call / serve / doctor / probe / scenario / (mcp stub)
+  cli/                     # `shbench` binary: call / serve / doctor / probe / scenario / (mcp stub)
     src/
       main.rs              # clap entrypoint
       serve_http.rs        # axum app (replaces serve.rs UDS daemon)
@@ -153,7 +153,7 @@ trait Command {
   utility commands don't leak into the API/MCP tool surface.
 - **Registration via `inventory`/`linkme`** (not a hand-maintained `register()`
   list): a command self-registers at link time, giving the "drop a file, it's
-  wired" UX that makes `appctl new` (§8c) a pure file generator. Decide this here
+  wired" UX that makes `shbench new` (§8c) a pure file generator. Decide this here
   in Phase 2 since it shapes the registry type.
 - New introspection: `registry.schema(name) -> { input_schema, output_schema }`,
   consumed by the API (`GET /commands`, OpenAPI) and the future MCP `tools/list`.
@@ -167,7 +167,7 @@ runner**, where the diagnostics are the point. `run_id`/timing ride along on the
 HTTP path as response headers (e.g. `x-run-id`), not in the body.
 
 ```
-CLI  : appctl call greet … → CommandResult { run_id, status, timing, data:{…}, … }
+CLI  : shbench call greet … → CommandResult { run_id, status, timing, data:{…}, … }
 HTTP : POST /api/v1/commands/greet → 200 { "message": "...", "times": 1 }   (bare Output)
        errors → HTTP status (from CommandError::error_code()) + problem body
 ```
@@ -255,14 +255,14 @@ Move `src-tauri/src/global_config.rs` + `global_config.yaml` into
 - Replace `invoke('engine_call', …)` with `fetch('/api/v1/commands/:name', …)`;
   add a tiny typed API client. `useConfig()` calls `GET` a config endpoint
   instead of the tauri `get_app_config` command.
-- Vite dev server proxies `/api` → `appctl serve`. Frontend is fully optional:
+- Vite dev server proxies `/api` → `shbench serve`. Frontend is fully optional:
   the template is useful headless with just the CLI + API.
 
 ## 8. MCP (designed-for, not built)
 
 No MCP server this iteration. The typed registry + `schema(name)` introspection
 is precisely what an MCP transport needs:
-- Future `appctl mcp` adapter maps `tools/list` → registry schemas and
+- Future `shbench mcp` adapter maps `tools/list` → registry schemas and
   `tools/call` → `registry.execute`. Leave a stub subcommand returning
   "unimplemented" and a `docs/` note describing the adapter.
 
@@ -284,19 +284,19 @@ mirror the split. Today's `make init` is only a thin Tauri rename — we replace
 it with the richer model.
 
 ```
-                     Rust-Template repo
+                     Secret-Hitler-Evals repo
                             │
       ┌──────────────────────┴───────────────────────┐
    PROJECT ONBOARDING                          COMMAND SCAFFOLDING
    (one-time, mutates repo)                    (recurring, adds files)
       │                                               │
-  make init ──► appctl init                   appctl new <name>
+  make init ──► shbench init                   shbench new <name>
       │  (wizard | --profile/--config/--dry-run)      │  templates/command.rs.tpl
    rename · brand · prune surfaces ·          ──► generates an engine Command
    .env setup · prek hooks                        (+ optional CLI subcommand)
 ```
 
-### A. Project onboarding — `make init` → `appctl init`
+### A. Project onboarding — `make init` → `shbench init`
 
 A Rust onboarding subcommand mirroring mcp-template's `init/onboard.py`, living
 in `crates/cli/src/init/`:
@@ -324,7 +324,7 @@ Adopt the reference's proven patterns:
   crate dir + drop it from `[workspace].members` and dependents'
   `[dependencies]` — format-preserving and robust (the reference uses brittle
   regex on `pyproject.toml`; we do better).
-- **Rename sentinels** (`rust-template`/`appctl`/`myorg`) replaced across an
+- **Rename sentinels** (`secret-hitler-evals`/`shbench`/`myorg`) replaced across an
   extension allowlist via `walkdir`, skipping `.git`/`target`/`node_modules`;
   GitHub owner/repo auto-detected from `git remote`. Read-only on git — never
   commit/push.
@@ -332,11 +332,11 @@ Adopt the reference's proven patterns:
 `make init` wraps it:
 ```make
 init:
-	cargo run -p appctl -- init $(if $(PROFILE),--profile $(PROFILE),) \
+	cargo run -p shbench -- init $(if $(PROFILE),--profile $(PROFILE),) \
 	  $(if $(CONFIG),--config $(CONFIG),) $(if $(DRY_RUN),--dry-run,) $(ARGS)
 ```
 
-### B. Command scaffolding — `appctl new <name>`
+### B. Command scaffolding — `shbench new <name>`
 
 A `string`-substitution generator over `templates/command.rs.tpl` (no
 cookiecutter/Jinja needed) that creates a new **engine `Command`** (input/output
@@ -353,7 +353,7 @@ structs + impl) and optionally a CLI subcommand wrapper.
 Port `.agents/skills/onboarding/SKILL.md` nearly verbatim: inspect → interview →
 dry-run → confirm → apply → verify → handle-untouched-systems. Swap `make
 onboard`→`make init`, `pyproject.toml`→`Cargo.toml`, verify via `cargo
-build`/`cargo test`/`appctl --help` + `/healthz`. Keep the skill pointing at one
+build`/`cargo test`/`shbench --help` + `/healthz`. Keep the skill pointing at one
 declared source-of-truth file (`crates/cli/src/init/config.rs`).
 
 > Note: `inventory`-based auto-registration (B) feeds back into Phase 2 — if we
@@ -363,7 +363,7 @@ declared source-of-truth file (`crates/cli/src/init/config.rs`).
 ### D. Implementation notes (Phase 5)
 
 - **Surface pruning is cargo-feature based, not source surgery.** The two Rust
-  surfaces are gated behind `appctl` crate features `cli` (diagnostic
+  surfaces are gated behind `shbench` crate features `cli` (diagnostic
   subcommands) and `http-api` (axum `serve` + tower stack), both in `default`.
   Pruning a surface drops its feature from the `default` list (via `toml_edit`,
   format-preserving) and deletes the now-unreferenced files (e.g.
@@ -375,7 +375,7 @@ declared source-of-truth file (`crates/cli/src/init/config.rs`).
   deps/scripts), `docs` (`docs/` + package.json workspace entry), and `docker`
   (`Dockerfile`, `.dockerignore`). `expand()` encodes the implications
   (`frontend ⇒ http_api`; dropping `http_api` drops `frontend`+`docker`).
-- **`command.rs.tpl` is embedded** via `include_str!`, so `appctl new` works
+- **`command.rs.tpl` is embedded** via `include_str!`, so `shbench new` works
   from any cwd. It writes `crates/engine/src/commands/<name>.rs` and inserts a
   sorted `mod <name>;` line — the only wiring `inventory` can't do at link time.
 - **`.env` bootstrap** copies `.env.example → .env` (existence-guarded);
@@ -465,7 +465,7 @@ All prior open questions are now decided (see §13 for the packaging detail):
 - **`cargo-dist`** (`dist-workspace.toml` / `cargo dist init`) generates the
   release CI: per-OS binary builds (linux/macos/windows), shell + PowerShell
   installers, and GitHub Release artifacts. Replaces the Tauri `release.yml`.
-  The released artifact is the `appctl` binary (CLI + `serve`).
+  The released artifact is the `shbench` binary (CLI + `serve`).
   - **Implementation note (Phase 4):** `dist-workspace.toml` is committed as the
     cargo-dist source of truth. The generated pipeline could not be produced in
     the build container (`dist init` unavailable), so `release.yml` currently
@@ -476,9 +476,9 @@ All prior open questions are now decided (see §13 for the packaging detail):
     `package.json` for now because the React `src/` still imports them; they are
     removed together with the `invoke()`→`fetch()` conversion in Phase 6. Only
     the `tauri` npm script and `@tauri-apps/cli` were dropped here.
-- **`Dockerfile`** — multi-stage: `cargo build --release -p appctl` in a builder
+- **`Dockerfile`** — multi-stage: `cargo build --release -p shbench` in a builder
   stage, copy the binary into a slim runtime base (distroless/debian-slim),
-  `EXPOSE` the configured port, `ENTRYPOINT ["appctl", "serve"]`. Host/port and
+  `EXPOSE` the configured port, `ENTRYPOINT ["shbench", "serve"]`. Host/port and
   config via env (`APP__…`, `APP_CONFIG_PATH`). `.dockerignore` excludes
   `target/`, `node_modules/`, `frontend/`.
 - Both are **onboarding-prunable** and land in the surface config so

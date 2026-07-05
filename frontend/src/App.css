@@ -105,7 +105,7 @@ body,
 		ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
 }
 
-/* Live connectivity indicator for the `appctl serve` HTTP API. */
+/* Live connectivity indicator for the `shbench serve` HTTP API. */
 .chat-status-dot {
 	width: 8px;
 	height: 8px;

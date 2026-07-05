@@ -1,7 +1,7 @@
 # engine – Shared Backend Logic
 
 The transport-agnostic service core of the Rust server template — all real
-backend logic. Driven by `appctl` (`crates/cli`) over the CLI and the HTTP API,
+backend logic. Driven by `shbench` (`crates/cli`) over the CLI and the HTTP API,
 and (later) MCP; the same registry serves every transport.
 
 ## Design Principles
@@ -53,7 +53,7 @@ let probe_result = engine::probes::run_probe("filesystem", &caps).await;
 
 Commands implement the typed, async `Command` trait and **self-register at link
 time** via `register_command!` — there is no hand-maintained registration list.
-The fastest path is `appctl new <name>` (or `make new name=<name>`); see the
+The fastest path is `shbench new <name>` (or `make new name=<name>`); see the
 `update-backend` skill for the full pattern.
 
 ```rust

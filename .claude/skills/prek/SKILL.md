@@ -3,7 +3,7 @@ name: prek
 description: Instructions for using prek as a replacement for pre-commit.
 ---
 # Prek Skill
-This skill provides instructions for using `prek` in the Rust-Template project. `prek` replaces `pre-commit` for managing Git hooks and running checks.
+This skill provides instructions for using `prek` in the Secret-Hitler-Evals project. `prek` replaces `pre-commit` for managing Git hooks and running checks.
 ## Commands
 - `prek run`: Run hooks on changed files.
 - `prek run --all-files`: Run hooks on all files in the repository.

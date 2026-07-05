@@ -1,18 +1,18 @@
 # Releasing
 
-How to cut a new release of the `appctl` binary (the CLI + HTTP API server).
+How to cut a new release of the `shbench` binary (the CLI + HTTP API server).
 
 ## Overview
 
 Pushing a `v*` git tag triggers the [Release workflow](.github/workflows/release.yml),
-which builds `appctl` for each target platform and attaches the archives to a
+which builds `shbench` for each target platform and attaches the archives to a
 GitHub Release.
 
 | Platform | Artifact |
 |----------|----------|
-| macOS    | `appctl` (Intel + Apple Silicon) archive |
-| Windows  | `appctl.exe` archive |
-| Linux    | `appctl` archive |
+| macOS    | `shbench` (Intel + Apple Silicon) archive |
+| Windows  | `shbench.exe` archive |
+| Linux    | `shbench` archive |
 
 The canonical release pipeline is [`cargo-dist`](https://opensource.axo.dev/cargo-dist/),
 configured in `dist-workspace.toml`. The committed `release.yml` is a functional
@@ -52,7 +52,7 @@ archives are attached, edit the release notes if desired, and publish.
 
 ## Code Signing (optional)
 
-`appctl` is a headless binary, so signing is not required to run it. If you
+`shbench` is a headless binary, so signing is not required to run it. If you
 distribute installers via `cargo-dist` and want to avoid OS warnings, configure
 platform signing in `dist-workspace.toml` per the cargo-dist docs (macOS
 notarization, Windows Authenticode). No signing keys are needed for the baseline

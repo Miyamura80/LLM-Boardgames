@@ -1,5 +1,5 @@
 //! Dry-run plan rendering. Prints the resolved [`Config`] and every mutation it
-//! implies as a table, *before* anything is written. `appctl init` prints this
+//! implies as a table, *before* anything is written. `shbench init` prints this
 //! for `--dry-run` and again (for confirmation) before a real apply.
 
 use super::config::{Config, Surface};

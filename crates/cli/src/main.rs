@@ -1,10 +1,10 @@
-//! `appctl` – the Rust server template's unified CLI + HTTP API binary.
+//! `shbench` – the Rust server template's unified CLI + HTTP API binary.
 //!
 //! Runs the shared `engine` command registry over multiple transports:
 //! `serve` (axum HTTP API) plus the CLI diagnostics (`call`, `probe`, `doctor`,
 //! `run-scenario`). `init` onboards the template into a real project, `new`
 //! scaffolds a fresh engine command, and `mcp` is a stub for the future MCP
-//! transport. Transports are cargo features (`cli`, `http-api`) so `appctl
+//! transport. Transports are cargo features (`cli`, `http-api`) so `shbench
 //! init` can prune a surface and still leave a compiling project.
 
 #[cfg(feature = "cli")]
@@ -26,7 +26,7 @@ use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(
-    name = "appctl",
+    name = "shbench",
     version,
     about = "CLI + HTTP API harness for the Rust server template"
 )]

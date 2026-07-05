@@ -1,4 +1,4 @@
-//! Interactive onboarding flow (dialoguer). Bare `appctl init` (no headless
+//! Interactive onboarding flow (dialoguer). Bare `shbench init` (no headless
 //! flags) runs this to build a [`Config`] by prompting for branding, the
 //! project profile, and the optional extras. Requires a TTY; headless callers
 //! pass `--profile`/`--config` instead and never reach here.
@@ -10,7 +10,7 @@ use dialoguer::{Confirm, Input, Select};
 /// Run the wizard, returning an un-expanded [`Config`] (the caller expands and
 /// plans). `defaults` seeds the prompts (e.g. org auto-detected from git).
 pub fn run(defaults: &Config) -> Result<Config> {
-    println!("appctl init — interactive setup\n");
+    println!("shbench init — interactive setup\n");
 
     let project_name: String = Input::new()
         .with_prompt("Project name")

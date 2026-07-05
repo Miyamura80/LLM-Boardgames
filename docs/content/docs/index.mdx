@@ -45,9 +45,9 @@ Sanitized configuration is exposed to the frontend over HTTP at
 Start the HTTP API, or invoke commands headlessly:
 
 ```bash
-make run                       # = appctl serve (GET /healthz, /api/v1/commands)
-appctl call ping --json        # invoke a command over the CLI
-make dev                       # optional frontend; Vite proxies /api → appctl serve
+make run                       # = shbench serve (GET /healthz, /api/v1/commands)
+shbench call ping --json        # invoke a command over the CLI
+make dev                       # optional frontend; Vite proxies /api → shbench serve
 ```
 
 </Step>

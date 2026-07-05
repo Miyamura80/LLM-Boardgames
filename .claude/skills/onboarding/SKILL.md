@@ -23,7 +23,7 @@ other.
      per-profile presets, `expand()` (dependency implications), and the
      prune-path groups (exactly which files/crates each choice removes)
    - The surfaces themselves: the engine command registry (`crates/engine/`),
-     the CLI (`crates/cli/`), the HTTP API (`appctl serve` / the `server`
+     the CLI (`crates/cli/`), the HTTP API (`shbench serve` / the `server`
      module), config (`crates/config/`), `docs/`, and relevant tests
    - Systems `make init` does NOT manage (handle these manually — see step 7):
      release CI (`.github/workflows/`). Note `frontend/`, `Dockerfile`, and the
@@ -66,8 +66,8 @@ other.
    manifests only.
 
 6. Verify the selected shape:
-   - CLI: run `appctl --help` and one simple command (e.g. `appctl call ping`).
-   - API: start `appctl serve`, check `GET /healthz`, and `GET /api/v1/commands`.
+   - CLI: run `shbench --help` and one simple command (e.g. `shbench call ping`).
+   - API: start `shbench serve`, check `GET /healthz`, and `GET /api/v1/commands`.
    - Shared changes: run focused `cargo test` first, then `make ci` when scope
      is large.
 

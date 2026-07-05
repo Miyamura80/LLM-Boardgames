@@ -4,7 +4,7 @@ members = ["cargo:."]
 # cargo-dist (https://opensource.axo.dev/cargo-dist/) configuration.
 #
 # This is the source of truth for cross-platform release artifacts of the
-# `appctl` binary. To (re)generate the canonical GitHub Actions release pipeline
+# `shbench` binary. To (re)generate the canonical GitHub Actions release pipeline
 # — which builds the shell/PowerShell installers declared below — install
 # cargo-dist and run `dist init` then `dist generate ci`; that overwrites
 # `.github/workflows/release.yml` with the officially generated workflow.
