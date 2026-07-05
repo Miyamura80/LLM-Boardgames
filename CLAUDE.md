@@ -2,11 +2,13 @@ This file provides guidance to AI agents working with code in this repository.
 
 ## Project Overview
 
-A Rust application-server template. Business logic is written **once** as a typed
-async `Command` in the `engine` crate and exposed over multiple transports — CLI,
-HTTP API, and (later) MCP — through the `shbench` binary. The `engine` core has no
-transport dependency; transports live in `crates/cli` behind cargo features. An
-optional React/Vite frontend (`frontend/`) talks to the HTTP API over `fetch`.
+An LLM-agent evaluation harness for **Secret Hitler**, the hidden-role
+social-deduction game. The engine-authoritative game state and eval logic are
+written **once** as typed async `Command`s in the `engine` crate and exposed over
+multiple transports — CLI, HTTP API, and (later) MCP — through the `shbench`
+binary. The `engine` core has no transport dependency; transports live in
+`crates/cli` behind cargo features. An optional React/Vite frontend (`frontend/`)
+visualizes games and replays over the HTTP API via `fetch`.
 **Note:** migrated away from Tauri/desktop and from Python — Rust for backend,
 Node/Bun for frontend/scripts.
 **Before any other work in this repo, enable prek:** `bun add -g prek && prek install`. Hooks are defined in `prek.toml`.

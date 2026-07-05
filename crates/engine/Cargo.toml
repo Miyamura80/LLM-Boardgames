@@ -2,7 +2,7 @@
 name = "engine"
 version = "0.1.0"
 edition = "2021"
-description = "Transport-agnostic service core for the Rust server template – shared across CLI, HTTP API, and MCP"
+description = "Transport-agnostic game engine and eval core for the Secret Hitler LLM-agent eval harness – shared across CLI, HTTP API, and MCP"
 license = "MIT"
 
 [dependencies]

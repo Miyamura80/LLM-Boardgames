@@ -1,9 +1,9 @@
-//! `shbench` – the Rust server template's unified CLI + HTTP API binary.
+//! `shbench` – the Secret Hitler eval harness's unified CLI + HTTP API binary.
 //!
-//! Runs the shared `engine` command registry over multiple transports:
-//! `serve` (axum HTTP API) plus the CLI diagnostics (`call`, `probe`, `doctor`,
-//! `run-scenario`). `init` onboards the template into a real project, `new`
-//! scaffolds a fresh engine command, and `mcp` is a stub for the future MCP
+//! Runs the shared `engine` game engine and eval command registry over multiple
+//! transports: `serve` (axum HTTP API) plus the CLI diagnostics (`call`, `probe`,
+//! `doctor`, `run-scenario`). `init` onboards the template into a real project,
+//! `new` scaffolds a fresh engine command, and `mcp` is a stub for the future MCP
 //! transport. Transports are cargo features (`cli`, `http-api`) so `shbench
 //! init` can prune a surface and still leave a compiling project.
 
@@ -28,7 +28,7 @@ use std::path::PathBuf;
 #[command(
     name = "shbench",
     version,
-    about = "CLI + HTTP API harness for the Rust server template"
+    about = "CLI + HTTP API binary for the Secret Hitler LLM-agent eval harness"
 )]
 struct Cli {
     #[command(subcommand)]

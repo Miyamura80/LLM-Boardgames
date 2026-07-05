@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-<b>agent-ready Rust server + CLI template</b>
+<b>an LLM-agent eval harness for Secret Hitler</b>
 </p>
 
 <p align="center">
@@ -27,10 +27,11 @@
 
 ## Key Features
 
-A Rust application-server template: **write your business logic once as a typed
-`Command`, and expose it over multiple transports** — a CLI, an HTTP API, and
-(later) MCP — all from one shared core. An optional React/Vite frontend talks to
-the API over `fetch`.
+An LLM-agent evaluation harness for **Secret Hitler**, the hidden-role
+social-deduction game. The `engine` crate holds the engine-authoritative game
+state and eval logic **written once as typed async `Command`s**, exposed over
+multiple transports — a CLI, an HTTP API, and (later) MCP — from one shared core.
+An optional React/Vite frontend visualizes games and replays over `fetch`.
 
 | Feature | Tech Stack |
 |---------|:----------:|

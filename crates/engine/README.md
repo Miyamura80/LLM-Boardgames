@@ -1,8 +1,9 @@
-# engine – Shared Backend Logic
+# engine – Game Engine & Eval Core
 
-The transport-agnostic service core of the Rust server template — all real
-backend logic. Driven by `shbench` (`crates/cli`) over the CLI and the HTTP API,
-and (later) MCP; the same registry serves every transport.
+The transport-agnostic core of the Secret Hitler LLM-agent eval harness —
+engine-authoritative game state, eval logic, and backend integrations. Driven by
+`shbench` (`crates/cli`) over the CLI and the HTTP API, and (later) MCP; the same
+registry serves every transport.
 
 ## Design Principles
 
