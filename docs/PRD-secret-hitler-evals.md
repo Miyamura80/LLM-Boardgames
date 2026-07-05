@@ -158,7 +158,7 @@ persuasion and deduction — with a bounded, reproducible, **order-free** struct
 that no seat position can exploit.
 
 **Acceptance Criteria:**
-- [ ] Before each government's vote, discussion runs for a configurable number of **simultaneous rounds** (default 2).
+- [ ] Before each government's vote, discussion runs for a configurable number of **simultaneous rounds** (default 3).
 - [ ] Within a round, every living player produces exactly one utterance (or explicit pass) **in parallel**, each conditioned only on public state through the **end of the previous round** — no player sees another's same-round message before writing.
 - [ ] All of a round's utterances are revealed together and appended to public history; the next round conditions on them.
 - [ ] No fixed or implied speaking order exists within a round (verified: swapping seat indices does not change any agent's within-round input).
@@ -193,10 +193,9 @@ win rates, so I can rank models honestly.
 model so I understand *how* it plays, without any subjective judge.
 
 **Acceptance Criteria:**
-- [ ] **Suspicion accuracy:** at defined checkpoints (see FR-13) each living player emits a structured belief distribution over others' roles; scored (Brier / log-loss) against ground-truth roles. Liberal suspicion accuracy reported.
+- [ ] **Suspicion accuracy:** at defined checkpoints (see FR-13) each living player emits a structured belief distribution over others' roles, **privately** (not shown to other players; does not affect game state); scored (Brier / log-loss) against ground-truth roles. Liberal suspicion accuracy reported.
 - [ ] **Goal-aligned enactment rate** (per-decision, luck-controlled): of the policy choices a player personally made (President discard among 3, Chancellor enact among 2), the fraction that advanced the player's own faction, given the tiles held.
-- [ ] **Faction policy throughput** (outcome stat): count/rate of the player's-faction policies enacted in governments where the player sat as President or Chancellor. Reported as outcome-correlated (not pure decision quality).
-- [ ] **Investigation quality** (Liberal Presidents): when Investigate Loyalty is used, whether the target's true party was previously uncertain to that seat, and whether the President's subsequent public votes/nominations were consistent with the true result.
+- [ ] **Faction policy throughput** (outcome stat): count/rate of the player's-faction policies enacted in governments where the player **personally made a policy choice** (as President or Chancellor). Reported as outcome-correlated (not pure decision quality).
 - [ ] **Execution accuracy:** when a player used Execution, whether the shot hit a Fascist/Hitler vs a Liberal, per faction.
 - [ ] Every metric is computed purely from engine state + declared beliefs; none uses an LLM to grade. Each documents its exact definition and known proxy limitations. Forced-default actions are excluded.
 - [ ] Metrics persisted per game and aggregated per model.
@@ -221,12 +220,12 @@ optionally visually.
 - **FR-5:** The harness must record malformed-output and illegal-move counts separately from play-quality metrics.
 - **FR-6:** The harness must support deterministic, deliberately-simple rule-based baseline agents (no discussion) usable as a CI floor.
 - **FR-7:** The harness must support LLM agents via the existing `app_config` LLM configuration, with transient-failure retry.
-- **FR-8:** Discussion must run as **simultaneous-reveal rounds** (configurable count, default 2): within a round all living players' utterances are generated in parallel conditioned only on state through the previous round, then revealed together. No within-round ordering. Per-utterance cap enforced; costs logged.
+- **FR-8:** Discussion must run as **simultaneous-reveal rounds** (configurable count, default 3): within a round all living players' utterances are generated in parallel conditioned only on state through the previous round, then revealed together. No within-round ordering. Per-utterance cap enforced; costs logged.
 - **FR-9:** The match runner must rotate every model through every seat and both factions as evenly as possible and log the realized distribution.
 - **FR-10:** Every game must produce a seed-reproducible, replayable transcript.
 - **FR-11:** The system must compute a Weng-Lin/OpenSkill rating (μ, σ) per model from win/loss, treating factions as teams. Implementation targets the Rust `skillratings` crate's `weng_lin` model; if its per-player contribution-weight support is insufficient, use/port the `openskill` crate.
 - **FR-12:** The system must report Liberal and Fascist win rates per model separately, plus game count and an uncertainty warning.
-- **FR-13:** The system must compute and persist the objective per-player metric suite (suspicion accuracy, goal-aligned enactment rate, faction policy throughput, investigation quality, execution accuracy) with documented definitions. Suspicion beliefs are elicited **after each enacted policy plus one end-of-game snapshot** (configurable).
+- **FR-13:** The system must compute and persist the objective per-player metric suite (suspicion accuracy, goal-aligned enactment rate, faction policy throughput, execution accuracy) with documented definitions. Suspicion beliefs are elicited **privately after each enacted policy** (plus a final snapshot at game end); elicitation is not shown to other players and does not affect game state.
 - **FR-14:** Results must be retrievable via CLI and HTTP API; the frontend replay is optional.
 - **FR-15:** All randomness (deck, assignment, forced-default tiebreaks) must be seedable so deterministic runs reproduce exactly.
 
@@ -249,14 +248,14 @@ optionally visually.
 
 - **Backend:** Rust — `engine` crate (game + eval logic, no transport deps), `shbench` binary (CLI + HTTP API). Rating via Weng-Lin/OpenSkill (`skillratings` `weng_lin`, or the `openskill` crate).
 - **Engine correctness is load-bearing:** every metric derives from engine state, so US-002's test suite gates everything else. Prioritize it.
-- **Cost drivers:** discussion tokens dominate (every seat re-ingests growing history). Mitigations: fixed 7 seats, bounded simultaneous rounds (default 2), per-utterance cap, parallel generation within a round (cheaper wall-clock), and zero-token baseline games for CI.
+- **Cost drivers:** discussion tokens dominate (every seat re-ingests growing history). Mitigations: fixed 7 seats, bounded simultaneous rounds (default 3), per-utterance cap, parallel generation within a round (cheaper wall-clock), and zero-token baseline games for CI.
 - **Belief elicitation:** suspicion accuracy needs a structured side-channel prompt at checkpoints; it must not alter game state and its cost is counted.
 
 ### Honest tradeoffs (stated, not hidden)
 
 - **The rating is coarse, relative, and non-stationary.** Weng-Lin/OpenSkill (like TrueSkill) is accurate head-to-head but degrades in multiplayer/team/FFA; expect wide σ, slow convergence, and reliable separation only between *tiers*, not adjacent ranks. Ratings shift with the model pool and can mask non-transitive (rock-paper-scissors) metagames.
 - **Win/loss is low-bandwidth** (≈1 bit/game): many games are needed and it never explains *why*. The objective metric suite is the partial remedy.
-- **Per-player signals are proxies.** Goal-aligned enactment is luck-controlled (conditioned on tiles held) and is the strongest; faction throughput and investigation quality are more outcome-correlated and can reward luck — they inform, they don't adjudicate.
+- **Per-player signals are proxies.** Goal-aligned enactment is luck-controlled (conditioned on tiles held) and is the strongest; faction throughput is more outcome-correlated and can reward luck — it informs, it doesn't adjudicate.
 - **Rule-based baselines don't exercise persuasion** and are exploitable; a floor/CI anchor, not the leaderboard.
 
 ## 8. Success Metrics
@@ -268,23 +267,20 @@ optionally visually.
 - Malformed-output, illegal-move, and forced-default rates are reported per model and separable from play quality.
 - Total token cost per LLM game is bounded and logged, within the configured discussion budget.
 
-## 9. Open Questions
+## 9. Resolved Decisions
 
-**Settled** (from discussion — recorded for traceability):
+All v1 design questions are settled:
 
 1. **Player count = 7** (4 Liberals / 3 Fascists, Hitler blind; Investigate Loyalty + Special Election + Execution×2 + Veto board).
 2. **Rating = Weng-Lin / OpenSkill in Rust** (`skillratings` `weng_lin`, fallback `openskill` crate for contribution weights).
-3. **Discussion = simultaneous-reveal rounds** (orderless; default 2 rounds), chosen over round-robin to remove exploitable seat order.
+3. **Discussion = simultaneous-reveal rounds** (orderless; default **3** batches), chosen over round-robin to remove exploitable seat order.
+4. **Belief elicitation = privately after each enacted policy** (+ a final game-end snapshot); not shown to other players, does not affect game state.
 5. **Vote-alignment heuristic dropped**, replaced by goal-aligned enactment rate (per-decision) + faction policy throughput (outcome stat).
+6. **Forced legal default = deterministic per decision** (Nein / first-eligible / seeded-random tile / first-legal-target), logged and metric-exempt.
+7. **Baseline strength = deliberately simple/weak** (CI floor, not the leaderboard).
+8. **No investigation-quality metric.** Investigate Loyalty remains a game power, but its use-quality is not separately scored (too fine-grained; suspicion accuracy already reflects good investigation indirectly).
+9. **Faction throughput attribution = strict** — count only governments where the player personally made a policy choice (President discard or Chancellor enact).
 
-**Recommended defaults** (taken because the question was left open — confirm or flip):
+**Tune-later (no decision needed now):**
 
-4. **Belief-elicitation cadence = after each enacted policy + end-of-game snapshot.** Alternatives: per-government (costlier, finer) or end-only (cheaper, coarser).
-6. **Forced legal default = deterministic per decision** (Nein / first-eligible / seeded-random tile / first-legal-target), metric-exempt. Alternatives: seeded-random for all, or forfeit-the-game on repeated illegality.
-7. **Baseline strength = deliberately simple/weak.** Alternative: a tuned mechanical opponent (more discriminating floor, higher build/maintenance cost, overfitting risk).
-
-**Still genuinely open:**
-
-8. **Investigation-quality definition** needs pinning — "acted consistently with the true result" is the softest new metric; exact rule TBD.
-9. **Faction policy throughput** attribution — count only governments where the player made the enacting choice, or any government they sat in?
-10. **Discussion round count** default (2) — validate against cost/signal once real games run.
+10. Discussion batch count starts at **3**; revisit against cost/signal once real games run.
