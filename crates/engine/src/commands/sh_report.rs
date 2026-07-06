@@ -1,0 +1,110 @@
+//! `sh_export_game_report` — render a stored game into a single
+//! self-contained HTML observability page (transcript with discussion and
+//! collapsible per-decision thoughts, belief heatmaps, reliability & cost).
+//!
+//! This is the native, token-free path for producing game reports: the
+//! template lives in the repo (`crates/engine/templates/game_report.html`)
+//! and the data comes straight from the Postgres store.
+
+use crate::commands::sh_match::open_store;
+use crate::commands::{Command, CommandError, Expose};
+use crate::context::Ctx;
+use crate::register_command;
+use async_trait::async_trait;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use std::path::Path;
+
+const TEMPLATE: &str = include_str!("../../templates/game_report.html");
+
+#[derive(Default)]
+pub struct ShExportGameReport;
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct ShExportGameReportInput {
+    pub game_id: String,
+    /// Where to write the HTML file. Omit to only return the HTML inline.
+    pub output_path: Option<String>,
+    /// Include the rendered HTML in the response (default true when no
+    /// output_path is given).
+    pub include_html: Option<bool>,
+}
+
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct ShExportGameReportOutput {
+    pub game_id: String,
+    pub bytes: usize,
+    pub output_path: Option<String>,
+    pub html: Option<String>,
+}
+
+#[async_trait]
+impl Command for ShExportGameReport {
+    type Input = ShExportGameReportInput;
+    type Output = ShExportGameReportOutput;
+
+    fn name(&self) -> &'static str {
+        "sh_export_game_report"
+    }
+    fn description(&self) -> &'static str {
+        "Render a stored game into a self-contained HTML observability report (transcript, thoughts, belief heatmaps, reliability, cost)."
+    }
+    fn expose(&self) -> Expose {
+        // Writes caller-supplied paths — keep it off the unauthenticated API.
+        Expose::cli_only()
+    }
+
+    async fn run(
+        &self,
+        input: ShExportGameReportInput,
+        cx: &Ctx<'_>,
+    ) -> Result<Self::Output, CommandError> {
+        let store = open_store().await?;
+        let record = store
+            .get_game(&input.game_id)
+            .await
+            .map_err(|e| CommandError::Other(e.to_string()))?
+            .ok_or_else(|| {
+                CommandError::InvalidInput(format!("unknown game: {}", input.game_id))
+            })?;
+
+        let rendered: Vec<String> = record
+            .events
+            .iter()
+            .map(|r| r.event.render_omniscient())
+            .collect();
+        // `</` must not appear inside the inline <script> payload.
+        let escape =
+            |v: &serde_json::Value| serde_json::to_string(v).map(|s| s.replace("</", "<\\/"));
+        let data =
+            escape(&serde_json::to_value(&record).map_err(|e| CommandError::Other(e.to_string()))?)
+                .map_err(|e| CommandError::Other(e.to_string()))?;
+        let lines = escape(
+            &serde_json::to_value(&rendered).map_err(|e| CommandError::Other(e.to_string()))?,
+        )
+        .map_err(|e| CommandError::Other(e.to_string()))?;
+        // Split at the markers instead of sequential global replaces: model-
+        // authored text inside the payloads could itself contain a marker.
+        let (before, rest) = TEMPLATE
+            .split_once("__GAME_DATA__")
+            .ok_or_else(|| CommandError::Other("template missing __GAME_DATA__".into()))?;
+        let (between, after) = rest
+            .split_once("__RENDERED__")
+            .ok_or_else(|| CommandError::Other("template missing __RENDERED__".into()))?;
+        let html = format!("{before}{data}{between}{lines}{after}");
+        let bytes = html.len();
+
+        if let Some(path) = &input.output_path {
+            cx.fs().write_file(Path::new(path), html.as_bytes())?;
+        }
+        let include_html = input.include_html.unwrap_or(input.output_path.is_none());
+        Ok(ShExportGameReportOutput {
+            game_id: input.game_id,
+            bytes,
+            output_path: input.output_path,
+            html: include_html.then_some(html),
+        })
+    }
+}
+
+register_command!(ShExportGameReport);

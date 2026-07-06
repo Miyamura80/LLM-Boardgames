@@ -64,13 +64,6 @@ export async function callCommand<TOutput, TInput = unknown>(
 	return (await res.json()) as TOutput;
 }
 
-/** Fetch the sanitized frontend configuration (`GET /api/v1/config`). */
-export async function fetchConfig<T>(): Promise<T> {
-	const res = await fetch(`${API_BASE}/config`);
-	if (!res.ok) throw await toApiError(res);
-	return (await res.json()) as T;
-}
-
 /** Format any thrown value for display, surfacing an {@link ApiError}'s code. */
 export function describeError(err: unknown): string {
 	if (err instanceof ApiError) return `${err.code}: ${err.message}`;

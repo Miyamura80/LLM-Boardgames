@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Secret Hitler Evals — Game Report</title>
+<style>
+:root{
+  --paper:#f7f3ea; --panel:#fffdf7; --ink:#26221a; --muted:#847b6a; --line:#e2dbc9;
+  --liberal:#3d6fa5; --liberal-soft:#e3ecf5; --fascist:#b4531d; --fascist-soft:#f6e6da;
+  --hitler:#8f1d1d; --chip:#efe9da;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --serif:Georgia,'Times New Roman',serif;
+  --sans:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{
+  --paper:#171410; --panel:#1f1b15; --ink:#eae4d4; --muted:#9a9080; --line:#39332a;
+  --liberal:#7aa7d6; --liberal-soft:#22303f; --fascist:#d98a55; --fascist-soft:#3a2718;
+  --hitler:#e07a7a; --chip:#2a2519;
+}}
+:root[data-theme="dark"]{
+  --paper:#171410; --panel:#1f1b15; --ink:#eae4d4; --muted:#9a9080; --line:#39332a;
+  --liberal:#7aa7d6; --liberal-soft:#22303f; --fascist:#d98a55; --fascist-soft:#3a2718;
+  --hitler:#e07a7a; --chip:#2a2519;
+}
+:root[data-theme="light"]{
+  --paper:#f7f3ea; --panel:#fffdf7; --ink:#26221a; --muted:#847b6a; --line:#e2dbc9;
+  --liberal:#3d6fa5; --liberal-soft:#e3ecf5; --fascist:#b4531d; --fascist-soft:#f6e6da;
+  --hitler:#8f1d1d; --chip:#efe9da;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:clamp(13.5px,1.1vw + 9px,15px);line-height:1.55}
+.wrap{max-width:1060px;margin:0 auto;padding:clamp(.8rem,3vw,2.2rem) clamp(.6rem,2.5vw,1.2rem) 4rem;display:grid;gap:1.3rem}
+/* Grid/flex children default to min-width:auto and would inherit the
+   heatmap table's intrinsic width, forcing sideways page scroll. */
+.wrap>*, .panel, .tablewrap, .log, .ev, .say>span:last-child{min-width:0}
+.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--serif);font-size:clamp(1.15rem,3.4vw,1.9rem);font-weight:600;text-wrap:balance;line-height:1.25}
+h2{font-family:var(--serif);font-size:clamp(1rem,2.4vw,1.2rem);font-weight:600;margin-bottom:.55rem}
+.statrow{display:flex;flex-wrap:wrap;gap:.4rem}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.35rem .65rem;font-size:12.5px}
+.stat b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+.stat span{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:clamp(.7rem,2vw,1.1rem)}
+.seats{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:.5rem}
+.seat{border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:6px;padding:.45rem .55rem;font-size:12px;background:var(--panel);min-width:0}
+.seat .nm{font-weight:700}
+.seat .tok{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--muted);font-size:11px;overflow-wrap:anywhere}
+.seat.Liberal{border-left-color:var(--liberal)} .seat.Fascist{border-left-color:var(--fascist)} .seat.Hitler{border-left-color:var(--hitler)}
+.rolechip{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.log{display:grid;gap:.18rem;max-height:70vh;overflow-y:auto;border:1px solid var(--line);border-radius:6px;padding:.7rem .75rem;background:var(--paper)}
+.ev{font-size:13px;overflow-wrap:anywhere}
+.ev .r{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-right:.3rem}
+.ev.private{color:var(--muted);font-style:italic}
+.ev.sys{color:var(--muted)}
+.roundhdr{margin:.6rem 0 .2rem;font-family:var(--serif);font-weight:600;border-bottom:1px solid var(--line);padding-bottom:.15rem}
+.say{display:flex;gap:.4rem;align-items:baseline;padding:.15rem 0;font-size:13px}
+.say>span:last-child{overflow-wrap:anywhere;min-width:0}
+.who{flex:none;font-size:10.5px;font-weight:700;font-family:var(--mono);padding:.05rem .35rem;border-radius:4px;background:var(--chip)}
+.who.Liberal{color:var(--liberal);background:var(--liberal-soft)} .who.Fascist,.who.Hitler{color:var(--fascist);background:var(--fascist-soft)}
+.policy{font-weight:700}
+.policy.Liberal{color:var(--liberal)} .policy.Fascist{color:var(--fascist)}
+.votes{font-family:var(--mono);font-size:11.5px;overflow-wrap:anywhere}
+details.thought{margin:.1rem 0 .1rem .2rem;border-left:2px dotted var(--line);padding-left:.55rem}
+details.thought summary{cursor:pointer;color:var(--muted);font-size:12px;list-style-position:inside}
+details.thought summary:focus-visible{outline:2px solid var(--liberal)}
+details.thought p{color:var(--muted);font-size:12.5px;margin:.25rem 0 .35rem .4rem;white-space:pre-wrap;overflow-wrap:anywhere}
+table{border-collapse:collapse;font-size:12.5px;width:100%}
+th,td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:600;font-size:11.5px}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto;max-width:100%}
+.hm{border-collapse:separate;border-spacing:2px;font-size:12px}
+.hm th{border:none;padding:.2rem .4rem}
+.hm tr>th:first-child{position:sticky;left:0;background:var(--panel);z-index:1}
+.hm td{border:none;min-width:2.2rem;height:1.7rem;text-align:center;border-radius:4px;font-family:var(--mono)}
+.hm td.empty{background:var(--chip)}
+.cpbtns{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.6rem}
+.cpbtns button{font:inherit;font-size:12px;padding:.22rem .6rem;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
+.cpbtns button:focus-visible{outline:2px solid var(--liberal)}
+.cpbtns button.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.note{font-size:12px;color:var(--muted)}
+.warn{border-left:3px solid var(--fascist);padding:.4rem .65rem;background:var(--fascist-soft);border-radius:4px;font-size:12.5px;margin-top:.55rem}
+ul.obs{padding-left:1.15rem;font-size:13px;display:grid;gap:.3rem}
+ul.obs li{overflow-wrap:anywhere}
+@media (max-width:560px){
+  .hm .hdrlabel{display:none}
+  th,td{padding:.3rem .35rem}
+  .seat{font-size:11px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="eyebrow">Secret Hitler Evals · game report</div>
+    <h1 id="headline">Game report</h1>
+    <div class="statrow" id="stats"></div>
+  </header>
+
+  <section>
+    <h2>The table</h2>
+    <div class="seats" id="seats"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Full transcript — every event, public and private</h2>
+    <p class="note" style="margin-bottom:.6rem">Discussion runs in simultaneous-reveal rounds: within a round nobody sees anyone else's message before writing. <em>Italic grey lines</em> are private knowledge (visible to one seat only); 💭 entries are the model's private reasoning per decision (collapsible; never fed back into play). A stored replay is omniscient.</p>
+    <div class="log" id="log"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Who suspected whom — private belief checkpoints</h2>
+    <p class="note" style="margin-bottom:.4rem">After each enacted policy every living seat privately states P(liberal / fascist / hitler) for every other player. Cell = stated P(subject is on the Fascist team), 0–100. ✦ marks the true Fascists/Hitler. Rows are believers, columns subjects. Scroll sideways on narrow screens.</p>
+    <div class="cpbtns" id="cps"></div>
+    <div class="tablewrap" id="hm"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Reliability &amp; cost per seat</h2>
+    <div class="tablewrap"><table id="rel"></table></div>
+  </section>
+</div>
+<script>
+const GAME = __GAME_DATA__;
+const RENDERED = __RENDERED__; // canonical omniscient lines from GameEvent::render_omniscient, index-aligned with GAME.events
+const $ = (id) => document.getElementById(id);
+const roles = GAME.roles;
+const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+
+// header
+const mins = Math.round(GAME.duration_ms/60000);
+const tokIn = GAME.seats.reduce((a,s)=>a+s.usage.prompt_tokens,0);
+const tokOut = GAME.seats.reduce((a,s)=>a+s.usage.completion_tokens,0);
+$("eyebrow").textContent = `Secret Hitler Evals · game ${GAME.game_id} · ${GAME.schedule_label}`;
+$("headline").textContent = `${GAME.winner}s win by ${GAME.win_condition === "HitlerChancellor" ? "electing Hitler Chancellor" : GAME.win_condition} — ${GAME.rounds} governments`;
+const rel = GAME.seats.reduce((a,s)=>({m:a.m+s.reliability.malformed_outputs,i:a.i+s.reliability.illegal_moves,f:a.f+s.reliability.forced_defaults}),{m:0,i:0,f:0});
+$("stats").innerHTML = [
+  ["seed", GAME.seed], ["events", GAME.events.length], ["duration", `${mins} min`],
+  ["prompt tok", tokIn.toLocaleString()], ["completion tok (incl. reasoning)", tokOut.toLocaleString()],
+  ["malformed", rel.m], ["illegal", rel.i], ["forced", rel.f],
+].map(([k,v]) => `<div class="stat"><b>${v}</b> <span>${k}</span></div>`).join("");
+
+// seats
+$("seats").innerHTML = GAME.seats.map(s => `
+  <div class="seat ${s.role}">
+    <div class="nm">P${s.seat} <span class="rolechip">${s.role}${s.survived ? "" : " †"}</span></div>
+    <div class="tok">${esc(s.model_id.split("/").pop())}</div>
+    <div class="tok">${(s.usage.prompt_tokens/1000).toFixed(0)}k in · ${(s.usage.completion_tokens/1000).toFixed(0)}k out</div>
+  </div>`).join("");
+
+// thoughts keyed by the transcript position they precede
+const thoughtsAt = new Map();
+for (const s of GAME.seats) {
+  for (const t of (s.thoughts || [])) {
+    const list = thoughtsAt.get(t.at_event) || [];
+    list.push({ seat: s.seat, decision: t.decision, text: t.text });
+    thoughtsAt.set(t.at_event, list);
+  }
+}
+const renderThoughts = (idx) => (thoughtsAt.get(idx) || []).map(t =>
+  `<details class="thought"><summary>💭 P${t.seat} thinking before ${esc(t.decision)}</summary><p>${esc(t.text)}</p></details>`
+).join("");
+
+// transcript — wording comes from the engine's canonical renderer (RENDERED);
+// this switch only adds visual decoration for a handful of event kinds.
+function renderEvent(rec) {
+  const e = rec.event, t = e.type;
+  const priv = rec.visibility !== "Public";
+  const tag = priv ? `<span class="r">[private P${rec.visibility.Private}]</span>` : "";
+  if (t === "Utterance") {
+    if (e.pass) return `<div class="ev sys"><span class="r">d${e.discussion_round+1}</span>P${e.seat} passes.</div>`;
+    return `<div class="say"><span class="who ${roles[e.seat]}">P${e.seat}</span><span>${esc(e.text)}</span></div>`;
+  }
+  const line = (html, cls="") => `<div class="ev ${priv ? "private" : cls}">${tag}${html}</div>`;
+  switch (t) {
+    case "PolicyEnacted":
+      return line(`A <span class="policy ${e.policy}">${e.policy}</span> policy was enacted.`);
+    case "TopDeckEnacted":
+      return line(`Tracker hit 3: top policy auto-enacted (<span class="policy ${e.policy}">${e.policy}</span>), no power.`);
+    case "VotesRevealed":
+      return line(`Vote on P${e.nominee}: <span class="votes">${e.votes.map(([s,ja])=>`P${s}=${ja?"Ja":"Nein"}`).join(" ")}</span> → <b>${e.passed?"PASSED":"FAILED"}</b>`);
+    case "GameEnded":
+      return line(`<b>${esc(RENDERED[rec.idx] ?? t)}</b>`);
+    case "GameStarted":
+    case "GovernmentFormed":
+    case "ElectionTrackerAdvanced":
+    case "DeckReshuffled":
+      return line(esc(RENDERED[rec.idx] ?? t), "sys");
+    default:
+      return line(esc(RENDERED[rec.idx] ?? t));
+  }
+}
+let lastRound = 0;
+const out = [];
+for (const rec of GAME.events) {
+  if (rec.round !== lastRound) { lastRound = rec.round; out.push(`<div class="roundhdr">Government ${rec.round}</div>`); }
+  out.push(renderThoughts(rec.idx));
+  out.push(renderEvent(rec));
+}
+out.push(renderThoughts(GAME.events.length));
+$("log").innerHTML = out.join("");
+
+// belief heatmaps: sequential single-hue ramp (magnitude), truth via ✦ marker
+const RAMP = ["#f2f7fc","#dcebf7","#c0dcf0","#9ac8e6","#6face0","#4a90d9","#2f6fbe","#1d4f96","#123568"];
+const cps = [...new Set(GAME.beliefs.map(b=>b.checkpoint))];
+function drawHm(cp) {
+  const snaps = GAME.beliefs.filter(b=>b.checkpoint===cp);
+  let h = `<table class="hm"><tr><th><span class="hdrlabel">believer ↓ / subject →</span></th>${roles.map((r,i)=>`<th>P${i}${r!=="Liberal"?" ✦":""}</th>`).join("")}</tr>`;
+  for (let b = 0; b < 7; b++) {
+    const snap = snaps.find(s=>s.seat===b);
+    h += `<tr><th>P${b} <span class="rolechip">${roles[b]}</span></th>`;
+    for (let subj = 0; subj < 7; subj++) {
+      const probs = snap?.report.assessments[String(subj)];
+      if (b === subj || !probs) { h += `<td class="empty"></td>`; continue; }
+      const p = probs.fascist + probs.hitler;
+      const idx = Math.max(0, Math.min(8, Math.floor(p*9)));
+      h += `<td style="background:${RAMP[idx]};color:${idx>=5?"#fff":"#26221a"}" title="P${b} on P${subj}: L ${(probs.liberal*100).toFixed(0)}% / F ${(probs.fascist*100).toFixed(0)}% / H ${(probs.hitler*100).toFixed(0)}%">${(p*100).toFixed(0)}</td>`;
+    }
+    h += "</tr>";
+  }
+  $("hm").innerHTML = `${h}</table>`;
+  document.querySelectorAll(".cpbtns button").forEach(btn => {
+    btn.classList.toggle("on", Number(btn.dataset.cp) === cp);
+  });
+}
+if (cps.length) {
+  $("cps").innerHTML = cps.map(c=>`<button type="button" data-cp="${c}">${c===255?"game end":`after policy ${c}`}</button>`).join("");
+  document.querySelectorAll(".cpbtns button").forEach(btn => {
+    btn.addEventListener("click", () => drawHm(Number(btn.dataset.cp)));
+  });
+  drawHm(cps[cps.length-1]);
+} else {
+  $("hm").innerHTML = `<p class="note">No belief snapshots recorded for this game.</p>`;
+}
+
+// reliability table
+$("rel").innerHTML = `<tr><th>Seat</th><th>Role</th><th>Won</th><th>Malformed</th><th>Illegal</th><th>Forced</th><th>Transport</th><th>Tokens in</th><th>Tokens out (incl. reasoning)</th></tr>` +
+  GAME.seats.map(s=>`<tr><td>P${s.seat}</td><td>${s.role}</td><td>${s.won?"✓":"—"}</td><td class="num">${s.reliability.malformed_outputs}</td><td class="num">${s.reliability.illegal_moves}</td><td class="num">${s.reliability.forced_defaults}</td><td class="num">${s.reliability.transport_failures}</td><td class="num">${s.usage.prompt_tokens.toLocaleString()}</td><td class="num">${s.usage.completion_tokens.toLocaleString()}</td></tr>`).join("");
+</script>
+</body>
+</html>

@@ -45,6 +45,9 @@ mod http_request;
 mod list_dir;
 mod ping;
 mod read_file;
+mod sh_game;
+mod sh_match;
+mod sh_report;
 mod system_info;
 mod write_file;
 

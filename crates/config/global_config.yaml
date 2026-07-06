@@ -34,6 +34,53 @@ llm_config:
     max_wait_seconds: 5
 
 ########################################################
+# Secret Hitler eval harness (see docs/rating-design.md)
+########################################################
+secret_hitler:
+  discussion_rounds: 3
+  retry_budget: 3
+  utterance_char_cap: 240
+  agent_max_tokens: 8192
+  agent_temperature: 0.5
+  rating_k: 2.0
+  # Frozen anchor pools. NOTE: all default LLM anchors are Gemini-family
+  # because only GEMINI_API_KEY ships with this repo — diversify providers
+  # before publishing results (model-family collusion caveat, rating-design §3).
+  pools:
+    pool-a:
+      - { name: random, kind: random-legal }
+      - { name: heuristic, kind: heuristic }
+      - { name: bayes, kind: bayes-history }
+      - { name: llm-cheap, kind: llm, model: gemini/gemini-2.5-flash-preview }
+      - { name: llm-mid, kind: llm, model: gemini/gemini-3-flash-preview }
+      - name: llm-strong
+        kind: llm
+        model: gemini/gemini-3-flash-preview
+        persona: "Play a disciplined, analytical game. Track every vote and claim, reason aloud about deck probabilities, and build a consistent case before accusing."
+    pool-b:
+      - name: accuser
+        kind: llm
+        model: gemini/gemini-3-flash-preview
+        persona: "Be an aggressive accuser: pressure others early, demand explanations for every vote, and threaten to vote Nein unless people commit to positions."
+      - name: quiet-bayesian
+        kind: llm
+        model: gemini/gemini-3-flash-preview
+        persona: "Speak rarely and briefly. When you do, cite concrete probabilities from the policy deck and voting record. Never emote."
+      - name: deceiver
+        kind: llm
+        model: gemini/gemini-3-flash-preview
+        persona: "When Fascist, weave plausible false narratives and frame a Liberal each round. When Liberal, play mind-games to bait Fascists into contradictions."
+      - name: coalition-builder
+        kind: llm
+        model: gemini/gemini-3-flash-preview
+        persona: "Build an explicit trust coalition: propose voting blocs, name who you trust and why, and try to lock in a stable government line."
+      - name: contrarian
+        kind: llm
+        model: gemini/gemini-3-flash-preview
+        persona: "Be sceptical of consensus: challenge whatever the table majority believes and float alternative suspect theories."
+      - { name: bayes, kind: bayes-history }
+
+########################################################
 # Debugging
 ########################################################
 features:
@@ -82,5 +129,3 @@ logging:
       - name: "GENERIC_KEY"
         regex: "(?i:(?:api[_-]?key|project[_-]?key|secret[_-]?key)[=:\\s]+['\"]?[a-zA-Z0-9_\\-]{16,}['\"]?)"
         placeholder: "[REDACTED_KEY]"
-
-

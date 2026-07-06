@@ -11,6 +11,7 @@ path = "src/lib.rs"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
+schemars = "0.8"
 config = { version = "0.15", features = ["yaml"] }
 
 [dev-dependencies]

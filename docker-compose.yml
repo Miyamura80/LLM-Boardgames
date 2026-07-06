@@ -1,0 +1,22 @@
+# Local Postgres for the Secret Hitler eval store.
+#   docker compose up -d
+#   export DATABASE_URL=postgres://shbench:shbench@localhost:5433/shbench
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: shbench
+      POSTGRES_PASSWORD: shbench
+      POSTGRES_DB: shbench
+    ports:
+      - "5433:5432"
+    volumes:
+      - shbench-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shbench"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  shbench-pgdata:
