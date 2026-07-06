@@ -199,6 +199,13 @@ impl GameState {
     pub fn log(&self) -> &GameLog {
         &self.log
     }
+
+    /// Append a discussion utterance to the public transcript. Called by the
+    /// runner's simultaneous-reveal loop; not rules-bearing (does not change
+    /// game state), but part of the public history subsequent decisions see.
+    pub fn record_utterance(&mut self, seat: usize, round: u8, text: String) {
+        self.log.public(Event::Utterance { seat, round, text });
+    }
     pub fn is_over(&self) -> bool {
         self.winner.is_some()
     }

@@ -65,6 +65,11 @@ pub struct Decision {
 }
 
 impl Decision {
+    /// Whether this is the simultaneous-vote decision (all living seats act).
+    pub fn is_vote(&self) -> bool {
+        matches!(self.kind, DecisionKind::Vote { .. })
+    }
+
     /// The single seat that must act, or `None` for the simultaneous `Vote`.
     pub fn actor(&self) -> Option<usize> {
         match &self.kind {
