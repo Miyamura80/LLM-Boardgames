@@ -1,12 +1,11 @@
 //! HTTP API – an `axum` app that exposes the engine registry over `/api/v1`.
 //!
 //! Routes are **auto-derived** from the command registry (one `POST` per
-//! command), mirroring the reference. Cross-cutting concerns live here in the
-//! tower middleware stack (CORS, tracing, timeout, request-id) — never in
-//! `engine`. Responses are the **bare typed `Output`**; the `run_id` rides in
-//! the `x-run-id` header. The router is built by [`build_app`] so it can be
-//! driven in-process by `tower::ServiceExt::oneshot` in tests, and is shaped so
-//! a `/mcp` sub-router can be nested later without reshaping the app.
+//! command); eval read routes (feature `store`) live in [`crate::eval_routes`].
+//! Cross-cutting concerns live in the tower middleware stack (CORS, tracing,
+//! timeout, request-id) — never in `engine`. Responses are the **bare typed
+//! `Output`**; the `run_id` rides in the `x-run-id` header. [`build_app`] builds
+//! the router so it can be driven by `tower::ServiceExt::oneshot` in tests.
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -33,6 +32,8 @@ use tower_http::{
 pub struct AppState {
     pub caps: Arc<AppContext>,
     pub registry: Arc<CommandRegistry>,
+    #[cfg(feature = "store")]
+    pub store: Option<Arc<crate::store::Store>>, // eval read endpoints: eval_routes
 }
 
 /// Operational tunables for the HTTP server, sourced from `global_config.yaml`
@@ -70,8 +71,7 @@ fn cors_layer(origins: &[String]) -> CorsLayer {
     if origins.is_empty() {
         return CorsLayer::permissive();
     }
-    // Surface misconfigured origins instead of silently narrowing the allowlist
-    // (an all-invalid list would otherwise deny every cross-origin request).
+    // Surface misconfigured origins instead of silently narrowing the allowlist.
     let allowed: Vec<HeaderValue> = origins
         .iter()
         .filter_map(|o| match o.parse::<HeaderValue>() {
@@ -97,10 +97,15 @@ pub fn build_app(state: AppState, settings: &ServeSettings) -> Router {
         .route("/doctor", get(doctor))
         .route("/config", get(get_config));
 
+    #[cfg(feature = "store")]
+    let api = api
+        .route("/leaderboard", get(crate::eval_routes::leaderboard))
+        .route("/games", get(crate::eval_routes::list_games))
+        .route("/games/:id", get(crate::eval_routes::get_game));
+
     Router::new()
         .route("/healthz", get(healthz))
         .nest("/api/v1", api)
-        // Middleware seam: auth / rate-limit slot in here later, never in engine.
         .layer(TraceLayer::new_for_http())
         .layer(cors_layer(&settings.cors_allow_origins))
         .layer(TimeoutLayer::with_status_code(
@@ -118,9 +123,14 @@ pub async fn run_server(
     registry: CommandRegistry,
     settings: ServeSettings,
 ) {
+    #[cfg(feature = "store")]
+    let store = crate::eval_routes::connect_store().await;
+
     let state = AppState {
         caps: Arc::new(caps),
         registry: Arc::new(registry),
+        #[cfg(feature = "store")]
+        store,
     };
     // Permissive CORS is fine for local dev, but warn if it's left open outside
     // a dev environment so a production deploy doesn't silently accept any origin.
@@ -333,6 +343,8 @@ mod tests {
             AppState {
                 caps: Arc::new(AppContext::default()),
                 registry: Arc::new(CommandRegistry::new()),
+                #[cfg(feature = "store")]
+                store: None,
             },
             &ServeSettings::default(),
         )

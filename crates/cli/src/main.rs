@@ -9,11 +9,17 @@
 
 #[cfg(feature = "cli")]
 mod diagnostics;
+#[cfg(feature = "eval")]
+mod eval_cmd;
+#[cfg(all(feature = "http-api", feature = "store"))]
+mod eval_routes;
 mod init;
 mod mcp;
 mod scaffold;
 #[cfg(feature = "http-api")]
 mod serve_http;
+#[cfg(feature = "store")]
+mod store;
 
 use clap::{Parser, Subcommand};
 
@@ -45,6 +51,11 @@ enum Commands {
 
     /// (stub) Serve the registry over MCP — designed-for, not yet implemented.
     Mcp,
+
+    /// Run Secret Hitler games/matches with LLM + baseline agents; rate, score,
+    /// persist, and write a JSON bundle.
+    #[cfg(feature = "eval")]
+    Eval(eval_cmd::EvalArgs),
 
     /// Collect environment facts and emit an env summary.
     #[cfg(feature = "cli")]
@@ -146,6 +157,8 @@ async fn main() {
             }
         }
         Commands::Mcp => mcp::run(),
+        #[cfg(feature = "eval")]
+        Commands::Eval(args) => eval_cmd::run(args).await,
         #[cfg(feature = "cli")]
         Commands::Doctor { json, out } => diagnostics::cmd_doctor(json, out).await,
         #[cfg(feature = "cli")]

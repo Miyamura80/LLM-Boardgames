@@ -14,7 +14,10 @@ pub mod runner;
 
 pub use agent::{Agent, AgentError, Beliefs};
 pub use baseline::BaselineAgent;
-pub use match_runner::{plan_match, run_match, Match, MatchConfig, MatchOutcome, SeatPlan};
+pub use match_runner::{
+    outcome_from_records, plan_match, run_match, Distribution, Match, MatchConfig, MatchOutcome,
+    SeatPlan,
+};
 pub use metrics::{aggregate, game_metrics, ModelRoleMetrics, PlayerMetrics};
 pub use rating::{compute_ratings, Leaderboard, ModelRating, RoleRating};
 pub use record::{BeliefSnapshot, GameRecord, Reliability, SeatAssignment, Usage};

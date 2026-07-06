@@ -1,8 +1,8 @@
 import "./App.css";
-import { Chat } from "./components/Chat";
+import { Dashboard } from "./eval/Dashboard";
 
 function App() {
-	return <Chat />;
+	return <Dashboard />;
 }
 
 export default App;

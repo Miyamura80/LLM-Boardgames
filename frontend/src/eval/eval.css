@@ -1,0 +1,187 @@
+.eval-root {
+	max-width: 1100px;
+	margin: 0 auto;
+	padding: 1.5rem;
+	font-family: system-ui, -apple-system, sans-serif;
+	color: #1f2937;
+}
+.eval-root h1 {
+	margin: 0;
+	font-size: 1.6rem;
+}
+.eval-root h2 {
+	font-size: 1.15rem;
+	margin: 0 0 0.5rem;
+}
+.eval-root h3 {
+	font-size: 1rem;
+	margin: 1rem 0 0.5rem;
+}
+.muted {
+	color: #6b7280;
+	font-size: 0.9rem;
+}
+.warn {
+	color: #b45309;
+	background: #fffbeb;
+	padding: 0.5rem 0.75rem;
+	border-radius: 6px;
+}
+.card {
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 10px;
+	padding: 1rem 1.25rem;
+	margin: 1rem 0;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.table-scroll {
+	overflow-x: auto;
+}
+table {
+	border-collapse: collapse;
+	width: 100%;
+	font-size: 0.88rem;
+}
+th,
+td {
+	padding: 0.35rem 0.6rem;
+	text-align: left;
+	border-bottom: 1px solid #f0f0f0;
+	white-space: nowrap;
+}
+th {
+	color: #374151;
+	font-weight: 600;
+}
+.mono {
+	font-family: ui-monospace, SFMono-Regular, monospace;
+	font-size: 0.82rem;
+}
+.strong {
+	font-weight: 700;
+}
+.game-picker {
+	margin: 1rem 0 0.5rem;
+}
+.game-picker select {
+	margin-left: 0.5rem;
+	padding: 0.25rem;
+}
+.game-views {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1rem;
+}
+@media (min-width: 900px) {
+	.game-views {
+		grid-template-columns: 1.3fr 1fr;
+		align-items: start;
+	}
+}
+.roster {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin: 0.5rem 0 0.75rem;
+}
+.seat-chip {
+	border: 2px solid #999;
+	border-radius: 999px;
+	padding: 0.1rem 0.6rem;
+	font-size: 0.8rem;
+}
+.replay-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+.timeline {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	max-height: 620px;
+	overflow-y: auto;
+	font-size: 0.85rem;
+}
+.ev {
+	padding: 0.25rem 0.5rem;
+	border-left: 3px solid #e5e7eb;
+	margin: 2px 0;
+}
+.ev-talk {
+	border-color: #8b5cf6;
+	background: #faf5ff;
+}
+.ev-pass {
+	border-color: #10b981;
+}
+.ev-fail {
+	border-color: #f59e0b;
+}
+.ev-fascist {
+	border-color: #ef4444;
+	background: #fef2f2;
+}
+.ev-liberal {
+	border-color: #3b82f6;
+	background: #eff6ff;
+}
+.ev-power {
+	border-color: #d946ef;
+	background: #fdf4ff;
+}
+.ev-over {
+	border-color: #111827;
+	background: #f3f4f6;
+	font-weight: 700;
+}
+.ev-gov,
+.ev-muted {
+	border-color: #e5e7eb;
+}
+.heatmap td,
+.heatmap th {
+	text-align: center;
+	min-width: 2.6rem;
+}
+.heatmap .diag {
+	background: #f3f4f6;
+}
+
+@media (prefers-color-scheme: dark) {
+	.eval-root {
+		color: #e5e7eb;
+	}
+	.card {
+		background: #111827;
+		border-color: #1f2937;
+	}
+	th {
+		color: #d1d5db;
+	}
+	th,
+	td {
+		border-color: #1f2937;
+	}
+	.ev-talk {
+		background: #2e1065;
+	}
+	.ev-fascist {
+		background: #3f1414;
+	}
+	.ev-liberal {
+		background: #12233f;
+	}
+	.ev-power {
+		background: #3b0a3f;
+	}
+	.ev-over {
+		background: #1f2937;
+	}
+	.heatmap .diag {
+		background: #1f2937;
+	}
+}

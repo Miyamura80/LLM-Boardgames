@@ -16,6 +16,7 @@ pub struct LlmAgent {
     endpoint: ModelEndpoint,
     temperature: f32,
     max_tokens: u32,
+    reasoning_effort: Option<String>,
     usage: Mutex<Usage>,
 }
 
@@ -26,11 +27,23 @@ impl LlmAgent {
         temperature: f32,
         max_tokens: u32,
     ) -> Self {
+        Self::with_reasoning(client, endpoint, temperature, max_tokens, None)
+    }
+
+    /// Construct with an explicit reasoning-effort cap (e.g. `Some("low")`).
+    pub fn with_reasoning(
+        client: Arc<LlmClient>,
+        endpoint: ModelEndpoint,
+        temperature: f32,
+        max_tokens: u32,
+        reasoning_effort: Option<String>,
+    ) -> Self {
         Self {
             client,
             endpoint,
             temperature,
             max_tokens,
+            reasoning_effort,
             usage: Mutex::new(Usage::default()),
         }
     }
@@ -47,6 +60,7 @@ impl LlmAgent {
                 self.temperature,
                 self.max_tokens,
                 true,
+                self.reasoning_effort.as_deref(),
             )
             .await
         {

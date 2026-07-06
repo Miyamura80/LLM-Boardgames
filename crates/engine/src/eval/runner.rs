@@ -6,6 +6,7 @@
 use crate::eval::agent::{Agent, AgentError};
 use crate::eval::record::{BeliefSnapshot, GameRecord, Reliability, SeatAssignment, Usage};
 use crate::game::{Action, Event, GameState};
+use futures::future::join_all;
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
@@ -157,8 +158,8 @@ fn decision_kind_name(decision: &crate::game::Decision) -> &'static str {
     }
 }
 
-/// Collect a simultaneous ballot: each living voter reports only its own vote,
-/// defaulting to Nein on exhaustion.
+/// Collect a simultaneous ballot: each living voter reports only its own vote
+/// (concurrently), defaulting to Nein on exhaustion.
 async fn collect_votes(
     game: &GameState,
     agents: &[Box<dyn Agent>],
@@ -166,37 +167,35 @@ async fn collect_votes(
     cfg: &RunnerConfig,
     reliability: &mut BTreeMap<usize, Reliability>,
 ) -> Action {
-    let voters = game.living_seats();
-    let mut ballot: BTreeMap<usize, bool> = BTreeMap::new();
-
-    // Sequential is fine for correctness and keeps reliability bookkeeping
-    // simple; parallelism is a wall-clock optimization applied in discussion.
-    for seat in voters {
+    let futures = game.living_seats().into_iter().map(|seat| {
         let obs = game.observation(seat);
-        let mut vote = None;
-        for _ in 0..cfg.max_attempts {
-            match agents[seat].act(&obs, decision, None).await {
-                Ok(Action::CastVotes(m)) => {
-                    if let Some(&v) = m.get(&seat) {
-                        vote = Some(v);
+        async move {
+            let mut malformed = 0u32;
+            let mut vote = None;
+            for _ in 0..cfg.max_attempts {
+                match agents[seat].act(&obs, decision, None).await {
+                    Ok(Action::CastVotes(m)) if m.contains_key(&seat) => {
+                        vote = Some(m[&seat]);
                         break;
                     }
-                    reliability.entry(seat).or_default().malformed_outputs += 1;
-                }
-                Ok(_) => {
-                    reliability.entry(seat).or_default().malformed_outputs += 1;
-                }
-                Err(_) => {
-                    reliability.entry(seat).or_default().malformed_outputs += 1;
+                    _ => malformed += 1,
                 }
             }
+            (seat, vote, malformed)
         }
+    });
+
+    let results = join_all(futures).await;
+    let mut ballot: BTreeMap<usize, bool> = BTreeMap::new();
+    for (seat, vote, malformed) in results {
+        let counters = reliability.entry(seat).or_default();
+        counters.malformed_outputs += malformed;
         match vote {
             Some(v) => {
                 ballot.insert(seat, v);
             }
             None => {
-                reliability.entry(seat).or_default().forced_defaults += 1;
+                counters.forced_defaults += 1;
                 ballot.insert(seat, false); // forced default: Nein
             }
         }
@@ -205,9 +204,9 @@ async fn collect_votes(
 }
 
 /// Run the simultaneous-reveal discussion: within a round, every living player
-/// speaks conditioned only on state through the *previous* round; all utterances
-/// are appended together after the round, so no seat sees another's same-round
-/// message. No within-round ordering exists.
+/// speaks (concurrently) conditioned only on state through the *previous* round;
+/// all utterances are appended together after the round, so no seat sees
+/// another's same-round message. No within-round ordering exists.
 async fn run_discussion(game: &mut GameState, agents: &[Box<dyn Agent>], rounds: u8) {
     for round in 0..rounds {
         let living = game.living_seats();
@@ -217,7 +216,7 @@ async fn run_discussion(game: &mut GameState, agents: &[Box<dyn Agent>], rounds:
             let obs = game.observation(seat);
             async move { (seat, agents[seat].discuss(&obs, round).await) }
         });
-        let utterances = futures_join_all(futures).await;
+        let utterances = join_all(futures).await;
         // Reveal together: append after the whole round is collected.
         for (seat, maybe_text) in utterances {
             if let Some(text) = maybe_text {
@@ -229,16 +228,19 @@ async fn run_discussion(game: &mut GameState, agents: &[Box<dyn Agent>], rounds:
     }
 }
 
-/// Elicit private beliefs from every living seat at a checkpoint.
+/// Elicit private beliefs from every living seat (concurrently) at a checkpoint.
 async fn elicit_beliefs(
     game: &GameState,
     agents: &[Box<dyn Agent>],
     checkpoint: u32,
     out: &mut Vec<BeliefSnapshot>,
 ) {
-    for seat in game.living_seats() {
+    let futures = game.living_seats().into_iter().map(|seat| {
         let obs = game.observation(seat);
-        if let Some(beliefs) = agents[seat].beliefs(&obs).await {
+        async move { (seat, agents[seat].beliefs(&obs).await) }
+    });
+    for (seat, beliefs) in join_all(futures).await {
+        if let Some(beliefs) = beliefs {
             out.push(BeliefSnapshot {
                 checkpoint,
                 seat,
@@ -265,18 +267,4 @@ fn enacted_a_policy(events: &[Event]) -> bool {
             Event::PolicyEnacted { .. } | Event::ChaosPolicyEnacted { .. }
         )
     })
-}
-
-/// Minimal `join_all` without pulling in the `futures` crate: awaits each future
-/// in turn. Discussion has no cross-future dependency, so ordering is irrelevant
-/// and the within-round inputs were all snapshotted before any await.
-async fn futures_join_all<F, T>(futures: impl Iterator<Item = F>) -> Vec<T>
-where
-    F: std::future::Future<Output = T>,
-{
-    let mut out = Vec::new();
-    for f in futures {
-        out.push(f.await);
-    }
-    out
 }

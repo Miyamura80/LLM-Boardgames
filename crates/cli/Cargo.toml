@@ -13,12 +13,17 @@ path = "src/main.rs"
 # The template ships with every surface enabled. `shbench init` prunes a surface
 # by dropping its feature from this `default` list (via toml_edit), so a
 # `cli-only` or `server-only` project compiles without the code it doesn't use.
-default = ["cli", "http-api"]
+default = ["cli", "http-api", "eval"]
 # CLI diagnostic subcommands (doctor / call / probe / run-scenario).
 cli = []
 # The axum HTTP API (`shbench serve`) and its tower middleware stack. `app-config`
 # is only read by the HTTP server, so a `cli-only` prune drops it too.
 http-api = ["dep:axum", "dep:tower", "dep:tower-http", "dep:app-config"]
+# Postgres persistence for game records, leaderboards, and metrics.
+store = ["dep:sqlx", "dep:chrono"]
+# The `eval` subcommand: run Secret Hitler games/matches with LLM + baseline
+# agents. Needs config (for API keys) and the store.
+eval = ["dep:app-config", "store"]
 
 [dependencies]
 engine = { path = "../engine" }
@@ -34,12 +39,14 @@ tower = { version = "0.5", features = ["util"], optional = true }
 tower-http = { version = "0.6", features = ["cors", "trace", "timeout", "request-id"], optional = true }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
-uuid = { version = "1", features = ["v4"] }
+uuid = { version = "1", features = ["v4", "serde"] }
 dialoguer = "0.12.0"
 walkdir = "2"
 toml_edit = "0.22"
 comfy-table = "7"
 anyhow = "1"
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls-ring", "postgres", "uuid", "json", "chrono"], optional = true }
+chrono = { version = "0.4", features = ["serde"], optional = true }
 
 [dev-dependencies]
 tempfile = "3.27.0"

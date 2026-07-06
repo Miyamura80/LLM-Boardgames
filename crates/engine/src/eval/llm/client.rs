@@ -130,7 +130,9 @@ impl LlmClient {
         })
     }
 
-    /// A single chat completion. `json_mode` requests a JSON object response.
+    /// A single chat completion. `json_mode` requests a JSON object response;
+    /// `reasoning_effort` (e.g. "low") caps thinking on reasoning models so a
+    /// short structured reply fits the token budget.
     pub async fn chat(
         &self,
         endpoint: &ModelEndpoint,
@@ -138,6 +140,7 @@ impl LlmClient {
         temperature: f32,
         max_tokens: u32,
         json_mode: bool,
+        reasoning_effort: Option<&str>,
     ) -> Result<ChatCompletion, LlmError> {
         let url = format!("{}/chat/completions", endpoint.base_url);
         let mut body = serde_json::json!({
@@ -148,6 +151,9 @@ impl LlmClient {
         });
         if json_mode {
             body["response_format"] = serde_json::json!({ "type": "json_object" });
+        }
+        if let Some(effort) = reasoning_effort {
+            body["reasoning_effort"] = serde_json::json!(effort);
         }
 
         let mut attempt = 0;

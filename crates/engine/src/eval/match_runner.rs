@@ -160,6 +160,22 @@ impl<'a> Match<'a> {
     }
 }
 
+/// Build a [`MatchOutcome`] (ratings, metrics, distribution) from a set of game
+/// records — used for self-play runs that don't go through the balanced
+/// scheduler. Note: with a single repeated model the rating is degenerate.
+pub fn outcome_from_records(records: Vec<GameRecord>) -> MatchOutcome {
+    let leaderboard = compute_ratings(&records);
+    let per_game: Vec<_> = records.iter().map(game_metrics).collect();
+    let metrics = aggregate(&per_game);
+    let distribution = realized_distribution(&records);
+    MatchOutcome {
+        records,
+        leaderboard,
+        metrics,
+        distribution,
+    }
+}
+
 /// Convenience: run a whole match end to end.
 pub async fn run_match(
     cfg: &MatchConfig,
