@@ -57,7 +57,10 @@ pub struct ChatOutcome {
 /// Chat client bound to one `provider/model` string. Cheap to clone the
 /// underlying reqwest client; accumulates total usage across calls.
 pub struct ChatClient {
-    http: reqwest::Client,
+    /// Built on first use: constructing a reqwest client initializes TLS,
+    /// which must not be a prerequisite for merely instantiating agents
+    /// (offline construction, e.g. in unit tests, stays panic-free).
+    http: std::sync::OnceLock<reqwest::Client>,
     model_string: String,
     keys: ProviderKeys,
     retry: RetryPolicy,
@@ -68,13 +71,17 @@ pub struct ChatClient {
 impl ChatClient {
     pub fn new(model_string: impl Into<String>, keys: ProviderKeys, retry: RetryPolicy) -> Self {
         Self {
-            http: reqwest::Client::new(),
+            http: std::sync::OnceLock::new(),
             model_string: model_string.into(),
             keys,
             retry,
             total_prompt: AtomicU64::new(0),
             total_completion: AtomicU64::new(0),
         }
+    }
+
+    fn http(&self) -> &reqwest::Client {
+        self.http.get_or_init(reqwest::Client::new)
     }
 
     pub fn model_string(&self) -> &str {
@@ -148,7 +155,7 @@ impl ChatClient {
         body: &serde_json::Value,
     ) -> Result<ChatOutcome, LlmError> {
         let resp = self
-            .http
+            .http()
             .post(url)
             .bearer_auth(api_key)
             .json(body)

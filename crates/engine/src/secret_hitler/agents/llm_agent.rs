@@ -16,6 +16,10 @@ use std::sync::Arc;
 
 pub struct LlmSeatAgent {
     client: Arc<ChatClient>,
+    /// Rating identity recorded on the seat — `anchor:{name}:{model}` for
+    /// anchors, the raw model string for candidates. Distinct from the
+    /// client's model string, which only addresses the provider API.
+    rated_model_id: String,
     persona: Option<String>,
     temperature: f32,
     max_tokens: u32,
@@ -26,6 +30,7 @@ pub struct LlmSeatAgent {
 impl LlmSeatAgent {
     pub fn new(
         client: Arc<ChatClient>,
+        rated_model_id: String,
         persona: Option<String>,
         temperature: f32,
         max_tokens: u32,
@@ -33,6 +38,7 @@ impl LlmSeatAgent {
     ) -> Self {
         Self {
             client,
+            rated_model_id,
             persona,
             temperature,
             max_tokens,
@@ -70,7 +76,7 @@ impl SeatAgent for LlmSeatAgent {
         "llm"
     }
     fn model_id(&self) -> String {
-        self.client.model_string().to_string()
+        self.rated_model_id.clone()
     }
     fn scaffold_version(&self) -> String {
         prompts::scaffold_version(self.persona.as_deref(), self.temperature)
@@ -178,10 +184,18 @@ impl SeatAgent for LlmSeatAgent {
                 .normalized(),
             );
         }
-        // Fill any missing living opponents with priors so scoring is total.
+        // Fill any missing living opponents so scoring is total: known
+        // teammates by their actual role, everyone else by the role prior
+        // (which assumes the seat is NOT covered by private knowledge).
+        let known: BTreeMap<Seat, crate::secret_hitler::types::Role> =
+            obs.known_teammates.iter().copied().collect();
         let prior = super::prior_for_observer(obs.role);
         for &s in obs.public.alive.iter().filter(|&&s| s != obs.seat) {
-            assessments.entry(s).or_insert(prior);
+            let fallback = known
+                .get(&s)
+                .map(|&role| RoleProbs::certain(role))
+                .unwrap_or(prior);
+            assessments.entry(s).or_insert(fallback);
         }
         assessments.retain(|s, _| *s != obs.seat && obs.public.alive.contains(s));
         Ok(Some(BeliefReport { assessments }))

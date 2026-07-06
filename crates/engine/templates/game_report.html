@@ -136,7 +136,7 @@ $("eyebrow").textContent = `Secret Hitler Evals · game ${GAME.game_id} · ${GAM
 $("headline").textContent = `${GAME.winner}s win by ${GAME.win_condition === "HitlerChancellor" ? "electing Hitler Chancellor" : GAME.win_condition} — ${GAME.rounds} governments`;
 const rel = GAME.seats.reduce((a,s)=>({m:a.m+s.reliability.malformed_outputs,i:a.i+s.reliability.illegal_moves,f:a.f+s.reliability.forced_defaults}),{m:0,i:0,f:0});
 $("stats").innerHTML = [
-  ["seed", GAME.seed], ["events", GAME.events.length], ["duration", mins + " min"],
+  ["seed", GAME.seed], ["events", GAME.events.length], ["duration", `${mins} min`],
   ["prompt tok", tokIn.toLocaleString()], ["completion tok (incl. reasoning)", tokOut.toLocaleString()],
   ["malformed", rel.m], ["illegal", rel.i], ["forced", rel.f],
 ].map(([k,v]) => `<div class="stat"><b>${v}</b> <span>${k}</span></div>`).join("");
@@ -211,7 +211,7 @@ function drawHm(cp) {
     const snap = snaps.find(s=>s.seat===b);
     h += `<tr><th>P${b} <span class="rolechip">${roles[b]}</span></th>`;
     for (let subj = 0; subj < 7; subj++) {
-      const probs = snap && snap.report.assessments[String(subj)];
+      const probs = snap?.report.assessments[String(subj)];
       if (b === subj || !probs) { h += `<td class="empty"></td>`; continue; }
       const p = probs.fascist + probs.hitler;
       const idx = Math.max(0, Math.min(8, Math.floor(p*9)));
@@ -219,13 +219,13 @@ function drawHm(cp) {
     }
     h += "</tr>";
   }
-  $("hm").innerHTML = h + "</table>";
+  $("hm").innerHTML = `${h}</table>`;
   document.querySelectorAll(".cpbtns button").forEach(btn => {
     btn.classList.toggle("on", Number(btn.dataset.cp) === cp);
   });
 }
 if (cps.length) {
-  $("cps").innerHTML = cps.map(c=>`<button type="button" data-cp="${c}">${c===255?"game end":"after policy "+c}</button>`).join("");
+  $("cps").innerHTML = cps.map(c=>`<button type="button" data-cp="${c}">${c===255?"game end":`after policy ${c}`}</button>`).join("");
   document.querySelectorAll(".cpbtns button").forEach(btn => {
     btn.addEventListener("click", () => drawHm(Number(btn.dataset.cp)));
   });

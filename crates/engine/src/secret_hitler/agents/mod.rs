@@ -162,9 +162,13 @@ pub(crate) fn prefer_tile(
     }
 }
 
-/// Baseline priors from one seat's perspective over the 6 other players,
+/// Baseline prior for a seat OUTSIDE the observer's private knowledge,
 /// before any evidence — consistent with each role's 7-player information
 /// set (4 Liberals, 2 regular Fascists, 1 Hitler at the table).
+///
+/// Callers must overlay `Observation::known_teammates` first: for a regular
+/// Fascist every unknown seat really is Liberal, but applying this prior to a
+/// known teammate would mislabel them.
 pub fn prior_for_observer(role: super::types::Role) -> RoleProbs {
     use super::types::Role;
     match role {

@@ -76,14 +76,23 @@ impl SeatAgent for RandomLegalBot {
     }
 
     async fn beliefs(&mut self, obs: &Observation) -> Result<Option<BeliefReport>, AgentError> {
-        // Uninformative priors — the calibration floor.
+        // Uninformative priors — the calibration floor. Known teammates are
+        // still reported truthfully: the prior only describes seats outside
+        // the observer's private knowledge.
+        let known: BTreeMap<_, _> = obs.known_teammates.iter().copied().collect();
         let prior = super::prior_for_observer(obs.role);
         let assessments: BTreeMap<_, RoleProbs> = obs
             .public
             .alive
             .iter()
             .filter(|&&s| s != obs.seat)
-            .map(|&s| (s, prior))
+            .map(|&s| {
+                let probs = known
+                    .get(&s)
+                    .map(|&role| RoleProbs::certain(role))
+                    .unwrap_or(prior);
+                (s, probs)
+            })
             .collect();
         Ok(Some(BeliefReport { assessments }))
     }

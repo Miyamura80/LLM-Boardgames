@@ -112,6 +112,15 @@ impl AgentFactory {
                 let model = spec.model.as_deref().ok_or_else(|| {
                     format!("anchor '{}' is kind=llm but has no model", spec.name)
                 })?;
+                // Catch config typos before a game burns tokens on them:
+                // providers disagree on how they handle out-of-range values.
+                let temperature = spec.temperature.unwrap_or(self.temperature);
+                if !(0.0..=2.0).contains(&temperature) {
+                    return Err(format!(
+                        "seat '{}' has temperature {temperature}, outside the supported 0.0..=2.0",
+                        spec.name
+                    ));
+                }
                 let client = Arc::new(ChatClient::new(
                     model,
                     self.keys.clone(),
@@ -119,12 +128,61 @@ impl AgentFactory {
                 ));
                 Ok(Box::new(LlmSeatAgent::new(
                     client,
+                    spec.model_id(),
                     spec.persona.clone(),
-                    spec.temperature.unwrap_or(self.temperature),
+                    temperature,
                     self.max_tokens,
                     self.utterance_char_cap,
                 )))
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn factory() -> AgentFactory {
+        AgentFactory {
+            keys: ProviderKeys::default(),
+            retry: RetryPolicy::default(),
+            temperature: 0.5,
+            max_tokens: 256,
+            utterance_char_cap: 240,
+        }
+    }
+
+    fn llm_anchor(temperature: Option<f32>) -> AgentSpec {
+        AgentSpec {
+            name: "aggressive".into(),
+            kind: AgentKind::Llm,
+            model: Some("gemini/gemini-3-flash-preview".into()),
+            persona: Some("accuse loudly".into()),
+            temperature,
+            is_anchor: true,
+        }
+    }
+
+    /// The rated identity on the live agent must be the anchor-prefixed key,
+    /// not the raw model string — otherwise an anchor merges with a candidate
+    /// that happens to share its model.
+    #[test]
+    fn built_anchor_keeps_its_rating_identity() {
+        let spec = llm_anchor(None);
+        let agent = factory().build(&spec, 7).unwrap();
+        assert_eq!(agent.model_id(), spec.model_id());
+        assert_eq!(
+            agent.model_id(),
+            "anchor:aggressive:gemini/gemini-3-flash-preview"
+        );
+    }
+
+    #[test]
+    fn out_of_range_temperature_is_rejected() {
+        for bad in [-0.1_f32, 2.5, f32::NAN] {
+            assert!(factory().build(&llm_anchor(Some(bad)), 7).is_err());
+        }
+        assert!(factory().build(&llm_anchor(Some(1.2)), 7).is_ok());
     }
 }

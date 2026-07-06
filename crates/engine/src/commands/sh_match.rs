@@ -172,6 +172,13 @@ impl Command for ShRunMatch {
         let spec_json = serde_json::to_value(&spec).unwrap();
         // Resuming an existing run with a different spec would silently mix
         // schedules (stored game ids dedupe against the new plan) — refuse.
+        // Insert first (ON CONFLICT DO NOTHING), then validate against
+        // whichever spec actually owns the row: checking before the insert
+        // would let two concurrent first-time calls both pass.
+        store
+            .create_run(&run_id, spec.mode(), &spec_json)
+            .await
+            .map_err(|e| CommandError::Other(e.to_string()))?;
         if let Some((_, stored)) = store
             .get_run_spec(&run_id)
             .await
@@ -183,10 +190,6 @@ impl Command for ShRunMatch {
                 )));
             }
         }
-        store
-            .create_run(&run_id, spec.mode(), &spec_json)
-            .await
-            .map_err(|e| CommandError::Other(e.to_string()))?;
 
         let factory = AgentFactory::from_app_config(cfg);
         let game_cfg = game_config(cfg, input.discussion_rounds, input.belief_checkpoints);

@@ -109,6 +109,12 @@ pub async fn advance_match(
         }
         let record = play_plan(&plan, factory, game_cfg_base).await?;
         let metrics = score_game(&record);
+        // Tokens were spent by THIS worker regardless of who wins the insert
+        // race below — usage reports real cost, `played` stays insert-aware.
+        for seat in &record.seats {
+            prompt_tokens += seat.usage.prompt_tokens;
+            completion_tokens += seat.usage.completion_tokens;
+        }
         let inserted = store
             .insert_game(run_id, &record, &metrics)
             .await
@@ -117,10 +123,6 @@ pub async fn advance_match(
             // A concurrent resume persisted this game first — theirs counts.
             skipped += 1;
             continue;
-        }
-        for seat in &record.seats {
-            prompt_tokens += seat.usage.prompt_tokens;
-            completion_tokens += seat.usage.completion_tokens;
         }
         played += 1;
         tracing::info!(
