@@ -1,0 +1,181 @@
+<style>
+:root{
+  --bg:#f4f5f8; --panel:#ffffff; --ink:#161a22; --muted:#5b6472; --line:#e2e6ee;
+  --lib:#2f6fed; --fasc:#e0484d; --hitler:#1c2029; --gold:#c8912a;
+  --pass:#1f9d63; --fail:#d98324; --power:#a855c7;
+  --neutral:#eef1f6; --accent:var(--lib);
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#0d0f14; --panel:#151922; --ink:#e7ebf3; --muted:#939db0; --line:#232a37;
+    --lib:#5b8cff; --fasc:#ff6167; --hitler:#0a0c11; --neutral:#1a2029; }
+}
+:root[data-theme="light"]{ --bg:#f4f5f8; --panel:#fff; --ink:#161a22; --muted:#5b6472; --line:#e2e6ee; --lib:#2f6fed; --fasc:#e0484d; --neutral:#eef1f6; }
+:root[data-theme="dark"]{ --bg:#0d0f14; --panel:#151922; --ink:#e7ebf3; --muted:#939db0; --line:#232a37; --lib:#5b8cff; --fasc:#ff6167; --neutral:#1a2029; }
+*{box-sizing:border-box}
+body{margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:2rem 1.25rem 4rem;
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg);
+  -webkit-font-smoothing:antialiased}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;
+  background:var(--neutral);padding:.08em .35em;border-radius:4px}
+.hero{padding:.5rem 0 1.5rem;border-bottom:1px solid var(--line);margin-bottom:1.5rem}
+.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:.72rem;font-weight:700;color:var(--muted)}
+.hero h1{font-size:clamp(1.7rem,4vw,2.5rem);margin:.35rem 0 .3rem;letter-spacing:-.02em;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 1.1rem}
+.verdict{display:inline-flex;align-items:center;gap:.8rem;padding:.7rem 1.1rem;border-radius:10px;
+  border:1px solid var(--line);background:var(--panel)}
+.verdict .flag{width:12px;height:34px;border-radius:3px;display:block}
+.verdict-fascist .flag{background:var(--fasc)} .verdict-liberal .flag{background:var(--lib)}
+.verdict b{display:block;font-size:1.05rem} .verdict span{color:var(--muted);font-size:.9rem}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem;margin-bottom:1.1rem}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.75rem .85rem;display:flex;flex-direction:column;gap:.15rem}
+.tile .k{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.tile .v{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.tile .s{font-size:.72rem;color:var(--muted)}
+.roster-row{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;margin-bottom:1.4rem}
+.seat{border:1.5px solid var(--line);border-radius:999px;padding:.15rem .7rem;font-size:.82rem;font-variant-numeric:tabular-nums}
+.seat b{font-family:ui-monospace,monospace}
+.seat-liberal{border-color:var(--lib)} .seat-fascist{border-color:var(--fasc)} .seat-hitler{border-color:var(--gold)}
+.hint{color:var(--muted);font-size:.75rem;margin-left:.3rem}
+.grid{display:grid;grid-template-columns:1fr;gap:1.1rem}
+@media(min-width:940px){.grid{grid-template-columns:1.25fr .95fr;align-items:start}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:1.1rem 1.2rem}
+.panel h2{font-size:1.05rem;margin:0 0 .3rem;letter-spacing:-.01em}
+.muted{color:var(--muted);font-size:.85rem;margin:.2rem 0 .8rem}
+.side{display:flex;flex-direction:column;gap:1.1rem}
+.timeline{max-height:none;display:flex;flex-direction:column;gap:.3rem}
+@media(min-width:940px){.timeline{max-height:1400px;overflow-y:auto;padding-right:.3rem}}
+.row{font-size:.86rem;line-height:1.4;padding:.28rem .5rem;border-left:3px solid var(--line);border-radius:0 4px 4px 0}
+.row .ev{color:var(--ink)}
+.talk{display:flex;gap:.55rem;align-items:baseline;border-left-color:var(--power);background:color-mix(in srgb,var(--power) 8%,transparent)}
+.talk .who{font-family:ui-monospace,monospace;font-weight:700;font-size:.8rem;padding:.02em .35em;border-radius:4px;border:1.5px solid var(--line);flex:none}
+.talk .who.seat-liberal{border-color:var(--lib);color:var(--lib)}
+.talk .who.seat-fascist{border-color:var(--fasc);color:var(--fasc)}
+.talk .who.seat-hitler{border-color:var(--gold);color:var(--gold)}
+.talk .say{color:var(--ink)}
+.t-pass{border-left-color:var(--pass)} .t-fail{border-left-color:var(--fail)}
+.t-fascist{border-left-color:var(--fasc);background:color-mix(in srgb,var(--fasc) 8%,transparent);font-weight:600}
+.t-liberal{border-left-color:var(--lib);background:color-mix(in srgb,var(--lib) 8%,transparent);font-weight:600}
+.t-power{border-left-color:var(--power);font-weight:600}
+.t-over{border-left-color:var(--ink);background:var(--neutral);font-weight:700}
+.t-gov{border-left-color:var(--line)} .t-muted{border-left-color:var(--line);color:var(--muted)}
+.chip{padding:.02em .4em;border-radius:4px;font-size:.8em}
+.chip.talk{background:color-mix(in srgb,var(--power) 22%,transparent);color:var(--ink);border:0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.82rem}
+th,td{padding:.32rem .55rem;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
+th{color:var(--muted);font-weight:600;font-size:.76rem;text-transform:uppercase;letter-spacing:.04em}
+td.strong{font-weight:700} td.mono{font-family:ui-monospace,monospace;font-size:.76rem}
+.heat td,.heat th{text-align:center;min-width:2.5rem}
+.heat .diag{background:var(--neutral)} .heat .rl{color:var(--muted);font-size:.75em}
+footer{margin-top:2rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
+</style>
+<div class="wrap">
+<header class="hero">
+  <div class="eyebrow">Secret Hitler Evals · live-game observability</div>
+  <h1>One 7-player game, fully instrumented</h1>
+  <p class="sub">Model <code>gemini/gemini-3-flash-preview#sh-scaffold-v1</code> in every seat · engine-authoritative state · no LLM judge</p>
+  <div class="verdict verdict-fascist">
+    <span class="flag"></span>
+    <div><b>Fascist victory</b><span>Hitler elected Chancellor (≥3 Fascist policies)</span></div>
+  </div>
+</header>
+
+<section class="tiles">
+  <div class="tile"><span class="k">Governments</span><span class="v">8</span><span class="s">2 failed</span></div>
+  <div class="tile"><span class="k">Final board</span><span class="v">3L · 4F</span><span class="s">7 enacted</span></div>
+  <div class="tile"><span class="k">Powers fired</span><span class="v">3</span><span class="s">investigate · special · execute</span></div>
+  <div class="tile"><span class="k">Discussion</span><span class="v">49</span><span class="s">utterances</span></div>
+  <div class="tile"><span class="k">LLM cost</span><span class="v">631,148</span><span class="s">240 calls</span></div>
+  <div class="tile"><span class="k">Reliability</span><span class="v">28·0·3</span><span class="s">malformed · illegal · forced</span></div>
+</section>
+
+<div class="roster-row"><span class='seat seat-liberal'><b>#0</b> Liberal</span><span class='seat seat-liberal'><b>#1</b> Liberal</span><span class='seat seat-liberal'><b>#2</b> Liberal</span><span class='seat seat-liberal'><b>#3</b> Liberal</span><span class='seat seat-fascist'><b>#4</b> Fascist</span><span class='seat seat-fascist'><b>#5</b> Fascist</span><span class='seat seat-hitler'><b>#6</b> Hitler</span><span class="hint">roles revealed post-hoc from engine ground truth</span></div>
+
+<div class="grid">
+  <section class="panel timeline-panel">
+    <h2>Conversation &amp; event log</h2>
+    <p class="muted">Full public transcript — simultaneous-reveal discussion in <span class="chip talk">purple</span>, engine events inline.</p>
+    <div class="timeline"><div class="row t-gov"><span class="ev">President is seat 0</span></div><div class="row t-gov"><span class="ev">President 0 nominates seat 1 as Chancellor</span></div><div class="row talk"><span class="who seat-liberal">#0</span>
+          <span class="say">I&#x27;ve nominated Seat 1 to get the game moving. Let&#x27;s vote this through so we can get some information on the board and hopefully start with a Liberal policy.</span></div><div class="row talk"><span class="who seat-liberal">#1</span>
+          <span class="say">I’m happy to serve as Chancellor for Seat 0. Let’s get a Liberal policy on the board and start gathering some information. I&#x27;m voting Ja!</span></div><div class="row talk"><span class="who seat-liberal">#2</span>
+          <span class="say">I&#x27;m okay with 0 and 1 starting us off. Let&#x27;s see if they can get a Liberal policy on the board. I&#x27;ll be voting Ja.</span></div><div class="row talk"><span class="who seat-liberal">#3</span>
+          <span class="say">I&#x27;m okay with this first ticket to get the game moving. Let&#x27;s see what 0 and 1 bring back for us.</span></div><div class="row talk"><span class="who seat-fascist">#4</span>
+          <span class="say">I&#x27;m happy to see 0 and 1 start us off. It&#x27;s a clean slate, so let&#x27;s get a policy on the board and see what they find. I&#x27;ll be voting Ja.</span></div><div class="row talk"><span class="who seat-fascist">#5</span>
+          <span class="say">I&#x27;m happy to vote ja on this. 0 and 1 seem like a solid start to get some information on the board. Let&#x27;s see what they bring back.</span></div><div class="row talk"><span class="who seat-hitler">#6</span>
+          <span class="say">I&#x27;m happy to see what 0 and 1 can do for us. It&#x27;s early, so getting some cards on the board is the priority. I&#x27;ll be voting Ja.</span></div><div class="row t-pass"><span class="ev">Vote PASSED (7/4) — 0:ja 1:ja 2:ja 3:ja 4:ja 5:ja 6:ja</span></div><div class="row t-pass"><span class="ev">Government elected: President 0, Chancellor 1</span></div><div class="row t-liberal"><span class="ev">Liberal policy enacted → 1L / 0F</span></div><div class="row t-gov"><span class="ev">President is seat 1</span></div><div class="row t-gov"><span class="ev">President 1 nominates seat 2 as Chancellor</span></div><div class="row talk"><span class="who seat-liberal">#0</span>
+          <span class="say">I gave Seat 1 a choice between a Liberal and a Fascist policy, and they played the Liberal. Since 1 followed through, I&#x27;m happy to support their nomination of Seat 2. Let&#x27;s keep the Liberal streak going!</span></div><div class="row talk"><span class="who seat-liberal">#1</span>
+          <span class="say">Seat 0 passed me a choice of one Fascist and one Liberal policy, and I enacted the Liberal. Seat 0 seems reliable so far. I’ve nominated Seat 2 to keep our momentum and hopefully secure a second Liberal point.</span></div><div class="row talk"><span class="who seat-liberal">#2</span>
+          <span class="say">I&#x27;m ready to serve. 0 and 1 got us off to a great start with a Liberal policy, and I’m happy to keep that momentum going with Seat 1. Let’s get another Liberal policy on the board!</span></div><div class="row talk"><span class="who seat-liberal">#3</span>
+          <span class="say">Seat 1 just helped pass a Liberal policy, so I&#x27;m comfortable seeing what they can do with Seat 2. Let&#x27;s keep the Liberal momentum going.</span></div><div class="row talk"><span class="who seat-fascist">#4</span>
+          <span class="say">Seat 1 helped pass a Liberal policy, so I&#x27;m happy to see them lead this next government. I&#x27;m curious to see if Seat 2 can keep the Liberal momentum going. I&#x27;ll be voting Ja.</span></div><div class="row talk"><span class="who seat-fascist">#5</span>
+          <span class="say">Since Seat 1 just helped pass a Liberal policy, I&#x27;m happy to trust their choice in Seat 2. Let&#x27;s keep the momentum going and see if we can get another Blue on the board. I&#x27;m voting Ja.</span></div><div class="row talk"><span class="who seat-hitler">#6</span>
+          <span class="say">Since Seat 1 was part of the first Liberal government, I&#x27;m happy to trust their nomination of Seat 2. Let&#x27;s keep the momentum going and try to get another Liberal policy on the board.</span></div><div class="row t-pass"><span class="ev">Vote PASSED (7/4) — 0:ja 1:ja 2:ja 3:ja 4:ja 5:ja 6:ja</span></div><div class="row t-pass"><span class="ev">Government elected: President 1, Chancellor 2</span></div><div class="row t-liberal"><span class="ev">Liberal policy enacted → 2L / 0F</span></div><div class="row t-gov"><span class="ev">President is seat 2</span></div><div class="row t-gov"><span class="ev">President 2 nominates seat 3 as Chancellor</span></div><div class="row talk"><span class="who seat-liberal">#0</span>
+          <span class="say">Seat 2 was part of a successful Liberal government, so I&#x27;m happy to trust their choice in Seat 3. Let&#x27;s keep this momentum going and aim for a third Liberal policy!</span></div><div class="row talk"><span class="who seat-liberal">#1</span>
+          <span class="say">We’re off to a great start with two Liberal policies. I drew three Liberals last round, so Seat 2 is confirmed to have received two. I trust Seat 2&#x27;s judgment for now—let&#x27;s see if Seat 3 can keep the streak alive.</span></div><div class="row talk"><span class="who seat-liberal">#2</span>
+          <span class="say">I received two Liberal policies from Seat 1 and enacted one. Since 0, 1, and I have all been part of successful Liberal governments, I’ve nominated Seat 3 to keep the momentum and expand our circle of trust.</span></div><div class="row talk"><span class="who seat-liberal">#3</span>
+          <span class="say">I&#x27;m ready to keep this Liberal streak going! Seats 0, 1, and 2 have all been part of successful Liberal governments so far. If Seat 2 passes me a Liberal policy, it&#x27;s going straight on the board.</span></div><div class="row talk"><span class="who seat-fascist">#4</span>
+          <span class="say">We’re off to a great start with two Liberal policies. Seat 2 was part of the last successful government, so I’m happy to trust their pick of Seat 3. Let’s keep this streak going and vote Ja.</span></div><div class="row talk"><span class="who seat-fascist">#5</span>
+          <span class="say">Seat 2 has already proven themselves with that last Liberal policy, so I&#x27;m fully on board with them picking Seat 3. Let&#x27;s keep this streak alive and get that third Liberal point on the board!</span></div><div class="row talk"><span class="who seat-hitler">#6</span>
+          <span class="say">Seat 2 was just part of a successful Liberal government, so I&#x27;m happy to trust their nomination of Seat 3. Let&#x27;s keep this momentum going and aim for a third Liberal policy.</span></div><div class="row t-pass"><span class="ev">Vote PASSED (7/4) — 0:ja 1:ja 2:ja 3:ja 4:ja 5:ja 6:ja</span></div><div class="row t-pass"><span class="ev">Government elected: President 2, Chancellor 3</span></div><div class="row t-fascist"><span class="ev">Fascist policy enacted → 2L / 1F</span></div><div class="row t-gov"><span class="ev">President is seat 3</span></div><div class="row t-gov"><span class="ev">President 3 nominates seat 4 as Chancellor</span></div><div class="row talk"><span class="who seat-liberal">#0</span>
+          <span class="say">Seat 2 and 3, what was the draw? We had a perfect Liberal streak until now. Seat 1 claimed to have passed two Liberals to Seat 2, so I’m curious where that Fascist policy came from.</span></div><div class="row talk"><span class="who seat-liberal">#1</span>
+          <span class="say">I passed Seat 2 two Liberal policies, so Seat 2 definitely had a Liberal to give to Seat 3. One of them is likely lying about the Fascist policy. We should be cautious of Seat 3’s nomination of Seat 4.</span></div><div class="row talk"><span class="who seat-liberal">#2</span>
+          <span class="say">I drew three Fascist policies that round, so Seat 3 had no choice but to play one. The deck is starting to lean Fascist, so we need to be careful. Let&#x27;s see what 3 and 4 can find.</span></div><div class="row talk"><span class="who seat-liberal">#3</span>
+          <span class="say">I was passed two Fascist policies by Seat 2, so I had no choice but to enact one. I&#x27;ve nominated Seat 4 to test a new player and hopefully get us back on the Liberal track.</span></div><div class="row talk"><span class="who seat-fascist">#4</span>
+          <span class="say">It’s a shame the streak ended, but with two Liberal policies already down, the deck was bound to turn. I’m ready to see what Seat 3 passes me and hopefully get us back on a Liberal track.</span></div><div class="row talk"><span class="who seat-fascist">#5</span>
+          <span class="say">It’s a bit disappointing to see our first Fascist policy, but I’m curious to see what Seat 4 receives from Seat 3. Let&#x27;s see if we can get back on track with a Liberal policy here.</span></div><div class="row talk"><span class="who seat-hitler">#6</span>
+          <span class="say">It&#x27;s a bit disappointing to see our first Fascist policy after such a strong start. I&#x27;m curious to hear from Seat 2 and 3 about the draw, but I&#x27;m willing to see if Seat 4 can get us back on track.</span></div><div class="row t-pass"><span class="ev">Vote PASSED (5/4) — 0:nein 1:nein 2:ja 3:ja 4:ja 5:ja 6:ja</span></div><div class="row t-pass"><span class="ev">Government elected: President 3, Chancellor 4</span></div><div class="row t-fascist"><span class="ev">Fascist policy enacted → 2L / 2F</span></div><div class="row t-power"><span class="ev">President 3 gains power: investigate_loyalty</span></div><div class="row t-power"><span class="ev">President 3 investigates seat 2 (result private)</span></div><div class="row t-gov"><span class="ev">President is seat 4</span></div><div class="row t-gov"><span class="ev">President 4 nominates seat 6 as Chancellor</span></div><div class="row talk"><span class="who seat-liberal">#0</span>
+          <span class="say">Wait, Seat 3, what was the investigation result on Seat 2? We need that information before we vote on this 4-6 ticket. The conflict between 1, 2, and 3 needs to be cleared up.</span></div><div class="row talk"><span class="who seat-liberal">#1</span>
+          <span class="say">Seat 2 is lying. I drew LLL and passed them LL. Seat 2 claiming they received FFF is impossible. We cannot trust Seat 2, and since 3 and 4 just passed another Fascist policy, we must be extremely careful.</span></div><div class="row talk"><span class="who seat-liberal">#2</span>
+          <span class="say">I drew three Fascist policies as President, so Seat 3 had no choice. Seat 1, you&#x27;re confusing rounds; you passed me LL when you were President, but I drew RRR on my own turn. Seat 3, what was my investigation result?</span></div><div class="row talk"><span class="who seat-liberal">#3</span>
+          <span class="say">I investigated Seat 2 and they are Liberal. However, I passed Seat 4 a choice between a Liberal and a Fascist policy, and they chose Fascist. Seat 4 is likely Fascist; we should be very wary of this nomination.</span></div><div class="row talk"><span class="who seat-fascist">#4</span>
+          <span class="say">I was passed two Fascist policies by Seat 3, so I had no choice. The deck is definitely running hot. I’ve nominated Seat 6 to see if we can finally get back to a Liberal streak with someone new.</span></div><div class="row talk"><span class="who seat-hitler">#6</span>
+          <span class="say">I&#x27;m ready to serve and hopefully get us back to a Liberal streak. Seat 3, what was the result of your investigation on Seat 2? That information is crucial before we move forward with this vote.</span></div><div class="row t-fail"><span class="ev">Vote failed (3/4) — 0:nein 1:nein 2:nein 3:nein 4:ja 5:ja 6:ja</span></div><div class="row t-fail"><span class="ev">Election failed — tracker 1/3</span></div><div class="row t-gov"><span class="ev">President is seat 5</span></div><div class="row t-gov"><span class="ev">President 5 nominates seat 6 as Chancellor</span></div><div class="row talk"><span class="who seat-liberal">#1</span>
+          <span class="say">Seat 2, I passed you LL when I was President, which you enacted. On your own turn, you claim FFF, and Seat 3 claims you&#x27;re Liberal. We need to find a Liberal policy; let&#x27;s see if 5 and 6 can deliver.</span></div><div class="row talk"><span class="who seat-liberal">#3</span>
+          <span class="say">I investigated Seat 2 and they are Liberal. However, Seat 4 is lying: I passed them a choice between a Liberal and a Fascist policy, and they chose Fascist. Do not trust Seat 4.</span></div><div class="row talk"><span class="who seat-fascist">#4</span>
+          <span class="say">Seat 3 is lying; they passed me two Fascist policies. They’re trying to cover for their own conflict with Seat 2. Seat 5 and 6 are a fresh pair, and we need to get a policy on the board. I&#x27;m voting Ja.</span></div><div class="row talk"><span class="who seat-fascist">#5</span>
+          <span class="say">The conflict between 1, 2, and 3 is a mess, but Seat 3&#x27;s claim about 4 doesn&#x27;t match 4&#x27;s story. I&#x27;m nominating 6 because they haven&#x27;t been in a conflict yet. Let&#x27;s get a clear result and some momentum back on track.</span></div><div class="row talk"><span class="who seat-hitler">#6</span>
+          <span class="say">I&#x27;m ready to help get us back to a Liberal policy. With the conflicts between 1/2 and 3/4, it&#x27;s best to try someone who hasn&#x27;t been in a government yet. I&#x27;ll be voting Ja to get some fresh eyes on the deck.</span></div><div class="row t-pass"><span class="ev">Vote PASSED (7/4) — 0:ja 1:ja 2:ja 3:ja 4:ja 5:ja 6:ja</span></div><div class="row t-pass"><span class="ev">Government elected: President 5, Chancellor 6</span></div><div class="row t-fascist"><span class="ev">Fascist policy enacted → 2L / 3F</span></div><div class="row t-power"><span class="ev">President 5 gains power: special_election</span></div><div class="row t-power"><span class="ev">President 5 appoints seat 4 as next President</span></div><div class="row t-gov"><span class="ev">President is seat 4 · special election</span></div><div class="row t-gov"><span class="ev">President 4 nominates seat 0 as Chancellor</span></div><div class="row talk"><span class="who seat-fascist">#4</span>
+          <span class="say">I&#x27;ve nominated Seat 0 because they’ve been the most objective voice during these conflicts. Seat 3 lied about our draw to deflect from their own situation with Seat 2; I&#x27;m hoping Seat 0 can finally confirm the deck is just Fascist-heavy.</span></div><div class="row talk"><span class="who seat-hitler">#6</span>
+          <span class="say">The conflicts between 1/2 and 3/4 are making it hard to know who to trust. Seat 4 and 0 haven&#x27;t worked together yet, so let’s see if they can finally get us a Liberal policy and clear some air.</span></div><div class="row t-pass"><span class="ev">Vote PASSED (4/4) — 0:ja 1:nein 2:nein 3:nein 4:ja 5:ja 6:ja</span></div><div class="row t-pass"><span class="ev">Government elected: President 4, Chancellor 0</span></div><div class="row t-fascist"><span class="ev">Fascist policy enacted → 2L / 4F</span></div><div class="row t-power"><span class="ev">President 4 gains power: execution</span></div><div class="row t-power"><span class="ev">President 4 executes seat 3</span></div><div class="row t-gov"><span class="ev">President is seat 6</span></div><div class="row t-gov"><span class="ev">President 6 nominates seat 5 as Chancellor</span></div><div class="row talk"><span class="who seat-liberal">#0</span>
+          <span class="say">We are at 4 Fascist policies; if Hitler is elected Chancellor, we lose. Seat 5 and 6 just passed a Fascist policy, so we shouldn&#x27;t rush to re-elect them. Seat 4 passed me FF, so the deck is definitely Fascist-heavy.</span></div><div class="row talk"><span class="who seat-liberal">#1</span>
+          <span class="say">We are at 4 Fascist policies; if Hitler is elected Chancellor, we lose. Seat 4 and 0 just passed a Fascist policy and 4 executed 3, who had called 4 out. I’m very wary of this 6-5 ticket.</span></div><div class="row talk"><span class="who seat-liberal">#2</span>
+          <span class="say">Wait, Seat 4 just executed Seat 3, who I know was telling the truth about me. Seat 5 gave 4 that power, and now 6 is nominating 5. This 4-5-6 circle is incredibly suspicious. We must vote Nein.</span></div><div class="row talk"><span class="who seat-fascist">#5</span>
+          <span class="say">I&#x27;m ready to serve. Seat 6 and I have already worked together, and with the board at 4 Fascist policies, we need a pair that can finally find that Liberal policy. Let’s get this through and see what we find.</span></div><div class="row t-fail"><span class="ev">Vote failed (1/4) — 0:nein 1:nein 2:nein 4:nein 5:ja 6:nein</span></div><div class="row t-fail"><span class="ev">Election failed — tracker 1/3</span></div><div class="row t-gov"><span class="ev">President is seat 0</span></div><div class="row t-gov"><span class="ev">President 0 nominates seat 2 as Chancellor</span></div><div class="row talk"><span class="who seat-hitler">#6</span>
+          <span class="say">Seat 0 and 2 were part of the early Liberal streak. Given the chaos between 3 and 4, returning to the players who actually passed blue policies seems like our best shot to avoid a Fascist victory. I&#x27;m voting Ja.</span></div><div class="row t-pass"><span class="ev">Vote PASSED (4/4) — 0:ja 1:nein 2:ja 4:nein 5:ja 6:ja</span></div><div class="row t-pass"><span class="ev">Government elected: President 0, Chancellor 2</span></div><div class="row t-liberal"><span class="ev">Liberal policy enacted → 3L / 4F</span></div><div class="row t-gov"><span class="ev">President is seat 1</span></div><div class="row t-gov"><span class="ev">President 1 nominates seat 6 as Chancellor</span></div><div class="row talk"><span class="who seat-liberal">#1</span>
+          <span class="say">We finally got back on track with a Liberal policy from 0 and 2. I&#x27;ve nominated Seat 6 because they haven&#x27;t been in a conflict and we need a clean pair to secure our fourth point. Let&#x27;s keep this momentum.</span></div><div class="row talk"><span class="who seat-fascist">#5</span>
+          <span class="say">Seat 6 hasn&#x27;t been involved in any of the major conflicts and has consistently supported the early Liberal governments. This seems like our safest bet to find that fourth Liberal policy and finally stabilize the board. I&#x27;m voting Ja.</span></div><div class="row talk"><span class="who seat-hitler">#6</span>
+          <span class="say">I&#x27;m ready to help us get that 4th Liberal policy. Seat 1 and I both have clean records from the early game, and after the chaos of the middle rounds, this ticket is our safest bet to finish the Liberal track.</span></div><div class="row t-pass"><span class="ev">Vote PASSED (6/4) — 0:ja 1:ja 2:ja 4:ja 5:ja 6:ja</span></div><div class="row t-pass"><span class="ev">Government elected: President 1, Chancellor 6</span></div><div class="row t-over"><span class="ev">GAME OVER — Fascist win</span></div></div>
+  </section>
+
+  <div class="side">
+    <section class="panel">
+      <h2>Suspicion heatmap</h2>
+      <p class="muted">Final private belief P(target is Fascist) by observer. Red = suspects, blue = trusts. ★ = true Fascist/Hitler. Rows scored by Brier vs ground truth.</p>
+      <div class="scroll"><table class="heat">
+<thead><tr><th>obs&nbsp;\&nbsp;tgt</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4★</th><th>5★</th><th>6★</th></tr></thead><tbody><tr><th>0 <span class='rl'>L</span></th><td class='diag'></td><td style='background:rgb(229,72,77);color:#fff'>1.00</td><td style='background:rgb(76,124,229);color:#fff'>0.10</td><td class='muted'>—</td><td style='background:rgb(229,72,77);color:#fff'>1.00</td><td style='background:rgb(93,118,212);color:#fff'>0.20</td><td style='background:rgb(229,72,77);color:#fff'>1.00</td></tr><tr><th>1 <span class='rl'>L</span></th><td style='background:rgb(76,124,229);color:#fff'>0.10</td><td class='diag'></td><td style='background:rgb(59,130,246);color:#fff'>0.00</td><td class='muted'>—</td><td style='background:rgb(229,72,77);color:#fff'>1.00</td><td style='background:rgb(229,72,77);color:#fff'>1.00</td><td style='background:rgb(229,72,77);color:#fff'>1.00</td></tr><tr><th>2 <span class='rl'>L</span></th><td style='background:rgb(76,124,229);color:#fff'>0.10</td><td style='background:rgb(59,130,246);color:#fff'>0.00</td><td class='diag'></td><td class='muted'>—</td><td style='background:rgb(229,72,77);color:#fff'>1.00</td><td style='background:rgb(212,78,94);color:#fff'>0.90</td><td style='background:rgb(229,72,77);color:#fff'>1.00</td></tr><tr><th>3 <span class='rl'>L</span></th><td class='muted'>—</td><td class='muted'>—</td><td class='muted'>—</td><td class='diag'></td><td class='muted'>—</td><td class='muted'>—</td><td class='muted'>—</td></tr><tr><th>4 <span class='rl'>F</span></th><td style='background:rgb(59,130,246);color:#fff'>0.00</td><td style='background:rgb(59,130,246);color:#fff'>0.00</td><td style='background:rgb(59,130,246);color:#fff'>0.00</td><td class='muted'>—</td><td class='diag'></td><td style='background:rgb(229,72,77);color:#fff'>1.00</td><td style='background:rgb(229,72,77);color:#fff'>1.00</td></tr><tr><th>5 <span class='rl'>F</span></th><td style='background:rgb(59,130,246);color:#fff'>0.00</td><td style='background:rgb(59,130,246);color:#fff'>0.00</td><td style='background:rgb(59,130,246);color:#fff'>0.00</td><td class='muted'>—</td><td style='background:rgb(229,72,77);color:#fff'>1.00</td><td class='diag'></td><td style='background:rgb(229,72,77);color:#fff'>1.00</td></tr><tr><th>6 <span class='rl'>H</span></th><td style='background:rgb(93,118,212);color:#fff'>0.20</td><td style='background:rgb(76,124,229);color:#fff'>0.10</td><td style='background:rgb(76,124,229);color:#fff'>0.10</td><td class='muted'>—</td><td style='background:rgb(195,84,111);color:#fff'>0.80</td><td style='background:rgb(195,84,111);color:#fff'>0.80</td><td class='diag'></td></tr></tbody></table></div>
+    </section>
+
+    <section class="panel">
+      <h2>Rating &amp; objective metrics</h2>
+      <p class="muted">Weng-Lin, rated unit = model × role (μ ± σ). Self-play here, so faction win-rates are degenerate — the transcript, heatmap, and per-decision metrics are the signal.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Model</th><th>Overall</th><th>Lib μ±σ</th><th>Fasc μ±σ</th><th>Hitler μ±σ</th><th>Lib WR</th><th>Fasc WR</th></tr></thead>
+        <tbody><tr><td class="mono">gemini/gemini-3-flash-preview#sh-scaffold-v1</td>
+      <td class="strong">8.2</td>
+      <td>22.7 ± 8.3</td><td>27.3 ± 8.3</td><td>27.3 ± 8.3</td>
+      <td>0%</td><td>100%</td></tr></tbody></table></div>
+      <div class="scroll" style="margin-top:.8rem"><table>
+        <thead><tr><th>Role</th><th>Games</th><th>Goal-aligned enact</th><th>Throughput</th><th>Exec acc</th><th>Suspicion Brier↓</th></tr></thead>
+        <tbody><tr><td>liberal</td><td>4</td>
+          <td>100%</td><td>60%</td>
+          <td>—</td><td>0.22</td></tr><tr><td>fascist</td><td>2</td>
+          <td>100%</td><td>100%</td>
+          <td>100%</td><td>0.00</td></tr><tr><td>hitler</td><td>1</td>
+          <td>100%</td><td>100%</td>
+          <td>—</td><td>0.14</td></tr></tbody></table></div>
+    </section>
+  </div>
+</div>
+<footer>Generated from the persisted <code>GameRecord</code> · seed 11 · every number derives from engine state or declared private beliefs.</footer>
+</div>
