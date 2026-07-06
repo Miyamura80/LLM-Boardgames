@@ -205,13 +205,17 @@ impl Command for ShRunMatch {
         .map_err(CommandError::Other)?;
 
         let (board, metrics) = if progress.remaining == 0 {
-            let (rows, _) = finalize_match(&store, &run_id, cfg.secret_hitler.rating_k)
+            let (mut rows, _) = finalize_match(&store, &run_id, cfg.secret_hitler.rating_k)
                 .await
                 .map_err(CommandError::Other)?;
-            let metrics = store
+            // Anchors are off-leaderboard by design; `sh_leaderboard` with
+            // `include_anchors` is the explicit opt-in for anchor rows.
+            rows.retain(|r| !r.is_anchor);
+            let mut metrics = store
                 .model_metric_summary(&run_id)
                 .await
                 .map_err(|e| CommandError::Other(e.to_string()))?;
+            metrics.retain(|m| !m.is_anchor);
             (Some(rows), Some(metrics))
         } else {
             (None, None)

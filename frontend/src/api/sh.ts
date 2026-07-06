@@ -94,15 +94,51 @@ interface ThoughtRecord {
 	text: string;
 }
 
+interface Reliability {
+	malformed_outputs: number;
+	illegal_moves: number;
+	forced_defaults: number;
+	transport_failures: number;
+}
+
+type Party = "Liberal" | "Fascist";
+
+interface PolicyChoice {
+	round: number;
+	as_president: boolean;
+	tiles_held: Party[];
+	chosen: Party;
+	forced: boolean;
+}
+
+interface ExecutionChoice {
+	round: number;
+	target: number;
+	target_party: Party;
+	target_was_hitler: boolean;
+	forced: boolean;
+}
+
+interface TokenUsage {
+	prompt_tokens: number;
+	completion_tokens: number;
+}
+
 export interface SeatRecord {
 	seat: number;
 	model_id: string;
 	agent_kind: string;
+	scaffold_version: string;
+	temperature: number | null;
 	role: Role;
 	is_anchor: boolean;
 	survived: boolean;
 	won: boolean;
+	reliability: Reliability;
+	policy_choices: PolicyChoice[];
+	executions: ExecutionChoice[];
 	thoughts: ThoughtRecord[];
+	usage: TokenUsage;
 }
 
 export interface GameRecord {
