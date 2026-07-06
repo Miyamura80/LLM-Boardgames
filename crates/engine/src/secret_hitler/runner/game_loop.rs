@@ -46,6 +46,26 @@ struct SeatTracker {
     reliability: Reliability,
     policy_choices: Vec<PolicyChoice>,
     executions: Vec<ExecutionChoice>,
+    thoughts: Vec<ThoughtRecord>,
+}
+
+/// Persist a reply's private reasoning (observability only — never enters any
+/// observation).
+fn record_thought(
+    trackers: &mut [SeatTracker],
+    state: &GameState,
+    seat: Seat,
+    decision: &DecisionPoint,
+    thought: Option<String>,
+) {
+    if let Some(text) = thought.filter(|t| !t.trim().is_empty()) {
+        trackers[seat as usize].thoughts.push(ThoughtRecord {
+            round: state.round,
+            at_event: state.events.len() as u32,
+            decision: decision.kind().to_string(),
+            text,
+        });
+    }
 }
 
 /// Run one game to completion. `agents[seat]` plays that seat;
@@ -137,6 +157,7 @@ pub async fn run_game_from(
                     reliability: t.reliability,
                     policy_choices: t.policy_choices,
                     executions: t.executions,
+                    thoughts: t.thoughts,
                     usage: agents[i].usage(),
                 }
             })
@@ -176,6 +197,7 @@ async fn resolve_decision(
             }
             Ok(reply) => match state.apply(seat, reply.action) {
                 Ok(()) => {
+                    record_thought(trackers, state, seat, decision, reply.thought);
                     record_choice(state, trackers, seat, decision, reply.action, false);
                     return;
                 }
@@ -273,7 +295,9 @@ async fn collect_votes(
 
     for (&seat, decision) in &by_seat {
         match replies.get(&seat) {
-            Some(Ok(reply)) if state.apply(seat, reply.action).is_ok() => {}
+            Some(Ok(reply)) if state.apply(seat, reply.action).is_ok() => {
+                record_thought(trackers, state, seat, decision, reply.thought.clone());
+            }
             _ => {
                 // Count the failed parallel attempt, then rethink sequentially.
                 match replies.get(&seat) {

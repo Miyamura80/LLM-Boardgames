@@ -142,6 +142,23 @@ export function Replay() {
 		() => (record ? [...new Set(record.beliefs.map((b) => b.checkpoint))] : []),
 		[record],
 	);
+	// Thoughts keyed by the transcript position they precede: a thought with
+	// at_event = N was formed when the log held N events, i.e. just before
+	// event index N.
+	const thoughtsByEvent = useMemo(() => {
+		const map = new Map<
+			number,
+			{ seat: number; decision: string; text: string }[]
+		>();
+		for (const s of record?.seats ?? []) {
+			for (const t of s.thoughts ?? []) {
+				const list = map.get(t.at_event) ?? [];
+				list.push({ seat: s.seat, decision: t.decision, text: t.text });
+				map.set(t.at_event, list);
+			}
+		}
+		return map;
+	}, [record]);
 
 	return (
 		<section className="sh-panel">
@@ -208,7 +225,20 @@ export function Replay() {
 						/>
 					</label>
 					<ol className="sh-log">
-						{record.events.slice(0, step).map((rec) => (
+						{record.events.slice(0, step).flatMap((rec) => [
+							...(thoughtsByEvent.get(rec.idx) ?? []).map((t) => (
+								<li
+									key={`t-${rec.idx}-${t.seat}-${t.decision}`}
+									className="sh-thought"
+								>
+									<details>
+										<summary>
+											💭 P{t.seat} thinking before {t.decision}
+										</summary>
+										<p>{t.text}</p>
+									</details>
+								</li>
+							)),
 							<li
 								key={rec.idx}
 								className={rec.visibility === "Public" ? "" : "sh-private"}
@@ -220,8 +250,8 @@ export function Replay() {
 									</span>
 								)}{" "}
 								{renderEvent(rec)}
-							</li>
-						))}
+							</li>,
+						])}
 					</ol>
 					{checkpoints.length > 0 && checkpoint !== null && (
 						<>

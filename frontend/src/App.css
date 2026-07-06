@@ -256,6 +256,19 @@ body {
 	font-style: italic;
 }
 
+.sh-thought summary {
+	cursor: pointer;
+	color: var(--color-text-secondary);
+	font-size: var(--font-size-sm);
+}
+
+.sh-thought p {
+	margin: 0.2rem 0 0.4rem 1.1rem;
+	color: var(--color-text-secondary);
+	font-size: var(--font-size-sm);
+	white-space: pre-wrap;
+}
+
 /* ─── Heatmap ───────────────────────────────────────────────────────────── */
 
 .sh-heatmap {

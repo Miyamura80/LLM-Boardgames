@@ -87,6 +87,13 @@ export interface BeliefSnapshot {
 	report: { assessments: Record<string, RoleProbs> };
 }
 
+interface ThoughtRecord {
+	round: number;
+	at_event: number;
+	decision: string;
+	text: string;
+}
+
 export interface SeatRecord {
 	seat: number;
 	model_id: string;
@@ -95,6 +102,7 @@ export interface SeatRecord {
 	is_anchor: boolean;
 	survived: boolean;
 	won: boolean;
+	thoughts: ThoughtRecord[];
 }
 
 export interface GameRecord {

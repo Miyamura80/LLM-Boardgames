@@ -31,6 +31,20 @@ pub struct ExecutionChoice {
     pub forced: bool,
 }
 
+/// The model's private reasoning for one decision, captured verbatim from the
+/// `thought_process` field of its reply. Observability only — never fed back
+/// into any observation, so it cannot influence play.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct ThoughtRecord {
+    pub round: u32,
+    /// Transcript position when the decision was made, for interleaving
+    /// thoughts into a replay timeline.
+    pub at_event: u32,
+    /// Decision kind (`nominate`, `vote`, `discard`, …).
+    pub decision: String,
+    pub text: String,
+}
+
 /// Reliability counters, kept strictly separate from play-quality metrics.
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, JsonSchema)]
 pub struct Reliability {
@@ -55,6 +69,10 @@ pub struct SeatRecord {
     pub reliability: Reliability,
     pub policy_choices: Vec<PolicyChoice>,
     pub executions: Vec<ExecutionChoice>,
+    /// Private reasoning per decision (empty for bots and for games recorded
+    /// before thought capture landed).
+    #[serde(default)]
+    pub thoughts: Vec<ThoughtRecord>,
     pub usage: TokenUsage,
 }
 
