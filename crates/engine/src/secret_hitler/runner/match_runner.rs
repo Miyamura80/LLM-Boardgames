@@ -4,7 +4,7 @@
 use super::game_loop::{run_game, GameConfig};
 use super::pools::{AgentFactory, AgentSpec};
 use super::record::GameRecord;
-use super::schedule::{arena_schedule, controlled_schedule, realized_distribution, GamePlan};
+use super::schedule::{arena_schedule, controlled_schedule, planned_distribution, GamePlan};
 use crate::secret_hitler::metrics::score_game;
 use crate::secret_hitler::rating::{leaderboard, LeaderboardRow, RatingTable};
 use crate::secret_hitler::state::GameState;
@@ -206,21 +206,28 @@ pub async fn finalize_match(
         .map_err(|e| e.to_string())?;
 
     let rows = leaderboard(&table, rating_k);
-    let spec = store
+    // Realized distribution from games actually played (persisted seat rows),
+    // not the planned schedule — a partial run must not over-report coverage,
+    // and arena role/faction counts are only known post-play.
+    let realized = store
+        .realized_distribution(run_id)
+        .await
+        .map_err(|e| e.to_string())?;
+    // Planned distribution (schedule intent) for gap comparison; absent if the
+    // stored spec no longer parses.
+    let planned = store
         .get_run_spec(run_id)
         .await
         .map_err(|e| e.to_string())?
-        .map(|(_, s)| s);
-    let dist = spec
-        .as_ref()
-        .and_then(|s| serde_json::from_value::<MatchSpec>(s.clone()).ok())
+        .and_then(|(_, s)| serde_json::from_value::<MatchSpec>(s).ok())
         .and_then(|spec| spec.schedule().ok())
-        .map(|plans| realized_distribution(&plans));
+        .map(|plans| planned_distribution(&plans));
 
     let summary = serde_json::json!({
         "leaderboard": rows,
         "games": records.len(),
-        "realized_distribution": dist,
+        "realized_distribution": realized,
+        "planned_distribution": planned,
     });
     store
         .set_run_status(run_id, "complete", Some(&summary))
