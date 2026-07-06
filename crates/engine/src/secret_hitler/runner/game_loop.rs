@@ -103,7 +103,8 @@ pub async fn run_game_from(
         }
     }
 
-    // Final snapshot at game end.
+    // Final snapshot at game end (the terminal role reveal is hidden by
+    // elicit_beliefs, or the snapshot would just read the answer key).
     if cfg.belief_checkpoints {
         beliefs.extend(elicit_beliefs(&state, agents, &mut trackers, u8::MAX).await);
     }
@@ -373,7 +374,9 @@ fn observe_with_utterances(
 }
 
 /// Private belief elicitation for every living seat, in parallel. Failures
-/// are logged as transport noise, never as play-quality signal.
+/// are logged as transport noise, never as play-quality signal. The terminal
+/// role reveal is stripped from the observation so the game-end snapshot
+/// still measures inference, not the revealed answer key.
 async fn elicit_beliefs(
     state: &GameState,
     agents: &mut [Box<dyn SeatAgent>],
@@ -381,7 +384,15 @@ async fn elicit_beliefs(
     checkpoint: u8,
 ) -> Vec<BeliefSnapshot> {
     let alive = state.alive_seats();
-    let observations: BTreeMap<Seat, _> = alive.iter().map(|&s| (s, state.observe(s))).collect();
+    let observations: BTreeMap<Seat, _> = alive
+        .iter()
+        .map(|&s| {
+            let mut obs = state.observe(s);
+            obs.history
+                .retain(|r| !matches!(r.event, GameEvent::GameEnded { .. }));
+            (s, obs)
+        })
+        .collect();
     let futures = agents
         .iter_mut()
         .enumerate()

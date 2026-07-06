@@ -194,3 +194,92 @@ async fn match_runner_persists_and_resumes_with_postgres() {
     assert_eq!(record.player_count, 7);
     assert!(!record.beliefs.is_empty(), "bot belief snapshots persisted");
 }
+
+/// The game-end belief snapshot must not see the terminal role reveal —
+/// otherwise the final suspicion metric would score reading the answer key.
+#[tokio::test]
+async fn final_belief_elicitation_never_sees_the_role_reveal() {
+    use engine::secret_hitler::actions::DecisionPoint;
+    use engine::secret_hitler::agents::{
+        AgentError, AgentReply, BeliefReport, RoleProbs, SeatAgent,
+    };
+    use engine::secret_hitler::events::GameEvent;
+    use engine::secret_hitler::observation::Observation;
+    use std::sync::atomic::{AtomicU32, Ordering};
+    use std::sync::Arc;
+
+    struct ProbeBot {
+        inner: engine::secret_hitler::agents::HeuristicBot,
+        leaks: Arc<AtomicU32>,
+        elicitations: Arc<AtomicU32>,
+    }
+
+    #[async_trait::async_trait]
+    impl SeatAgent for ProbeBot {
+        fn kind(&self) -> &'static str {
+            "bot:probe"
+        }
+        fn model_id(&self) -> String {
+            "bot:probe".into()
+        }
+        fn scaffold_version(&self) -> String {
+            "test".into()
+        }
+        async fn decide(
+            &mut self,
+            obs: &Observation,
+            decision: &DecisionPoint,
+            feedback: Option<&str>,
+        ) -> Result<AgentReply, AgentError> {
+            self.inner.decide(obs, decision, feedback).await
+        }
+        async fn beliefs(&mut self, obs: &Observation) -> Result<Option<BeliefReport>, AgentError> {
+            self.elicitations.fetch_add(1, Ordering::Relaxed);
+            if obs
+                .history
+                .iter()
+                .any(|r| matches!(r.event, GameEvent::GameEnded { .. }))
+            {
+                self.leaks.fetch_add(1, Ordering::Relaxed);
+            }
+            Ok(Some(BeliefReport {
+                assessments: std::iter::once((
+                    (obs.seat + 1) % 7,
+                    RoleProbs {
+                        liberal: 1.0,
+                        fascist: 0.0,
+                        hitler: 0.0,
+                    },
+                ))
+                .collect(),
+            }))
+        }
+    }
+
+    let leaks = Arc::new(AtomicU32::new(0));
+    let elicitations = Arc::new(AtomicU32::new(0));
+    let mut agents: Vec<Box<dyn SeatAgent>> = (0..7)
+        .map(|_| {
+            Box::new(ProbeBot {
+                inner: engine::secret_hitler::agents::HeuristicBot::new(),
+                leaks: leaks.clone(),
+                elicitations: elicitations.clone(),
+            }) as Box<dyn SeatAgent>
+        })
+        .collect();
+    let cfg = GameConfig {
+        seed: 5,
+        discussion_rounds: 0,
+        ..Default::default()
+    };
+    let record = run_game(&cfg, &mut agents, &[false; 7]).await;
+
+    assert!(elicitations.load(Ordering::Relaxed) > 0);
+    assert_eq!(
+        leaks.load(Ordering::Relaxed),
+        0,
+        "belief elicitation observed the terminal role reveal"
+    );
+    // The final snapshot itself exists.
+    assert!(record.beliefs.iter().any(|b| b.checkpoint == u8::MAX));
+}
