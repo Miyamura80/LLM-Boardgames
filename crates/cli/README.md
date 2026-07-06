@@ -1,18 +1,19 @@
-# appctl – CLI + HTTP API
+# shbench – CLI + HTTP API
 
-The `appctl` binary drives the shared `engine` command registry over multiple
-transports: the CLI (`call` / `probe` / `doctor` / `run-scenario`) and the axum
-HTTP API (`serve`). `init` onboards the template into a real project, `new`
-scaffolds a command, and `mcp` is a stub for the future MCP transport.
+The `shbench` binary drives the shared `engine` game engine and eval command
+registry over multiple transports: the CLI (`call` / `probe` / `doctor` /
+`run-scenario`) and the axum HTTP API (`serve`). `init` onboards the template
+into a real project, `new` scaffolds a command, and `mcp` is a stub for the
+future MCP transport.
 
 The `cli` and `http-api` surfaces are cargo features (both on by default), so
-`appctl init` can prune one and still leave a compiling binary.
+`shbench init` can prune one and still leave a compiling binary.
 
 ## Build
 
 ```bash
-cargo build -p appctl
-# Binary at target/debug/appctl (or target/release/appctl with --release)
+cargo build -p shbench
+# Binary at target/debug/shbench (or target/release/shbench with --release)
 ```
 
 ## Commands
@@ -23,13 +24,13 @@ Collect environment facts (OS, kernel, headless detection, proxy vars).
 
 ```bash
 # Human-readable
-appctl doctor
+shbench doctor
 
 # JSON output
-appctl doctor --json
+shbench doctor --json
 
 # Write result to file
-appctl doctor --json --out /tmp/env.json
+shbench doctor --json --out /tmp/env.json
 ```
 
 ### call
@@ -38,16 +39,16 @@ Invoke a backend command by name with JSON arguments.
 
 ```bash
 # Ping (prove wiring works)
-appctl call ping --json
+shbench call ping --json
 
 # Read a file
-appctl call read_file --args '{"path": "/etc/hostname"}' --json
+shbench call read_file --args '{"path": "/etc/hostname"}' --json
 
 # Write a file
-appctl call write_file --args '{"path": "/tmp/test.txt", "content": "hello"}' --json
+shbench call write_file --args '{"path": "/tmp/test.txt", "content": "hello"}' --json
 
 # With artifacts directory
-appctl call ping --json --artifacts /tmp/artifacts
+shbench call ping --json --artifacts /tmp/artifacts
 ```
 
 ### probe
@@ -56,10 +57,10 @@ Targeted capability checks.
 
 ```bash
 # Filesystem probe (create/read/write/delete in temp dir)
-appctl probe filesystem --json
+shbench probe filesystem --json
 
 # Network probe (DNS resolve + HTTPS GET)
-appctl probe network --json
+shbench probe network --json
 ```
 
 ### run-scenario
@@ -86,8 +87,8 @@ steps:
 ```
 
 ```bash
-appctl run-scenario scenario.yaml --json
-appctl run-scenario scenario.yaml --artifacts /tmp/artifacts
+shbench run-scenario scenario.yaml --json
+shbench run-scenario scenario.yaml --artifacts /tmp/artifacts
 ```
 
 ### serve
@@ -96,7 +97,7 @@ Start the axum HTTP API. Host/port default from config
 (`APP__SERVER__HOST` / `APP__SERVER__PORT`) and can be overridden with flags.
 
 ```bash
-appctl serve --host 0.0.0.0 --port 8080
+shbench serve --host 0.0.0.0 --port 8080
 ```
 
 Routes (versioned under `/api/v1`, auto-derived from the registry):

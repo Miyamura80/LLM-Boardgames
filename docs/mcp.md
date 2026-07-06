@@ -1,6 +1,6 @@
 # MCP transport (designed-for, not built)
 
-`appctl mcp` is a **stub**. It prints a "not implemented" notice and exits with
+`shbench mcp` is a **stub**. It prints a "not implemented" notice and exits with
 `EX_UNAVAILABLE` (69). This document records the intended design so the adapter
 can be added later without reshaping `engine`.
 
@@ -44,7 +44,7 @@ protocol envelope.
    `registry.call(name, args, &ctx)`, and return the bare `Output` as the tool
    result. Errors map from `CommandError::error_code()` to MCP error responses,
    the same mapping `serve_http.rs` uses for HTTP status codes.
-4. Mount it in the same process as `appctl serve` (the HTTP router is already
+4. Mount it in the same process as `shbench serve` (the HTTP router is already
    shaped to nest a `/mcp` sub-router), or run it standalone over stdio for
    local tool clients.
 

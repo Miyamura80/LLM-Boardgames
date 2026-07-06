@@ -2,11 +2,13 @@ This file provides guidance to AI agents working with code in this repository.
 
 ## Project Overview
 
-A Rust application-server template. Business logic is written **once** as a typed
-async `Command` in the `engine` crate and exposed over multiple transports — CLI,
-HTTP API, and (later) MCP — through the `appctl` binary. The `engine` core has no
-transport dependency; transports live in `crates/cli` behind cargo features. An
-optional React/Vite frontend (`frontend/`) talks to the HTTP API over `fetch`.
+An LLM-agent evaluation harness for **Secret Hitler**, the hidden-role
+social-deduction game. The engine-authoritative game state and eval logic are
+written **once** as typed async `Command`s in the `engine` crate and exposed over
+multiple transports — CLI, HTTP API, and (later) MCP — through the `shbench`
+binary. The `engine` core has no transport dependency; transports live in
+`crates/cli` behind cargo features. An optional React/Vite frontend (`frontend/`)
+visualizes games and replays over the HTTP API via `fetch`.
 **Note:** migrated away from Tauri/desktop and from Python — Rust for backend,
 Node/Bun for frontend/scripts.
 **Before any other work in this repo, enable prek:** `bun add -g prek && prek install`. Hooks are defined in `prek.toml`.
@@ -14,26 +16,26 @@ Node/Bun for frontend/scripts.
 ## Common Commands
 
 ```bash
-make run                # Run the HTTP API server (= appctl serve)
+make run                # Run the HTTP API server (= shbench serve)
 cargo test --workspace  # Run Rust tests
 cargo clippy --workspace --all-targets -- -D warnings
-appctl call ping --json # Invoke a command headlessly
+shbench call ping --json # Invoke a command headlessly
 make new name=fetch_url # Scaffold a new engine command
 make init PROFILE=... DRY_RUN=1  # Onboard the template into a real project
-make dev                # Optional frontend: Vite dev server, /api → appctl serve
+make dev                # Optional frontend: Vite dev server, /api → shbench serve
 ```
 
 ## Architecture
 
 - **crates/engine/** — typed async `Command` registry with `inventory`
   self-registration; per-request `Ctx`; capability traits. No transport deps.
-- **crates/cli/** — the `appctl` binary; `cli` and `http-api` are cargo features
-  (both default), so `appctl init` can prune a surface and still compile.
+- **crates/cli/** — the `shbench` binary; `cli` and `http-api` are cargo features
+  (both default), so `shbench init` can prune a surface and still compile.
 - **crates/config/** — crate `app-config`; `AppConfig` (secrets) vs sanitized
   `FrontendConfig` (served over HTTP). The sanitizer is a security boundary.
 - **frontend/** — optional React/Vite app, `fetch`-based `/api/v1` client.
 
-> **Making backend changes?** Use the `update-backend` skill for architecture details, command patterns, trait implementations, config access, and `appctl` testing workflows.
+> **Making backend changes?** Use the `update-backend` skill for architecture details, command patterns, trait implementations, config access, and `shbench` testing workflows.
 
 ## Code Style
 

@@ -121,7 +121,7 @@ export function Chat() {
 	const connectivityLabel = {
 		unknown: "Checking API…",
 		online: "API connected",
-		offline: "API offline — run `appctl serve`",
+		offline: "API offline — run `shbench serve`",
 	}[connectivity];
 
 	return (

@@ -1,4 +1,4 @@
-//! `appctl init` — one-time project onboarding.
+//! `shbench init` — one-time project onboarding.
 //!
 //! Turns this template into a real project: renames the template sentinels,
 //! prunes the surfaces you don't want, and seeds `.env`. Everything routes
@@ -22,7 +22,7 @@ use std::collections::BTreeSet;
 use std::io::IsTerminal;
 use std::path::PathBuf;
 
-/// The `appctl init` subcommand flags (clap). Booleans use paired
+/// The `shbench init` subcommand flags (clap). Booleans use paired
 /// `--flag`/`--no-flag` so an unspecified axis stays `None` and keeps the
 /// profile default.
 #[derive(Debug, clap::Args)]

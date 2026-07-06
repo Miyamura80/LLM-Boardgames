@@ -1,4 +1,4 @@
-//! `appctl new <name>` — command scaffolding.
+//! `shbench new <name>` — command scaffolding.
 //!
 //! Generates a new engine [`Command`] by substituting into
 //! `templates/command.rs.tpl` and drops it in `crates/engine/src/commands/`.
@@ -12,11 +12,11 @@
 use anyhow::{bail, Context, Result};
 use std::path::PathBuf;
 
-/// The command template, embedded at build time so `appctl new` works from any
+/// The command template, embedded at build time so `shbench new` works from any
 /// working directory.
 const TEMPLATE: &str = include_str!("../../../templates/command.rs.tpl");
 
-/// The `appctl new` subcommand flags (clap).
+/// The `shbench new` subcommand flags (clap).
 #[derive(Debug, clap::Args)]
 pub struct NewArgs {
     /// Command name in snake_case (e.g. `fetch_url`).
@@ -102,7 +102,7 @@ fn execute(opts: NewOptions) -> Result<()> {
     println!("\nNext:");
     println!("  edit {}", dest.display());
     println!("  cargo test --workspace");
-    println!("  appctl call {name} --args '{{\"message\":\"hi\"}}'");
+    println!("  shbench call {name} --args '{{\"message\":\"hi\"}}'");
     Ok(())
 }
 

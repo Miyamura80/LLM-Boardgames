@@ -9,7 +9,7 @@
 
 2.  **Setup**:
     ```bash
-    cargo build --workspace   # backend (engine + appctl)
+    cargo build --workspace   # backend (engine + shbench)
     bun install               # optional: frontend / docs
     ```
 

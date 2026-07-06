@@ -147,7 +147,7 @@ pub async fn run_server(
     } else {
         host.clone()
     };
-    eprintln!("appctl serve listening on http://{display_host}:{port}");
+    eprintln!("shbench serve listening on http://{display_host}:{port}");
 
     if let Err(e) = axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())

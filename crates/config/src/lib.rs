@@ -98,7 +98,7 @@ pub struct ExampleParent {
     pub example_child: String,
 }
 
-/// HTTP server settings for `appctl serve` (override via `APP__SERVER__*`).
+/// HTTP server settings for `shbench serve` (override via `APP__SERVER__*`).
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerConfig {
     pub host: String,

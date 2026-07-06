@@ -1,4 +1,4 @@
-//! Source of truth for `appctl init` onboarding.
+//! Source of truth for `shbench init` onboarding.
 //!
 //! Every selectable choice, its default, the implications between choices
 //! ([`Config::expand`]), the rename sentinels ([`Config::rename_rules`]), and
@@ -14,11 +14,11 @@ use std::path::{Path, PathBuf};
 // ---------------------------------------------------------------------------
 
 /// Lowercase/kebab project sentinel (package.json name, crate references).
-pub const SENTINEL_PROJECT_KEBAB: &str = "rust-template";
+pub const SENTINEL_PROJECT_KEBAB: &str = "secret-hitler-evals";
 /// Title-case project sentinel (README headings, directory prose).
-pub const SENTINEL_PROJECT_TITLE: &str = "Rust-Template";
+pub const SENTINEL_PROJECT_TITLE: &str = "Secret-Hitler-Evals";
 /// The CLI binary sentinel.
-pub const SENTINEL_CLI: &str = "appctl";
+pub const SENTINEL_CLI: &str = "shbench";
 /// The GitHub owner sentinel (auto-detected from `git remote` when possible).
 pub const SENTINEL_ORG: &str = "Miyamura80";
 
@@ -59,13 +59,13 @@ impl Profile {
     pub const ALL: [Profile; 3] = [Self::CliOnly, Self::ServerOnly, Self::CliServer];
 }
 
-/// A service surface. Maps 1:1 onto a cargo feature of the `appctl` crate, so a
+/// A service surface. Maps 1:1 onto a cargo feature of the `shbench` crate, so a
 /// pruned surface compiles out cleanly rather than being deleted from source.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Surface {
     /// CLI diagnostic subcommands — cargo feature `cli`.
     Cli,
-    /// axum HTTP API (`appctl serve`) — cargo feature `http-api`.
+    /// axum HTTP API (`shbench serve`) — cargo feature `http-api`.
     HttpApi,
 }
 
@@ -193,7 +193,7 @@ impl Config {
             ));
             // Only rewrite the kebab sentinel when the name yields a valid
             // (non-empty) kebab; otherwise a name like "!!!" would blank out
-            // `rust-template` in the manifests and break the generated project.
+            // `secret-hitler-evals` in the manifests and break the generated project.
             let kebab = kebab_case(&self.project_name);
             if !kebab.is_empty() {
                 rules.push((SENTINEL_PROJECT_KEBAB.to_string(), kebab));
@@ -332,7 +332,7 @@ mod tests {
     #[test]
     fn kebab_case_normalises() {
         assert_eq!(kebab_case("My Cool App"), "my-cool-app");
-        assert_eq!(kebab_case("Rust-Template"), "rust-template");
+        assert_eq!(kebab_case("Secret-Hitler-Evals"), "secret-hitler-evals");
         assert_eq!(kebab_case("weird__name!!"), "weird-name");
     }
 
@@ -423,9 +423,9 @@ mod tests {
         let rules = c.rename_rules();
         assert!(rules
             .iter()
-            .any(|(f, t)| f == "Rust-Template" && t == "Acme App"));
+            .any(|(f, t)| f == "Secret-Hitler-Evals" && t == "Acme App"));
         assert!(rules
             .iter()
-            .any(|(f, t)| f == "rust-template" && t == "acme-app"));
+            .any(|(f, t)| f == "secret-hitler-evals" && t == "acme-app"));
     }
 }

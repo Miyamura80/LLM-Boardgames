@@ -6,7 +6,7 @@ example_parent:
   example_child: "example_value"
 
 ########################################################
-# HTTP server (appctl serve)
+# HTTP server (shbench serve)
 ########################################################
 server:
   host: "127.0.0.1"

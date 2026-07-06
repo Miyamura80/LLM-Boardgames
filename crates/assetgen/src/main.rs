@@ -107,7 +107,7 @@ async fn run_logo(
         Some(name) => name,
         None => read_project_name(&workspace)
             .await
-            .unwrap_or_else(|_| "Rust-Template".into()),
+            .unwrap_or_else(|_| "Secret-Hitler-Evals".into()),
     };
     let target = output_dir.unwrap_or_else(|| workspace.join("docs").join("public"));
     tokio::fs::create_dir_all(&target)
@@ -190,7 +190,7 @@ async fn run_banner(
         Some(t) => t,
         None => read_project_name(&workspace)
             .await
-            .unwrap_or_else(|_| "Rust-Template".into()),
+            .unwrap_or_else(|_| "Secret-Hitler-Evals".into()),
     };
     let target = output_dir.unwrap_or_else(|| workspace.join("media"));
     tokio::fs::create_dir_all(&target)

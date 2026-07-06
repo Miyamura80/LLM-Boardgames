@@ -1,10 +1,10 @@
-// Tiny typed client for the `appctl serve` HTTP API (`/api/v1`).
+// Tiny typed client for the `shbench serve` HTTP API (`/api/v1`).
 //
 // URLs are relative to the page origin. In development, Vite proxies `/api`
-// (and `/healthz`) to `appctl serve` — see vite.config.ts. In production, serve
+// (and `/healthz`) to `shbench serve` — see vite.config.ts. In production, serve
 // the built `frontend/dist` from any static host and either put it behind a
-// reverse proxy that forwards `/api` to `appctl serve`, or point it at the API
-// via `VITE_API_PROXY`. (`appctl serve` itself is an API only — it does not
+// reverse proxy that forwards `/api` to `shbench serve`, or point it at the API
+// via `VITE_API_PROXY`. (`shbench serve` itself is an API only — it does not
 // serve the SPA.)
 
 const API_BASE = "/api/v1";
