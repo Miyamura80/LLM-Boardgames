@@ -113,13 +113,95 @@ pub fn render_observation(obs: &Observation) -> String {
     s
 }
 
-/// Bump on ANY change to prompt-shaping code that the constant hashes below
-/// cannot see: `role_brief`, `decision_schema`/`decision_ask`, or
-/// `render_observation`. Keeps rating attribution honest — a scaffold id must
-/// change whenever model-visible prompts change.
+/// Manual override lever. The golden render below already covers
+/// `role_brief`, `decision_schema`, and `render_observation` automatically, so
+/// this only needs bumping to *intentionally* invalidate scaffolds for a
+/// reason the rendered text cannot see (e.g. a decoding/sampling change).
 const PROMPT_REVISION: &str = "prompts-v1";
 
-/// Hash of every template + persona + temperature: the scaffold version.
+/// A fixed, deterministic render of every model-visible prompt-shaping
+/// function. Folding this into the scaffold hash means any edit to
+/// `role_brief`, `render_observation`, `decision_schema`, or the event
+/// rendering they call changes the scaffold id on its own — no manual
+/// `PROMPT_REVISION` bump required, so rating attribution can't silently drift.
+fn golden_prompt_render() -> String {
+    use crate::secret_hitler::actions::DecisionPoint;
+    use crate::secret_hitler::state::GameState;
+    use crate::secret_hitler::types::{Party, Power, PLAYER_COUNT};
+
+    // Fixed arrangement: seats 0-3 Liberal, 4-5 Fascist, 6 Hitler. The seed is
+    // constant so the fixture (and thus the digest) is fully deterministic.
+    let roles: [Role; PLAYER_COUNT as usize] = [
+        Role::Liberal,
+        Role::Liberal,
+        Role::Liberal,
+        Role::Liberal,
+        Role::Fascist,
+        Role::Fascist,
+        Role::Hitler,
+    ];
+    let state = GameState::with_roles(0xF00D, roles);
+
+    let mut s = String::with_capacity(4096);
+    // One seat of each role exercises role_brief (incl. the Fascist teammate
+    // block) and render_observation (incl. private-event rendering).
+    for seat in [0u8, 4, 6] {
+        let obs = state.observe(seat);
+        s.push_str(&role_brief(&obs));
+        s.push('\n');
+        s.push_str(&render_observation(&obs));
+        s.push('\n');
+    }
+    // Every decision variant exercises decision_schema.
+    let decisions = [
+        DecisionPoint::Nominate {
+            president: 0,
+            eligible: vec![1, 2, 3],
+        },
+        DecisionPoint::Vote {
+            seat: 1,
+            nominee: 2,
+        },
+        DecisionPoint::Discard {
+            president: 0,
+            tiles: vec![Party::Liberal, Party::Fascist, Party::Fascist],
+        },
+        DecisionPoint::Enact {
+            chancellor: 2,
+            tiles: vec![Party::Liberal, Party::Fascist],
+            can_veto: false,
+        },
+        DecisionPoint::Enact {
+            chancellor: 2,
+            tiles: vec![Party::Liberal, Party::Fascist],
+            can_veto: true,
+        },
+        DecisionPoint::VetoConsent { president: 0 },
+        DecisionPoint::UsePower {
+            president: 0,
+            power: Power::InvestigateLoyalty,
+            targets: vec![1, 2],
+        },
+        DecisionPoint::UsePower {
+            president: 0,
+            power: Power::SpecialElection,
+            targets: vec![1, 2],
+        },
+        DecisionPoint::UsePower {
+            president: 0,
+            power: Power::Execution,
+            targets: vec![1, 2],
+        },
+    ];
+    for d in &decisions {
+        s.push_str(&decision_schema(d));
+        s.push('\n');
+    }
+    s
+}
+
+/// Hash of every template + rendered prompt code + persona + temperature: the
+/// scaffold version recorded on each seat of each game.
 pub fn scaffold_version(persona: Option<&str>, temperature: f32) -> String {
     let mut hasher = Sha256::new();
     hasher.update(PROMPT_REVISION);
@@ -127,8 +209,51 @@ pub fn scaffold_version(persona: Option<&str>, temperature: f32) -> String {
     hasher.update(OUTPUT_CONTRACT);
     hasher.update(SPEECH_SCHEMA);
     hasher.update(BELIEFS_INSTRUCTION);
+    hasher.update(golden_prompt_render());
     hasher.update(persona.unwrap_or(""));
     hasher.update(temperature.to_le_bytes());
     let digest = hasher.finalize();
     format!("sc-{:x}", digest)[..11].to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn golden_render_exercises_every_prompt_function() {
+        let g = golden_prompt_render();
+        // role_brief for each role...
+        assert!(g.contains("your secret role is Liberal"));
+        assert!(g.contains("your secret role is Fascist"));
+        assert!(g.contains("your secret role is Hitler"));
+        // ...the Fascist teammate block from role_brief...
+        assert!(g.contains("is Hitler."));
+        // ...render_observation board header...
+        assert!(g.contains("== BOARD =="));
+        // ...and every decision schema.
+        for token in [
+            "\"nominate\"",
+            "\"vote\"",
+            "\"discard\"",
+            "\"enact\"",
+            "veto_consent",
+            "use_power",
+        ] {
+            assert!(g.contains(token), "golden render missing {token}");
+        }
+    }
+
+    #[test]
+    fn scaffold_version_is_deterministic_and_input_sensitive() {
+        let base = scaffold_version(None, 0.7);
+        assert_eq!(base, scaffold_version(None, 0.7), "same inputs → same id");
+        assert_ne!(
+            base,
+            scaffold_version(Some("aggressive"), 0.7),
+            "persona shifts id"
+        );
+        assert_ne!(base, scaffold_version(None, 0.9), "temperature shifts id");
+        assert!(base.starts_with("sc-"));
+    }
 }
