@@ -21,7 +21,6 @@ cargo test --workspace  # Run Rust tests
 cargo clippy --workspace --all-targets -- -D warnings
 shbench call ping --json # Invoke a command headlessly
 make new name=fetch_url # Scaffold a new engine command
-make init PROFILE=... DRY_RUN=1  # Onboard the template into a real project
 make dev                # Optional frontend: Vite dev server, /api → shbench serve
 ```
 
@@ -30,7 +29,7 @@ make dev                # Optional frontend: Vite dev server, /api → shbench s
 - **crates/engine/** — typed async `Command` registry with `inventory`
   self-registration; per-request `Ctx`; capability traits. No transport deps.
 - **crates/cli/** — the `shbench` binary; `cli` and `http-api` are cargo features
-  (both default), so `shbench init` can prune a surface and still compile.
+  (both default), so a surface can be pruned and still compile.
 - **crates/config/** — crate `app-config`; `AppConfig` (secrets) vs sanitized
   `FrontendConfig` (served over HTTP). The sanitizer is a security boundary.
 - **frontend/** — optional React/Vite app, `fetch`-based `/api/v1` client.

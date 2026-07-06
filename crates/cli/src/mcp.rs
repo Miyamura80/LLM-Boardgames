@@ -5,8 +5,8 @@
 //! registry already exposes `registry.schemas()` / `registry.schema(name)`,
 //! which is exactly what an adapter maps `tools/list` → schemas and
 //! `tools/call` → `registry.call` onto. This stub keeps the subcommand surface
-//! stable until the adapter lands, and is intentionally ungated (like `init`
-//! and `new`) so it survives surface pruning.
+//! stable until the adapter lands, and is intentionally ungated (like `new`) so
+//! it survives surface pruning.
 
 /// Print the "not implemented" notice and exit with `EX_UNAVAILABLE` (69).
 pub fn run() -> ! {
