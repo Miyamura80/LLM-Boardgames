@@ -43,16 +43,25 @@ secret_hitler:
   agent_max_tokens: 8192
   agent_temperature: 0.5
   rating_k: 2.0
-  # Frozen anchor pools. NOTE: all default LLM anchors are Gemini-family
-  # because only GEMINI_API_KEY ships with this repo — diversify providers
-  # before publishing results (model-family collusion caveat, rating-design §3).
+  # Frozen anchor pools. The LLM anchors span three distinct model families
+  # (Mistral / DeepSeek / Google) to avoid the same-family collusion caveat in
+  # rating-design §3. All three tiers are cheap NON-REASONING models so per-game
+  # cost stays flat and predictable (reasoning tokens bill as output and this
+  # harness is output-volume-bound). Provider routing is litellm-style; set the
+  # matching keys (MISTRAL_API_KEY, DEEPSEEK_API_KEY, GEMINI_API_KEY) or point
+  # every anchor at `openrouter/…` and set OPENROUTER_API_KEY instead.
+  # VERIFY the exact model ids against each provider before a paid run — a wrong
+  # id surfaces immediately as a transport error, not a silent bad game.
   pools:
     pool-a:
       - { name: random, kind: random-legal }
       - { name: heuristic, kind: heuristic }
       - { name: bayes, kind: bayes-history }
-      - { name: llm-cheap, kind: llm, model: gemini/gemini-2.5-flash-preview }
-      - { name: llm-mid, kind: llm, model: gemini/gemini-3-flash-preview }
+      # llm-cheap: Mistral Small 3.2 — cheapest coherent non-reasoner (AA II 11).
+      - { name: llm-cheap, kind: llm, model: mistral/mistral-small-2506 }
+      # llm-mid: DeepSeek V3.2 non-reasoning — best cheap/coherent workhorse (AA II 25).
+      - { name: llm-mid, kind: llm, model: deepseek/deepseek-chat }
+      # llm-strong: Gemini 3 Flash (non-reasoning) — fast, 1M ctx, keyed by default.
       - name: llm-strong
         kind: llm
         model: gemini/gemini-3-flash-preview
