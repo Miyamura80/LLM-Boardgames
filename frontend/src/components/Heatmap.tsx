@@ -6,17 +6,20 @@
 
 import type { BeliefSnapshot, Role } from "../api/sh";
 
-// Single-hue sequential ramp (light → dark blue), text flips for dark steps.
+// Single-hue sequential ramp (parchment → deep fascist red): the cell measures
+// P(subject is on the Fascist team), so magnitude climbs toward the brand red.
+// Text flips to parchment for the dark steps. Ground-truth identity is still
+// carried by the ✦ marker + legend, never by cell color alone.
 const RAMP = [
-	"#f2f7fc",
-	"#dcebf7",
-	"#c0dcf0",
-	"#9ac8e6",
-	"#6face0",
-	"#4a90d9",
-	"#2f6fbe",
-	"#1d4f96",
-	"#123568",
+	"#f6eeda",
+	"#f2ddc0",
+	"#eec39c",
+	"#e7a077",
+	"#df7d55",
+	"#d65e3b",
+	"#c33a22",
+	"#9f2c19",
+	"#6f1d10",
 ];
 
 function cellColor(v: number): { bg: string; dark: boolean } {

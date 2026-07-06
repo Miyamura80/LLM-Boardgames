@@ -2,168 +2,211 @@
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
 
-/* Brand Colors:
-   - Baseline Black  #000000  (40%)
-   - Graphene Grey   #9BA4A6  (30%)
-   - Core Cyan       #C3FFFD  (20%)
-   - Wavelength White #F9F9F9 (10%)
-*/
+/* ============================================================================
+   Secret Hitler brand — docs surface.
+   Palette + type are the SINGLE SOURCE OF TRUTH in the `secret-hitler-brand`
+   skill (assets/secret-hitler-brand.css). Fumadocs themes via --color-fd-*, so
+   here we MAP those vars onto the brand's Parchment (light) / Noir (dark)
+   palettes. When the brand changes, edit it in the skill first, then re-sync
+   these hexes. See also frontend/src/brand.css (the Vite copy).
+
+     Fascist red  #C33A22 / #E0553B     Liberal teal #2E7C8C / #4FA9BC
+     Gold accent  #C79A3E / #D8AE4E     Ink #211A12  Parchment #ECE0C6
+   ========================================================================== */
+
+/* ─── Self-hosted brand fonts (no runtime Google dependency) ────────────── */
+@font-face {
+	font-family: "Oswald";
+	font-style: normal;
+	font-weight: 500 700;
+	font-display: swap;
+	src: url("/fonts/oswald-latin.woff2") format("woff2");
+}
+@font-face {
+	font-family: "Special Elite";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("/fonts/special-elite-latin.woff2") format("woff2");
+}
 
 @theme inline {
-	/* Light mode - inverted for readability */
-	--color-fd-background: #f9f9f9;
-	--color-fd-foreground: #000000;
-	--color-fd-muted: #9ba4a6;
-	--color-fd-muted-foreground: #5a6366;
-	--color-fd-primary: #000000;
-	--color-fd-primary-foreground: #f9f9f9;
-	--color-fd-secondary: #e8e8e8;
-	--color-fd-secondary-foreground: #000000;
-	--color-fd-accent: #c3fffd;
-	--color-fd-accent-foreground: #000000;
-	--color-fd-border: #9ba4a6;
-	--color-fd-ring: #c3fffd;
-	--color-fd-card: #f9f9f9;
-	--color-fd-card-foreground: #000000;
-	--color-fd-popover: #f9f9f9;
-	--color-fd-popover-foreground: #000000;
+	/* Light "Parchment" theme */
+	--color-fd-background: #ece0c6;
+	--color-fd-foreground: #211a12;
+	--color-fd-muted: #e3d4b4;
+	--color-fd-muted-foreground: #6d5e46;
+	--color-fd-primary: #c33a22; /* fascist red — links, active */
+	--color-fd-primary-foreground: #f6eeda;
+	--color-fd-secondary: #e3d4b4;
+	--color-fd-secondary-foreground: #211a12;
+	--color-fd-accent: #c79a3e; /* mustard gold — hover accents */
+	--color-fd-accent-foreground: #211a12;
+	--color-fd-border: #cdb98f;
+	--color-fd-ring: #c79a3e;
+	--color-fd-card: #f6eeda;
+	--color-fd-card-foreground: #211a12;
+	--color-fd-popover: #f6eeda;
+	--color-fd-popover-foreground: #211a12;
+
+	--font-display:
+		"Oswald", "Futura", "Century Gothic", "Trebuchet MS", ui-sans-serif,
+		system-ui, sans-serif;
+	--font-typewriter: "Special Elite", "Courier New", ui-monospace, monospace;
 }
 
 :root.dark {
-	--color-fd-background: #000000;
-	--color-fd-foreground: #f9f9f9;
-	--color-fd-muted: #1a1b1f;
-	--color-fd-muted-foreground: #9ba4a6;
-	--color-fd-primary: #c3fffd;
-	--color-fd-primary-foreground: #000000;
-	--color-fd-secondary: #1a1b1f;
-	--color-fd-secondary-foreground: #f9f9f9;
-	--color-fd-accent: #0d3332;
-	--color-fd-accent-foreground: #c3fffd;
-	--color-fd-border: #2a2b30;
-	--color-fd-ring: #c3fffd;
-	--color-fd-card: #1a1b1f;
-	--color-fd-card-foreground: #f9f9f9;
-	--color-fd-popover: #1a1b1f;
-	--color-fd-popover-foreground: #f9f9f9;
+	/* Dark "Noir" theme */
+	--color-fd-background: #16120c;
+	--color-fd-foreground: #f1e6cf;
+	--color-fd-muted: #201910;
+	--color-fd-muted-foreground: #b09a76;
+	--color-fd-primary: #e0553b; /* brightened fascist red on ink */
+	--color-fd-primary-foreground: #16120c;
+	--color-fd-secondary: #201910;
+	--color-fd-secondary-foreground: #f1e6cf;
+	--color-fd-accent: #d8ae4e; /* gold */
+	--color-fd-accent-foreground: #16120c;
+	--color-fd-border: #3a2f1f;
+	--color-fd-ring: #d8ae4e;
+	--color-fd-card: #201910;
+	--color-fd-card-foreground: #f1e6cf;
+	--color-fd-popover: #201910;
+	--color-fd-popover-foreground: #f1e6cf;
 }
 
-/* Sidebar dark mode overrides */
+/* ─── Art-Deco display headings (condensed Oswald, uppercase) ───────────── */
+h1,
+h2,
+h3,
+.prose h1,
+.prose h2,
+.prose h3,
+#nd-sidebar [data-radix-collection-item],
+[data-nd-brand] {
+	font-family: var(--font-display);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+h1,
+.prose h1 {
+	color: var(--color-fd-primary);
+}
+
+/* Typewriter treatment for inline code blocks reads as "classified" flavor. */
+:root {
+	--sh-font-typewriter: var(--font-typewriter);
+}
+
+/* ─── Noir sidebar / TOC overrides (parchment on ink) ───────────────────── */
 .dark #nd-sidebar {
-	--color-fd-background: #1a1b1f;
-	--color-fd-muted: #252629;
-	--color-fd-secondary: #252629;
-	--color-fd-muted-foreground: #9ba4a6;
-	--color-fd-foreground: #f9f9f9;
-	--color-fd-secondary-foreground: #f9f9f9;
-	--color-fd-border: #2a2b30;
-	background-color: #1a1b1f;
+	--color-fd-background: #201910;
+	--color-fd-muted: #2a2113;
+	--color-fd-secondary: #2a2113;
+	--color-fd-muted-foreground: #b09a76;
+	--color-fd-foreground: #f1e6cf;
+	--color-fd-secondary-foreground: #f1e6cf;
+	--color-fd-border: #3a2f1f;
+	background-color: #201910;
 }
 
-/* Ensure sidebar inner elements also get dark background */
 .dark #nd-sidebar > div {
-	background-color: #1a1b1f;
+	background-color: #201910;
 }
 
-/* Sidebar link text in dark mode */
 .dark #nd-sidebar a {
-	color: #f9f9f9;
+	color: #f1e6cf;
 }
 
 .dark #nd-sidebar a:hover {
-	color: #c3fffd;
+	color: #d8ae4e;
 }
 
-/* Active sidebar item */
 .dark #nd-sidebar a[data-active="true"] {
-	color: #c3fffd;
+	color: #e0553b;
 	font-weight: 600;
 }
 
-/* Inline TOC dark mode styling - target bg-fd-card elements */
 .dark .bg-fd-card {
-	background-color: #1a1b1f;
-	border-color: #2a2b30;
-	color: #f9f9f9;
+	background-color: #201910;
+	border-color: #3a2f1f;
+	color: #f1e6cf;
 }
 
 .dark .bg-fd-card button {
-	background-color: #1a1b1f;
-	color: #f9f9f9;
+	background-color: #201910;
+	color: #f1e6cf;
 }
 
 .dark .text-fd-muted-foreground {
-	color: #9ba4a6;
+	color: #b09a76;
 }
 
 .dark .bg-fd-card a {
-	color: #9ba4a6;
+	color: #b09a76;
 }
 
 .dark .bg-fd-card a:hover {
-	color: #c3fffd;
+	color: #d8ae4e;
 }
 
-/* Secondary buttons (Copy Markdown, Open) dark mode styling */
 .dark .bg-fd-secondary {
-	background-color: #1a1b1f;
-	border-color: #2a2b30;
-	color: #f9f9f9;
+	background-color: #201910;
+	border-color: #3a2f1f;
+	color: #f1e6cf;
 }
 
 .dark .bg-fd-secondary:hover {
-	background-color: #252629;
+	background-color: #2a2113;
 }
 
-/* Cards dark mode styling */
 .dark [data-card] {
-	background-color: #1a1b1f;
-	border-color: #2a2b30;
-	color: #f9f9f9;
+	background-color: #201910;
+	border-color: #3a2f1f;
+	color: #f1e6cf;
 }
 
 .dark [data-card]:hover {
-	background-color: #252629;
+	background-color: #2a2113;
 }
 
 .dark [data-card] a,
 .dark [data-card] span,
 .dark [data-card] p {
-	color: #f9f9f9;
+	color: #f1e6cf;
 }
 
-/* Right-side Table of Contents dark mode styling */
 .dark #nd-toc {
-	background-color: #1a1b1f;
-	border-color: #2a2b30;
+	background-color: #201910;
+	border-color: #3a2f1f;
 }
 
 .dark #nd-toc a {
-	color: #9ba4a6;
+	color: #b09a76;
 }
 
 .dark #nd-toc a:hover {
-	color: #c3fffd;
+	color: #d8ae4e;
 }
 
 .dark #nd-toc a[data-active="true"] {
-	color: #c3fffd;
+	color: #e0553b;
 }
 
-/* TOC popover (mobile) dark mode styling */
 .dark [data-toc-popover] {
-	background-color: #1a1b1f;
+	background-color: #201910;
 }
 
 .dark [data-toc-popover-content] {
-	background-color: #1a1b1f;
-	border-color: #2a2b30;
+	background-color: #201910;
+	border-color: #3a2f1f;
 }
 
 .dark [data-toc-popover-content] a {
-	color: #9ba4a6;
+	color: #b09a76;
 }
 
 .dark [data-toc-popover-content] a:hover {
-	color: #c3fffd;
+	color: #d8ae4e;
 }
