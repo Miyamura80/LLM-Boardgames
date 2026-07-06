@@ -108,15 +108,20 @@ pub async fn advance_match(
             break;
         }
         let record = play_plan(&plan, factory, game_cfg_base).await?;
+        let metrics = score_game(&record);
+        let inserted = store
+            .insert_game(run_id, &record, &metrics)
+            .await
+            .map_err(|e| e.to_string())?;
+        if !inserted {
+            // A concurrent resume persisted this game first — theirs counts.
+            skipped += 1;
+            continue;
+        }
         for seat in &record.seats {
             prompt_tokens += seat.usage.prompt_tokens;
             completion_tokens += seat.usage.completion_tokens;
         }
-        let metrics = score_game(&record);
-        store
-            .insert_game(run_id, &record, &metrics)
-            .await
-            .map_err(|e| e.to_string())?;
         played += 1;
         tracing::info!(
             game = plan.game_id,

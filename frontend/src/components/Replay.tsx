@@ -69,7 +69,15 @@ export function Replay() {
 		listGames(runId)
 			.then((r) => {
 				setGames(r.games);
-				if (r.games.length > 0) setGameId(r.games[0].game_id);
+				if (r.games.length > 0) {
+					setGameId(r.games[0].game_id);
+				} else {
+					// A run with no games must not keep showing the previous
+					// run's replay.
+					setGameId("");
+					setRecord(null);
+					setRendered([]);
+				}
 			})
 			.catch((e) => setError(describeError(e)));
 	}, [runId]);

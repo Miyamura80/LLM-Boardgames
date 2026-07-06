@@ -5,7 +5,6 @@
 use super::{AgentError, AgentReply, BeliefReport, RoleProbs, SeatAgent};
 use crate::secret_hitler::actions::{Action, DecisionPoint};
 use crate::secret_hitler::observation::Observation;
-use crate::secret_hitler::types::Role;
 use async_trait::async_trait;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
@@ -78,7 +77,7 @@ impl SeatAgent for RandomLegalBot {
 
     async fn beliefs(&mut self, obs: &Observation) -> Result<Option<BeliefReport>, AgentError> {
         // Uninformative priors — the calibration floor.
-        let prior = super::prior_for_observer(obs.role == Role::Liberal);
+        let prior = super::prior_for_observer(obs.role);
         let assessments: BTreeMap<_, RoleProbs> = obs
             .public
             .alive

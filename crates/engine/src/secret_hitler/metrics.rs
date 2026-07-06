@@ -130,7 +130,10 @@ fn score_seat(record: &GameRecord, seat: Seat) -> SeatMetrics {
                 .events
                 .iter()
                 .find_map(|r| match &r.event {
-                    GameEvent::Executed { target, .. } if *target == seat => Some(r.round),
+                    // The fatal round was not survived.
+                    GameEvent::Executed { target, .. } if *target == seat => {
+                        Some(r.round.saturating_sub(1))
+                    }
                     _ => None,
                 })
                 .unwrap_or(record.rounds)

@@ -163,23 +163,25 @@ pub(crate) fn prefer_tile(
 }
 
 /// Baseline priors from one seat's perspective over the 6 other players,
-/// before any evidence: 7-player game has 4 Liberals, 2 Fascists, 1 Hitler.
-pub fn prior_for_observer(observer_is_liberal: bool) -> RoleProbs {
-    // A Liberal looks at 6 others containing 3L/2F/1H; a Fascist's unknowns
-    // are Liberals only, but bots that know roles report the truth instead.
-    if observer_is_liberal {
-        RoleProbs {
+/// before any evidence — consistent with each role's 7-player information
+/// set (4 Liberals, 2 regular Fascists, 1 Hitler at the table).
+pub fn prior_for_observer(role: super::types::Role) -> RoleProbs {
+    use super::types::Role;
+    match role {
+        // A Liberal's 6 unknowns: 3L / 2F / 1H.
+        Role::Liberal => RoleProbs {
             liberal: 3.0 / 6.0,
             fascist: 2.0 / 6.0,
             hitler: 1.0 / 6.0,
-        }
-        .normalized()
-    } else {
-        RoleProbs {
-            liberal: 1.0 / 3.0,
-            fascist: 1.0 / 3.0,
-            hitler: 1.0 / 3.0,
-        }
-        .normalized()
+        },
+        // A regular Fascist knows every role: unknowns are Liberal.
+        Role::Fascist => RoleProbs::certain(Role::Liberal),
+        // Hitler's 6 unknowns: 4L / 2F / no second Hitler.
+        Role::Hitler => RoleProbs {
+            liberal: 4.0 / 6.0,
+            fascist: 2.0 / 6.0,
+            hitler: 0.0,
+        },
     }
+    .normalized()
 }

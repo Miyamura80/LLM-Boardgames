@@ -37,7 +37,7 @@
 		--color-btn-bg: #e5e5e5;
 		--color-btn-hover: #d4d4d4;
 		--color-error: #f87171;
-		--color-warn-bg: #45309b00;
+		--color-warn-bg: rgba(251, 191, 36, 0.16);
 		--color-warn-text: #fbbf24;
 	}
 }

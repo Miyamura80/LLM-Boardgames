@@ -78,6 +78,12 @@ impl Command for ShPlayGame {
                 "models must not be empty".into(),
             ));
         }
+        if models.len() > PLAYER_COUNT as usize {
+            return Err(CommandError::InvalidInput(format!(
+                "at most {PLAYER_COUNT} models fit a table; got {}",
+                models.len()
+            )));
+        }
         let seed = input.seed.unwrap_or(42);
         let factory = AgentFactory::from_app_config(cfg);
 
@@ -112,10 +118,11 @@ impl Command for ShPlayGame {
                 .create_run(run_id, "adhoc", &serde_json::json!({"mode":"adhoc"}))
                 .await
                 .map_err(|e| CommandError::Other(e.to_string()))?;
-            store
+            let inserted = store
                 .insert_game(run_id, &record, &metrics)
                 .await
                 .map_err(|e| CommandError::Other(e.to_string()))?;
+            debug_assert!(inserted, "ad-hoc game ids are request-unique");
         }
 
         let sum = |f: fn(&crate::secret_hitler::runner::record::SeatRecord) -> u32| {

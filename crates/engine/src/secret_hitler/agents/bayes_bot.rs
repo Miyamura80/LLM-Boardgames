@@ -144,21 +144,30 @@ impl SeatAgent for BayesHistoryBot {
     async fn beliefs(&mut self, obs: &Observation) -> Result<Option<BeliefReport>, AgentError> {
         let score = Self::suspicion(obs);
         let known: BTreeMap<Seat, Role> = obs.known_teammates.iter().copied().collect();
-        let prior = super::prior_for_observer(obs.role == Role::Liberal);
+        let prior = super::prior_for_observer(obs.role);
         let mut assessments = BTreeMap::new();
         for &s in obs.public.alive.iter().filter(|&&s| s != obs.seat) {
             let probs = match known.get(&s) {
                 Some(&role @ (Role::Fascist | Role::Hitler)) => RoleProbs::certain(role),
+                // A regular Fascist knows the whole table: unknowns are Liberal.
+                _ if obs.role == Role::Fascist => RoleProbs::certain(Role::Liberal),
                 _ => {
                     // Squash suspicion into a fascist-probability shift.
                     let x = score.get(&s).copied().unwrap_or(0.0);
                     let shift = 1.0 / (1.0 + (-x / 2.0).exp()); // 0..1, 0.5 = neutral
-                    let fasc_mass = (prior.fascist + prior.hitler) * 2.0 * shift;
-                    let fasc_mass = fasc_mass.clamp(0.02, 0.95);
+                    let team_prior = prior.fascist + prior.hitler;
+                    let fasc_mass = (team_prior * 2.0 * shift).clamp(0.02, 0.95);
+                    // Split the team mass like the prior does (a Hitler
+                    // observer puts zero on a second Hitler).
+                    let hitler_share = if team_prior > 0.0 {
+                        prior.hitler / team_prior
+                    } else {
+                        0.0
+                    };
                     RoleProbs {
                         liberal: 1.0 - fasc_mass,
-                        fascist: fasc_mass * 2.0 / 3.0,
-                        hitler: fasc_mass / 3.0,
+                        fascist: fasc_mass * (1.0 - hitler_share),
+                        hitler: fasc_mass * hitler_share,
                     }
                 }
             };

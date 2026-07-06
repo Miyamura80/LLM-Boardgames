@@ -15,6 +15,13 @@ impl GameState {
         roles: [Role; PLAYER_COUNT as usize],
         deck_top_first: &[Party],
     ) -> Self {
+        let hitlers = roles.iter().filter(|r| **r == Role::Hitler).count();
+        let fascists = roles.iter().filter(|r| **r == Role::Fascist).count();
+        assert_eq!(
+            (hitlers, fascists),
+            (1, 2),
+            "scripted roles must be 4 Liberals, 2 Fascists, 1 Hitler"
+        );
         let mut state = Self::new(seed);
         // Rewrite roles, then re-deal knowledge events to match.
         state.events.clear();

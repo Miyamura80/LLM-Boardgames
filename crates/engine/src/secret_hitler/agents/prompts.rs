@@ -113,9 +113,16 @@ pub fn render_observation(obs: &Observation) -> String {
     s
 }
 
+/// Bump on ANY change to prompt-shaping code that the constant hashes below
+/// cannot see: `role_brief`, `decision_schema`/`decision_ask`, or
+/// `render_observation`. Keeps rating attribution honest — a scaffold id must
+/// change whenever model-visible prompts change.
+const PROMPT_REVISION: &str = "prompts-v1";
+
 /// Hash of every template + persona + temperature: the scaffold version.
 pub fn scaffold_version(persona: Option<&str>, temperature: f32) -> String {
     let mut hasher = Sha256::new();
+    hasher.update(PROMPT_REVISION);
     hasher.update(RULES_SUMMARY);
     hasher.update(OUTPUT_CONTRACT);
     hasher.update(SPEECH_SCHEMA);

@@ -293,6 +293,10 @@ pub struct AnchorSpec {
     pub model: Option<String>,
     #[serde(default)]
     pub persona: Option<String>,
+    /// Frozen per-anchor sampling temperature (part of the anchor's scaffold);
+    /// falls back to `secret_hitler.agent_temperature`.
+    #[serde(default)]
+    pub temperature: Option<f32>,
 }
 
 fn default_discussion_rounds() -> u8 {

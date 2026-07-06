@@ -34,10 +34,13 @@ impl Default for RetryPolicy {
 impl RetryPolicy {
     /// Build from the repo's `llm_config.retry` section.
     pub fn from_app_config(cfg: &app_config::AppConfig) -> Self {
+        let max_wait_ms = cfg.llm_config.retry.max_wait_seconds.max(1) as u64 * 1_000;
         Self {
             max_attempts: cfg.llm_config.retry.max_attempts.max(1) as u32,
-            min_wait_ms: cfg.llm_config.retry.min_wait_seconds.max(0) as u64 * 1_000,
-            max_wait_ms: cfg.llm_config.retry.max_wait_seconds.max(1) as u64 * 1_000,
+            // Keep the window well-ordered even if config inverts min/max.
+            min_wait_ms: (cfg.llm_config.retry.min_wait_seconds.max(0) as u64 * 1_000)
+                .min(max_wait_ms),
+            max_wait_ms,
         }
     }
 }

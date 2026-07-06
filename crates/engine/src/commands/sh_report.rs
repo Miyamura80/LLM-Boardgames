@@ -83,9 +83,15 @@ impl Command for ShExportGameReport {
             &serde_json::to_value(&rendered).map_err(|e| CommandError::Other(e.to_string()))?,
         )
         .map_err(|e| CommandError::Other(e.to_string()))?;
-        let html = TEMPLATE
-            .replace("__GAME_DATA__", &data)
-            .replace("__RENDERED__", &lines);
+        // Split at the markers instead of sequential global replaces: model-
+        // authored text inside the payloads could itself contain a marker.
+        let (before, rest) = TEMPLATE
+            .split_once("__GAME_DATA__")
+            .ok_or_else(|| CommandError::Other("template missing __GAME_DATA__".into()))?;
+        let (between, after) = rest
+            .split_once("__RENDERED__")
+            .ok_or_else(|| CommandError::Other("template missing __RENDERED__".into()))?;
+        let html = format!("{before}{data}{between}{lines}{after}");
         let bytes = html.len();
 
         if let Some(path) = &input.output_path {

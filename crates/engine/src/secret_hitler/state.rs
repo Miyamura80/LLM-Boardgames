@@ -115,7 +115,8 @@ impl GameState {
     }
 
     fn build(seed: u64, mut rng: ChaCha8Rng, roles: Vec<Role>) -> Self {
-        debug_assert_eq!(
+        assert_eq!(roles.len(), PLAYER_COUNT as usize, "exactly 7 seats");
+        assert_eq!(
             roles.iter().filter(|r| **r == Role::Hitler).count(),
             1,
             "exactly one Hitler"

@@ -122,7 +122,10 @@ pub fn controlled_schedule(
 /// model visits every seat as evenly as the count allows. Roles are dealt from
 /// the seed (faction balance emerges over volume and is logged).
 pub fn arena_schedule(match_seed: u64, models: &[AgentSpec], games: u32) -> Vec<GamePlan> {
-    let n = models.len().max(1);
+    if models.is_empty() {
+        return Vec::new();
+    }
+    let n = models.len();
     (0..games)
         .map(|g| {
             let seed = cell_seed(match_seed, "arena", g as u64, 0, 0);

@@ -165,18 +165,26 @@ impl Command for ShRunMatch {
         let run_id = input.run_id.clone().unwrap_or_else(|| {
             use sha2::{Digest, Sha256};
             let digest = Sha256::digest(serde_json::to_string(&spec).unwrap_or_default());
-            format!(
-                "run-{}-{:02x}{:02x}{:02x}{:02x}",
-                spec.mode(),
-                digest[0],
-                digest[1],
-                digest[2],
-                digest[3]
-            )
+            let hex: String = digest[..8].iter().map(|b| format!("{b:02x}")).collect();
+            format!("run-{}-{hex}", spec.mode())
         });
         let store = open_store().await?;
+        let spec_json = serde_json::to_value(&spec).unwrap();
+        // Resuming an existing run with a different spec would silently mix
+        // schedules (stored game ids dedupe against the new plan) — refuse.
+        if let Some((_, stored)) = store
+            .get_run_spec(&run_id)
+            .await
+            .map_err(|e| CommandError::Other(e.to_string()))?
+        {
+            if stored != spec_json {
+                return Err(CommandError::InvalidInput(format!(
+                    "run '{run_id}' already exists with a different match spec; pick a new run_id or repeat the original spec"
+                )));
+            }
+        }
         store
-            .create_run(&run_id, spec.mode(), &serde_json::to_value(&spec).unwrap())
+            .create_run(&run_id, spec.mode(), &spec_json)
             .await
             .map_err(|e| CommandError::Other(e.to_string()))?;
 

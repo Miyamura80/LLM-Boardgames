@@ -102,7 +102,7 @@ impl SeatAgent for HeuristicBot {
                 Some(&role) => RoleProbs::certain(role),
                 // Everyone a regular Fascist doesn't know is Liberal.
                 None if obs.role == Role::Fascist => RoleProbs::certain(Role::Liberal),
-                None => super::prior_for_observer(obs.role == Role::Liberal),
+                None => super::prior_for_observer(obs.role),
             };
             assessments.insert(s, probs.normalized());
         }

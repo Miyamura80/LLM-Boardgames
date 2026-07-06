@@ -153,20 +153,22 @@ impl Store {
     }
 
     /// Persist a finished game with its per-seat metrics, atomically.
+    /// Returns `false` when the game id already existed (concurrent resume) —
+    /// callers must not count such games as newly played.
     pub async fn insert_game(
         &self,
         run_id: &str,
         record: &GameRecord,
         metrics: &[SeatMetrics],
-    ) -> StoreResult<()> {
+    ) -> StoreResult<bool> {
         let mut tx = self.pool.begin().await?;
-        sqlx::query(
+        let inserted = sqlx::query(
             "INSERT INTO sh_games (id, run_id, seed, schedule_label, winner, win_condition, rounds, duration_ms, record)
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (id) DO NOTHING",
         )
         .bind(&record.game_id)
         .bind(run_id)
-        .bind(record.seed as i64)
+        .bind(format!("{:016x}", record.seed))
         .bind(&record.schedule_label)
         .bind(record.winner.as_str())
         .bind(format!("{:?}", record.win_condition))
@@ -174,7 +176,9 @@ impl Store {
         .bind(record.duration_ms as i64)
         .bind(serde_json::to_value(record).expect("GameRecord serializes"))
         .execute(&mut *tx)
-        .await?;
+        .await?
+        .rows_affected()
+            > 0;
 
         for (seat, m) in record.seats.iter().zip(metrics.iter()) {
             sqlx::query(
@@ -212,7 +216,8 @@ impl Store {
             .execute(&mut *tx)
             .await?;
         }
-        tx.commit().await
+        tx.commit().await?;
+        Ok(inserted)
     }
 
     pub async fn list_games(&self, run_id: &str) -> StoreResult<Vec<GameSummary>> {
@@ -242,7 +247,11 @@ impl Store {
             .bind(game_id)
             .fetch_optional(&self.pool)
             .await?;
-        Ok(row.and_then(|r| serde_json::from_value(r.get("record")).ok()))
+        // A malformed payload is corruption, not absence — surface it.
+        row.map(|r| {
+            serde_json::from_value(r.get("record")).map_err(|e| sqlx::Error::Decode(Box::new(e)))
+        })
+        .transpose()
     }
 
     /// Every stored game of a run, oldest first (rating recomputation).

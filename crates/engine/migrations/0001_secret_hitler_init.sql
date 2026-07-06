@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS sh_runs (
 CREATE TABLE IF NOT EXISTS sh_games (
     id             TEXT PRIMARY KEY,
     run_id         TEXT NOT NULL REFERENCES sh_runs(id) ON DELETE CASCADE,
-    seed           BIGINT NOT NULL,
+    -- u64 seed as zero-padded hex (BIGINT would sign-wrap high-bit seeds)
+    seed           TEXT NOT NULL,
     schedule_label TEXT NOT NULL,
     winner         TEXT NOT NULL,
     win_condition  TEXT NOT NULL,

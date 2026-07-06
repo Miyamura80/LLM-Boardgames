@@ -20,6 +20,9 @@ pub struct AgentSpec {
     pub model: Option<String>,
     #[serde(default)]
     pub persona: Option<String>,
+    /// Frozen sampling temperature; `None` uses the configured default.
+    #[serde(default)]
+    pub temperature: Option<f32>,
     #[serde(default)]
     pub is_anchor: bool,
 }
@@ -31,6 +34,7 @@ impl AgentSpec {
             kind: AgentKind::Llm,
             model: Some(model.to_string()),
             persona: None,
+            temperature: None,
             is_anchor: false,
         }
     }
@@ -41,6 +45,7 @@ impl AgentSpec {
             kind,
             model: None,
             persona: None,
+            temperature: None,
             is_anchor: false,
         }
     }
@@ -51,6 +56,7 @@ impl AgentSpec {
             kind: a.kind,
             model: a.model.clone(),
             persona: a.persona.clone(),
+            temperature: a.temperature,
             is_anchor: true,
         }
     }
@@ -60,6 +66,14 @@ impl AgentSpec {
     /// via their own model+persona scaffold hash).
     pub fn model_id(&self) -> String {
         match self.kind {
+            // LLM anchors are distinct rated entities per pool slot: the same
+            // base model with a different persona/temperature is a different
+            // (frozen) player, and an anchor must never merge with a
+            // candidate that happens to share its model string.
+            AgentKind::Llm if self.is_anchor => {
+                let model = self.model.as_deref().unwrap_or(&self.name);
+                format!("anchor:{}:{}", self.name, model)
+            }
             AgentKind::Llm => self.model.clone().unwrap_or_else(|| self.name.clone()),
             kind => format!("bot:{}", kind.as_str()),
         }
@@ -106,7 +120,7 @@ impl AgentFactory {
                 Ok(Box::new(LlmSeatAgent::new(
                     client,
                     spec.persona.clone(),
-                    self.temperature,
+                    spec.temperature.unwrap_or(self.temperature),
                     self.max_tokens,
                     self.utterance_char_cap,
                 )))

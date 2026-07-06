@@ -2,7 +2,7 @@
 // plus the objective metric summary. Values are text; identity stays in ink
 // (no series colors needed — this is a table, not a chart).
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { describeError } from "../api/client";
 import {
 	fetchLeaderboard,
@@ -50,19 +50,29 @@ export function Leaderboard() {
 			.catch((e) => setError(describeError(e)));
 	}, []);
 
-	const load = useCallback(() => {
+	// Only the latest request may commit: quick run/filter changes would
+	// otherwise race, and a failed fetch must not leave stale rows on screen.
+	useEffect(() => {
 		if (!runId) return;
+		let current = true;
 		fetchLeaderboard(runId, anchors)
 			.then((r) => {
+				if (!current) return;
 				setRows(r.rows);
 				setMetrics(r.metrics);
 				setNote(r.uncertainty_note);
 				setError(null);
 			})
-			.catch((e) => setError(describeError(e)));
+			.catch((e) => {
+				if (!current) return;
+				setRows([]);
+				setMetrics([]);
+				setError(describeError(e));
+			});
+		return () => {
+			current = false;
+		};
 	}, [runId, anchors]);
-
-	useEffect(load, [load]);
 
 	return (
 		<section className="sh-panel">

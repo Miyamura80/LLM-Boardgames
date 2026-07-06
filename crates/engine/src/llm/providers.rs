@@ -55,6 +55,9 @@ pub struct ResolvedProvider {
 /// model name with no `/` defaults to the `openai` provider.
 pub fn resolve_provider(model: &str, keys: &ProviderKeys) -> Result<ResolvedProvider, String> {
     let (prefix, name) = model.split_once('/').unwrap_or(("openai", model));
+    if name.trim().is_empty() {
+        return Err(format!("model string '{model}' has an empty model name"));
+    }
     let (provider, base_url, key): (&'static str, &str, &Option<String>) = match prefix {
         "openai" => ("openai", "https://api.openai.com/v1", &keys.openai),
         "anthropic" => ("anthropic", "https://api.anthropic.com/v1", &keys.anthropic),

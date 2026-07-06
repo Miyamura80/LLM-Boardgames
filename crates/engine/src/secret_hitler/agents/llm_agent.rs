@@ -120,6 +120,15 @@ impl SeatAgent for LlmSeatAgent {
         let content = self.ask(self.system_prompt(obs), user).await?;
         let value = extract_json(&content)
             .ok_or_else(|| AgentError::Malformed("no JSON object found in reply".into()))?;
+        // Same strictness as decisions: unknown fields are rejected.
+        if let Some(obj) = value.as_object() {
+            const ALLOWED: [&str; 3] = ["message", "pass", "thought_process"];
+            if let Some(unknown) = obj.keys().find(|k| !ALLOWED.contains(&k.as_str())) {
+                return Err(AgentError::Malformed(format!(
+                    "unknown field \"{unknown}\" (additionalProperties are rejected)"
+                )));
+            }
+        }
         if value.get("pass").and_then(Value::as_bool) == Some(true) {
             return Ok(SpeechReply { text: None });
         }
@@ -170,8 +179,7 @@ impl SeatAgent for LlmSeatAgent {
             );
         }
         // Fill any missing living opponents with priors so scoring is total.
-        let prior =
-            super::prior_for_observer(obs.role == crate::secret_hitler::types::Role::Liberal);
+        let prior = super::prior_for_observer(obs.role);
         for &s in obs.public.alive.iter().filter(|&&s| s != obs.seat) {
             assessments.entry(s).or_insert(prior);
         }
@@ -207,16 +215,29 @@ fn decision_ask(decision: &DecisionPoint) -> String {
     }
 }
 
-/// Pull the first JSON object out of a completion (tolerates code fences and
-/// prose around it, tolerates nothing inside it).
+/// Pull the first parseable JSON object out of a completion (tolerates code
+/// fences and prose around it, tolerates nothing inside it). Every `{` is a
+/// candidate start: prose containing a stray brace before the real payload
+/// must not eat the reply.
 fn extract_json(content: &str) -> Option<Value> {
     let trimmed = content.trim();
     if let Ok(v) = serde_json::from_str::<Value>(trimmed) {
         return Some(v);
     }
-    let start = trimmed.find('{')?;
-    // Walk to the matching close brace.
-    let bytes = trimmed.as_bytes();
+    let mut search_from = 0;
+    while let Some(offset) = trimmed[search_from..].find('{') {
+        let start = search_from + offset;
+        if let Some(v) = extract_balanced(trimmed, start) {
+            return Some(v);
+        }
+        search_from = start + 1;
+    }
+    None
+}
+
+/// Parse the brace-balanced block starting at `start`, if it is valid JSON.
+fn extract_balanced(text: &str, start: usize) -> Option<Value> {
+    let bytes = text.as_bytes();
     let mut depth = 0usize;
     let mut in_str = false;
     let mut escape = false;
@@ -231,7 +252,7 @@ fn extract_json(content: &str) -> Option<Value> {
             b'}' if !in_str => {
                 depth -= 1;
                 if depth == 0 {
-                    return serde_json::from_str(&trimmed[start..=i]).ok();
+                    return serde_json::from_str(&text[start..=i]).ok();
                 }
             }
             _ => {}
