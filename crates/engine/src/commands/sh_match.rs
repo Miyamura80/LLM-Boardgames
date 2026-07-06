@@ -146,10 +146,17 @@ impl Command for ShRunMatch {
             }
         };
 
-        let run_id = input
-            .run_id
-            .clone()
-            .unwrap_or_else(|| format!("run-{}-{match_seed:x}", spec.mode()));
+        // Default run id hashes the whole spec: the same seed with a different
+        // candidate/pool must be a different run, or resume would silently
+        // skip the new candidate's games.
+        let run_id = input.run_id.clone().unwrap_or_else(|| {
+            use std::hash::{Hash, Hasher};
+            let mut h = std::collections::hash_map::DefaultHasher::new();
+            serde_json::to_string(&spec)
+                .unwrap_or_default()
+                .hash(&mut h);
+            format!("run-{}-{:08x}", spec.mode(), h.finish() as u32)
+        });
         let store = open_store().await?;
         store
             .create_run(&run_id, spec.mode(), &serde_json::to_value(&spec).unwrap())
