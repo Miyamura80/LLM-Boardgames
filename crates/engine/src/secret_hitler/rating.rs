@@ -126,10 +126,14 @@ pub struct LeaderboardRow {
     /// Role-frequency-weighted aggregate: 4/7·Lib + 2/7·Fasc + 1/7·Hitler
     /// (missing roles fall back to the Weng-Lin prior μ=25).
     pub overall_mu: f64,
+    /// Role-frequency-weighted aggregate σ (same weights as `overall_mu`).
+    pub overall_sigma: f64,
     pub overall_conservative: f64,
     pub total_games: u32,
-    /// True when σ is still too wide to separate this row from its
-    /// leaderboard neighbours — do not over-read close ranks.
+    /// True when this row's μ±kσ interval overlaps an adjacent row's — i.e.
+    /// the rating is still too uncertain to separate it from a neighbour.
+    /// On a single-row board (no neighbour to compare) this falls back to
+    /// "σ still near the prior". Do not over-read close ranks when set.
     pub high_uncertainty: bool,
 }
 
@@ -177,17 +181,15 @@ pub fn leaderboard(table: &RatingTable, k: f64) -> Vec<LeaderboardRow> {
         .map(|(model_id, roles)| {
             let weights = [4.0 / 7.0, 2.0 / 7.0, 1.0 / 7.0];
             let mut overall_mu = 0.0;
-            let mut overall_cons = 0.0;
+            let mut overall_sigma = 0.0;
             let mut total_games = 0;
             let mut is_anchor = false;
-            let mut max_sigma: f64 = 0.0;
             for (i, r) in roles.iter().enumerate() {
                 let st = r.as_ref().unwrap_or(&default);
                 overall_mu += weights[i] * st.mu;
-                overall_cons += weights[i] * (st.mu - k * st.sigma);
+                overall_sigma += weights[i] * st.sigma;
                 total_games += st.games;
                 is_anchor |= st.is_anchor;
-                max_sigma = max_sigma.max(st.sigma);
             }
             LeaderboardRow {
                 model_id,
@@ -196,11 +198,11 @@ pub fn leaderboard(table: &RatingTable, k: f64) -> Vec<LeaderboardRow> {
                 fascist: roles[1].as_ref().map(|s| role_line(s, k)),
                 hitler: roles[2].as_ref().map(|s| role_line(s, k)),
                 overall_mu,
-                overall_conservative: overall_cons,
+                overall_sigma,
+                overall_conservative: overall_mu - k * overall_sigma,
                 total_games,
-                // σ barely below the 25/3 prior means the rating is still
-                // mostly prior — warn.
-                high_uncertainty: max_sigma > 25.0 / 3.0 * 0.75,
+                // Filled in the neighbour pass below once rows are ranked.
+                high_uncertainty: false,
             }
         })
         .collect();
@@ -209,5 +211,96 @@ pub fn leaderboard(table: &RatingTable, k: f64) -> Vec<LeaderboardRow> {
             .partial_cmp(&a.overall_conservative)
             .unwrap()
     });
+    flag_neighbour_overlap(&mut rows, k);
     rows
+}
+
+/// Flag a row when its μ±kσ interval overlaps an adjacent (ranked) row's —
+/// the honest reading of "too uncertain to separate close models". Two
+/// intervals `[μ-kσ, μ+kσ]` overlap iff neither sits entirely beyond the
+/// other. A lone row has no neighbour, so it falls back to "σ near the prior".
+fn flag_neighbour_overlap(rows: &mut [LeaderboardRow], k: f64) {
+    let lo = |r: &LeaderboardRow| r.overall_mu - k * r.overall_sigma;
+    let hi = |r: &LeaderboardRow| r.overall_mu + k * r.overall_sigma;
+    let overlaps = |a: &LeaderboardRow, b: &LeaderboardRow| lo(a) <= hi(b) && lo(b) <= hi(a);
+
+    let flags: Vec<bool> = (0..rows.len())
+        .map(|i| {
+            let above = i.checked_sub(1).map(|j| overlaps(&rows[i], &rows[j]));
+            let below = rows.get(i + 1).map(|r| overlaps(&rows[i], r));
+            match (above, below) {
+                // At least one neighbour exists: flag iff an interval overlaps.
+                (Some(a), Some(b)) => a || b,
+                (Some(a), None) => a,
+                (None, Some(b)) => b,
+                // Single-row board: no separation to judge — fall back to the
+                // prior-width heuristic (σ still mostly the 25/3 Weng-Lin prior).
+                (None, None) => rows[i].overall_sigma > 25.0 / 3.0 * 0.75,
+            }
+        })
+        .collect();
+    for (row, flag) in rows.iter_mut().zip(flags) {
+        row.high_uncertainty = flag;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn entity(table: &mut RatingTable, model: &str, role: Role, mu: f64, sigma: f64) {
+        table.entities.insert(
+            (model.to_string(), role),
+            RatingState {
+                mu,
+                sigma,
+                games: 10,
+                wins: 5,
+                is_anchor: false,
+            },
+        );
+    }
+
+    /// Two well-separated, confident models: neither interval overlaps, so
+    /// neither is flagged.
+    #[test]
+    fn separated_confident_rows_not_flagged() {
+        let mut table = RatingTable::default();
+        for role in [Role::Liberal, Role::Fascist, Role::Hitler] {
+            entity(&mut table, "strong", role, 35.0, 1.0);
+            entity(&mut table, "weak", role, 15.0, 1.0);
+        }
+        let rows = leaderboard(&table, 2.0);
+        assert!(rows.iter().all(|r| !r.high_uncertainty));
+    }
+
+    /// Two models a hair apart with wide σ: intervals overlap → both flagged,
+    /// even though each row's σ alone might pass an absolute threshold.
+    #[test]
+    fn overlapping_intervals_flagged() {
+        let mut table = RatingTable::default();
+        for role in [Role::Liberal, Role::Fascist, Role::Hitler] {
+            entity(&mut table, "a", role, 25.5, 3.0);
+            entity(&mut table, "b", role, 24.5, 3.0);
+        }
+        let rows = leaderboard(&table, 2.0);
+        assert!(rows.iter().all(|r| r.high_uncertainty));
+    }
+
+    /// A confident leader whose interval clears the runner-up's is not flagged,
+    /// while the still-uncertain runner-up is.
+    #[test]
+    fn confident_leader_over_uncertain_field() {
+        let mut table = RatingTable::default();
+        for role in [Role::Liberal, Role::Fascist, Role::Hitler] {
+            entity(&mut table, "leader", role, 40.0, 0.5);
+            entity(&mut table, "midA", role, 25.0, 3.0);
+            entity(&mut table, "midB", role, 24.0, 3.0);
+        }
+        let rows = leaderboard(&table, 2.0);
+        let by = |id: &str| rows.iter().find(|r| r.model_id == id).unwrap();
+        assert!(!by("leader").high_uncertainty);
+        assert!(by("midA").high_uncertainty);
+        assert!(by("midB").high_uncertainty);
+    }
 }
