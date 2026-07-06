@@ -23,6 +23,14 @@
   <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/Miyamura80/Secret-Hitler-Evals/rust_checks.yaml?branch=main">
 </p>
 
+<p align="center">
+  <img src="media/frontend-midgame.png" alt="Secret-Hitler-Evals frontend showing a mid-game replay: board state, seat roster with roles and models, the omniscient transcript with each agent's private reasoning, and the who-suspected-who belief heatmap" width="760">
+</p>
+
+<p align="center">
+  <sub><i>The replay console mid-game — board, seats, omniscient transcript (with agents' private reasoning), and the who-suspected-who belief heatmap. Data shown is illustrative.</i></sub>
+</p>
+
 ---
 
 ## Key Features
