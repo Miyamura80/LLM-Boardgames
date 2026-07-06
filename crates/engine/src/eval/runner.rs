@@ -8,6 +8,7 @@ use crate::eval::record::{BeliefSnapshot, GameRecord, Reliability, SeatAssignmen
 use crate::game::{Action, Event, GameState};
 use std::collections::BTreeMap;
 
+#[derive(Debug, Clone)]
 pub struct RunnerConfig {
     /// Attempts per decision before the forced legal default is applied.
     pub max_attempts: usize,
@@ -57,8 +58,11 @@ pub async fn run_game(
             game.apply(ballot).expect("aggregated ballot is legal")
         } else {
             let seat = decision.actor().expect("non-vote decision has an actor");
-            let action =
+            let (action, forced) =
                 resolve_action(&game, agents, seat, &decision, cfg, &mut reliability).await;
+            if forced {
+                game.record_forced_default(seat, decision_kind_name(&decision));
+            }
             game.apply(action).expect("resolved action is legal")
         };
 
@@ -100,7 +104,7 @@ async fn resolve_action(
     decision: &crate::game::Decision,
     cfg: &RunnerConfig,
     reliability: &mut BTreeMap<usize, Reliability>,
-) -> Action {
+) -> (Action, bool) {
     let obs = game.observation(seat);
     let mut feedback: Option<String> = None;
     let counters = reliability.entry(seat).or_default();
@@ -111,7 +115,7 @@ async fn resolve_action(
                 // Legal-check by probing a clone; on illegal, rethink with reason.
                 let mut probe = game.clone();
                 match probe.apply(action.clone()) {
-                    Ok(_) => return action,
+                    Ok(_) => return (action, false),
                     Err(reason) => {
                         counters.illegal_moves += 1;
                         feedback = Some(format!("illegal move: {reason}. Choose a legal action."));
@@ -132,8 +136,25 @@ async fn resolve_action(
     counters.forced_defaults += 1;
     // Forced legal default is computed on a clone to keep `game` immutable here.
     let mut g = game.clone();
-    g.forced_default()
-        .expect("a pending decision has a default")
+    (
+        g.forced_default()
+            .expect("a pending decision has a default"),
+        true,
+    )
+}
+
+fn decision_kind_name(decision: &crate::game::Decision) -> &'static str {
+    use crate::game::DecisionKind::*;
+    match decision.kind {
+        Nominate { .. } => "nominate",
+        Vote { .. } => "vote",
+        PresidentDiscard { .. } => "discard",
+        ChancellorEnact { .. } => "enact",
+        VetoConsent { .. } => "veto_consent",
+        Investigate { .. } => "investigate",
+        SpecialElection { .. } => "special_election",
+        Execution { .. } => "execute",
+    }
 }
 
 /// Collect a simultaneous ballot: each living voter reports only its own vote,

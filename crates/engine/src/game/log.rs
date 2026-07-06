@@ -88,6 +88,13 @@ pub enum Event {
         winner: crate::game::roles::Faction,
         reason: WinReason,
     },
+    /// The harness applied a forced legal default for `seat` (attempts exhausted).
+    /// Recorded by the runner so play-quality metrics can exclude this choice
+    /// (FR-4); reliability counters still increment.
+    ForcedDefault {
+        seat: usize,
+        decision: String,
+    },
 
     // ---- private (seat-scoped) -----------------------------------------
     RoleAssigned {

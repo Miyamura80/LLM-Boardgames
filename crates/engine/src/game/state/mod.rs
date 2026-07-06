@@ -92,9 +92,11 @@ impl GameState {
         let mut rng = Rng::new(config.seed);
         let aux = rng.fork(0xF0);
 
-        // Deal roles.
-        let mut roles = SEVEN_PLAYER_ROLES;
-        rng.shuffle(&mut roles);
+        // Deal roles: use the explicit assignment if given, else shuffle.
+        let mut roles = config.role_assignment.unwrap_or(SEVEN_PLAYER_ROLES);
+        if config.role_assignment.is_none() {
+            rng.shuffle(&mut roles);
+        }
         let players: Vec<Player> = roles
             .iter()
             .enumerate()
@@ -205,6 +207,15 @@ impl GameState {
     /// game state), but part of the public history subsequent decisions see.
     pub fn record_utterance(&mut self, seat: usize, round: u8, text: String) {
         self.log.public(Event::Utterance { seat, round, text });
+    }
+
+    /// Mark that the runner is applying a forced legal default for `seat`, so
+    /// downstream metrics can exclude the choice that follows (FR-4).
+    pub fn record_forced_default(&mut self, seat: usize, decision: impl Into<String>) {
+        self.log.public(Event::ForcedDefault {
+            seat,
+            decision: decision.into(),
+        });
     }
     pub fn is_over(&self) -> bool {
         self.winner.is_some()
@@ -433,64 +444,5 @@ impl GameState {
     }
 }
 
-// ===========================================================================
-// Test-support seams (black-box: crate-visible constructors used by the rules
-// suite to control roles, deck order, and board position deterministically).
-// ===========================================================================
-
 #[cfg(test)]
-impl GameState {
-    pub(crate) fn test_game(
-        roles: [Role; NUM_PLAYERS],
-        draw: Vec<Policy>,
-        first_president: usize,
-    ) -> Self {
-        let config = GameConfig::new(0).with_first_president(first_president);
-        let rng = Rng::new(config.seed);
-        let aux = rng.fork(0xF0);
-        let players = roles
-            .iter()
-            .enumerate()
-            .map(|(seat, &role)| Player {
-                seat,
-                role,
-                alive: true,
-            })
-            .collect();
-        let mut state = Self {
-            config,
-            rng,
-            aux,
-            players,
-            deck: Deck::from_draw(draw),
-            board: Board::default(),
-            election_tracker: 0,
-            president: first_president,
-            chancellor: None,
-            last_president: None,
-            last_chancellor: None,
-            phase: Phase::Nomination,
-            pending_special: None,
-            special_return: None,
-            current_is_special: false,
-            investigated: Vec::new(),
-            investigation_results: BTreeMap::new(),
-            winner: None,
-            log: GameLog::default(),
-        };
-        state.emit_setup();
-        state
-    }
-
-    /// Jump the enacted-policy counters (to reach a threshold quickly).
-    pub(crate) fn test_set_board(&mut self, liberal: u8, fascist: u8) {
-        self.board.liberal = liberal;
-        self.board.fascist = fascist;
-    }
-
-    /// Tiles still in draw+discard piles (not yet enacted). For the tile
-    /// conservation invariant.
-    pub(crate) fn deck_in_circulation(&self) -> usize {
-        self.deck.tiles_in_circulation()
-    }
-}
+mod test_support;

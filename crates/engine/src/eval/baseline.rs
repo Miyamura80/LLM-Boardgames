@@ -13,12 +13,28 @@ use async_trait::async_trait;
 use std::collections::BTreeMap;
 
 /// A scripted baseline seat.
-#[derive(Debug, Default, Clone)]
-pub struct BaselineAgent;
+#[derive(Debug, Clone)]
+pub struct BaselineAgent {
+    name: String,
+}
+
+impl Default for BaselineAgent {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl BaselineAgent {
     pub fn new() -> Self {
-        Self
+        Self {
+            name: "baseline/v1".to_string(),
+        }
+    }
+
+    /// A baseline with a distinct identity (so a table of baselines has distinct
+    /// rated entities — used to exercise the match runner/rating).
+    pub fn named(name: impl Into<String>) -> Self {
+        Self { name: name.into() }
     }
 
     fn own_faction(role: Role) -> Faction {
@@ -34,7 +50,7 @@ impl BaselineAgent {
 #[async_trait]
 impl Agent for BaselineAgent {
     fn name(&self) -> String {
-        "baseline/v1".to_string()
+        self.name.clone()
     }
 
     async fn act(

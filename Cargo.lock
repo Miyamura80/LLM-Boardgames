@@ -718,6 +718,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
+ "skillratings",
  "tempfile",
  "thiserror 2.0.18",
  "tokio",
@@ -2460,6 +2461,12 @@ checksum = "95890f873bec569a0362c235787f3aca6e1e887302ba4840839bcc6459c42da6"
 dependencies = [
  "quote",
 ]
+
+[[package]]
+name = "skillratings"
+version = "0.27.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53c8196a815d27d6dbd2439058a2cbf6597a549a68ca6368611df240df7c2987"
 
 [[package]]
 name = "slab"

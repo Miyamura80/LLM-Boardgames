@@ -354,6 +354,9 @@ fn format_event(e: &Event, you: usize) -> Option<String> {
             if *consented { "accepted" } else { "rejected" }
         ),
         Event::GameOver { winner, reason } => format!("GAME OVER: {winner:?} win ({reason:?})."),
+        Event::ForcedDefault { seat, decision } => {
+            format!("Seat {seat} timed out; a forced default was applied ({decision}).")
+        }
         // Private events for `you` only.
         Event::RoleAssigned { role } => format!("(private) Your role: {}.", role_name(*role)),
         Event::FascistTeamRevealed { fascists, hitler } => {

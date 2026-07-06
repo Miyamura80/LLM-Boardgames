@@ -27,9 +27,10 @@ pub enum Party {
 }
 
 /// The secret role. Ground truth; never appears in another seat's observation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Role {
+    #[default]
     Liberal,
     Fascist,
     Hitler,
