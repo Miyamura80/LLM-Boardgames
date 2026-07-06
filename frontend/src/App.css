@@ -267,16 +267,99 @@ body {
 	color: var(--color-text-secondary);
 }
 
+/* Transcript header: round count + expand/collapse-all actions. */
+.sh-log-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 1rem;
+}
+
+.sh-log-actions {
+	display: flex;
+	gap: 0.75rem;
+}
+
+.sh-linkbtn {
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	font-family: var(--font-display);
+	font-size: var(--font-size-sm);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--sh-liberal);
+}
+
+.sh-linkbtn:hover {
+	color: var(--sh-fascist);
+}
+
 .sh-log {
-	list-style: none;
-	max-height: 320px;
+	max-height: 360px;
 	overflow-y: auto;
 	border: 1px solid var(--color-border);
-	border-radius: 8px;
-	padding: 0.5rem 0.75rem;
+	border-radius: var(--sh-radius);
+	padding: 0.4rem;
 	font-size: var(--font-size-sm);
 	display: grid;
+	gap: 0.4rem;
+}
+
+/* Each round is an independently foldable group. */
+.sh-round {
+	border: 1px solid var(--color-border);
+	border-radius: var(--sh-radius);
+	background: var(--color-surface);
+	overflow: hidden;
+}
+
+.sh-round > summary {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 0.75rem;
+	cursor: pointer;
+	padding: 0.35rem 0.6rem;
+	background: var(--sh-surface-sunken);
+	list-style: none;
+}
+
+.sh-round > summary::-webkit-details-marker {
+	display: none;
+}
+
+.sh-round > summary::before {
+	content: "▸";
+	color: var(--color-text-secondary);
+	margin-right: 0.1rem;
+	transition: transform 0.12s ease;
+}
+
+.sh-round[open] > summary::before {
+	content: "▾";
+}
+
+.sh-round-title {
+	flex: 1;
+	font-family: var(--font-display);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.sh-round-tag {
+	color: var(--color-text-secondary);
+	font-size: var(--font-size-sm);
+	white-space: nowrap;
+}
+
+.sh-round-body {
+	list-style: none;
+	display: grid;
 	gap: 0.15rem;
+	padding: 0.4rem 0.6rem 0.5rem 1.1rem;
 }
 
 .sh-private {

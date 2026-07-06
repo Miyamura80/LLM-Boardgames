@@ -28,7 +28,7 @@
 </p>
 
 <p align="center">
-  <sub><i>The replay console mid-game — board, seats, omniscient transcript (with agents' private reasoning), and the who-suspected-who belief heatmap. Data shown is illustrative.</i></sub>
+  <sub><i>The replay console mid-game — board, seats, a fold/expand-per-round omniscient transcript (with each agent's private reasoning), and the who-suspected-who belief heatmap. Data shown is illustrative.</i></sub>
 </p>
 
 ---
