@@ -88,25 +88,35 @@ An optional React/Vite frontend visualizes games and replays over `fetch`.
 ## Quick Start
 
 ```bash
-# 1. Onboard the template into a real project (dry-run first, then apply)
-make init PROFILE=cli+server DRY_RUN=1
-make init PROFILE=cli+server
-
-# 2. Build + test the workspace
+# 1. Build + test the workspace (includes the exhaustive rules test suite)
 cargo build --workspace
 cargo test --workspace
 
-# 3. Run the HTTP API
-make run                    # = shbench serve   (GET /healthz, /api/v1/commands)
+# 2. Start the Postgres eval store and point the harness at it
+docker compose up -d
+cp .env.example .env        # fill APP__GEMINI_API_KEY etc.; DATABASE_URL is preset
 
-# 4. Call a command headlessly
-cargo run -p shbench -- call ping --json
-cargo run -p shbench -- call read_file --args '{"path": "/etc/hostname"}' --json
+# 3. Smoke-test a full 7-player game with scripted bots (no LLM, no DB, <1s)
+cargo run -p shbench -- call sh_play_game --args '{"models":["bot:heuristic","bot:bayes-history","bot:random-legal"]}' --json
 
-# 5. (optional) Run the frontend against the API
-bun install
-make dev                    # Vite dev server; /api is proxied to shbench serve
+# 4. Play one real LLM game (any mix of `provider/model` and `bot:<kind>` seats)
+cargo run -p shbench -- call sh_play_game --args '{"models":["gemini/gemini-3-flash-preview"],"store_run":"demo"}' --json
+
+# 5. Run a rated match: candidate vs the frozen anchor pool, 21·K games
+#    (3 roles × 7 seats × K reps, mirrored seeds; resumable via the same run_id)
+cargo run -p shbench -- call sh_run_match --args '{"mode":"controlled","candidate":"gemini/gemini-3-flash-preview","pool":"pool-a","k":1,"run_id":"demo-match"}' --json
+
+# 6. Inspect results (role-conditioned Weng-Lin ratings + objective metrics)
+cargo run -p shbench -- call sh_leaderboard --args '{"run_id":"demo-match"}' --json
+
+# 7. Visualize: leaderboard, game replay, who-suspected-who heatmap
+make run                    # shbench serve (HTTP API on :8080)
+bun install && make dev     # Vite dev server; /api proxied to shbench serve
 ```
+
+See [`docs/PRD-secret-hitler-evals.md`](docs/PRD-secret-hitler-evals.md) for the
+spec and [`docs/rating-design.md`](docs/rating-design.md) for the rating system
+(model × role Weng-Lin, anchor pools, schedules, metric definitions).
 
 Scaffold a new command with `make new name=fetch_url` (or `shbench new
 fetch_url`) — it self-registers, so it's immediately callable over the CLI and

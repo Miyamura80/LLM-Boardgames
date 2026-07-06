@@ -4,6 +4,11 @@
 > **Secret Hitler**. This document specifies **v1** at the **7-player** ruleset.
 > Decisions taken by recommendation (vs. explicit user confirmation) are flagged
 > in [Open Questions](#9-open-questions).
+>
+> **v1.1 amendment:** the rating layer was redesigned after review — ratings are
+> now **role-conditioned** (model × Liberal/Fascist/Hitler) with fixed anchor
+> pools and a role-seat balanced schedule. Where this document and
+> [`rating-design.md`](rating-design.md) disagree, `rating-design.md` wins.
 
 ## 1. Introduction / Overview
 
@@ -221,9 +226,9 @@ optionally visually.
 - **FR-6:** The harness must support deterministic, deliberately-simple rule-based baseline agents (no discussion) usable as a CI floor.
 - **FR-7:** The harness must support LLM agents via the existing `app_config` LLM configuration, with transient-failure retry.
 - **FR-8:** Discussion must run as **simultaneous-reveal rounds** (configurable count, default 3): within a round all living players' utterances are generated in parallel conditioned only on state through the previous round, then revealed together. No within-round ordering. Per-utterance cap enforced; costs logged.
-- **FR-9:** The match runner must rotate every model through every seat and both factions as evenly as possible and log the realized distribution.
+- **FR-9:** The match runner must support two modes: **controlled** (one candidate + six frozen anchor-pool seats, enumerating candidate × 3 roles × 7 seats × K cells with candidate-independent mirrored seeds) and **arena** (mixed candidates, balanced rotation through seats and factions, duplicates allowed). The realized distribution is logged.
 - **FR-10:** Every game must produce a seed-reproducible, replayable transcript.
-- **FR-11:** The system must compute a Weng-Lin/OpenSkill rating (μ, σ) per model from win/loss, treating factions as teams. Implementation targets the Rust `skillratings` crate's `weng_lin` model; if its per-player contribution-weight support is insufficient, use/port the `openskill` crate.
+- **FR-11:** The system must compute Weng-Lin/OpenSkill ratings (μ, σ) **per (model, role)** — Liberal, Fascist, Hitler — from win/loss, treating factions as teams, via the Rust `skillratings` crate's `weng_lin` model. Reports include the conservative score μ−kσ (k=2 default) and a role-frequency-weighted overall. Duplicate rating entities in one game average their deltas. See `rating-design.md`.
 - **FR-12:** The system must report Liberal and Fascist win rates per model separately, plus game count and an uncertainty warning.
 - **FR-13:** The system must compute and persist the objective per-player metric suite (suspicion accuracy, goal-aligned enactment rate, faction policy throughput, execution accuracy) with documented definitions. Suspicion beliefs are elicited **privately after each enacted policy** (plus a final snapshot at game end); elicitation is not shown to other players and does not affect game state.
 - **FR-14:** Results must be retrievable via CLI and HTTP API; the frontend replay is optional.
@@ -284,3 +289,10 @@ All v1 design questions are settled:
 **Tune-later (no decision needed now):**
 
 10. Discussion batch count starts at **3**; revisit against cost/signal once real games run.
+
+**v1.1 amendments (supersede items above where they conflict):**
+
+11. **Rating = role-conditioned** (model × Liberal/Fascist/Hitler), conservative score μ−2σ, weighted overall; see `rating-design.md` §1.
+12. **Controlled anchor-pool mode** is the primary schedule (1 candidate + 6 anchors, 21K games per candidate, mirrored seeds); **arena mode** (mixed candidates, 7 seats, duplicates allowed with delta-averaging) is for validation; see `rating-design.md` §2–3.
+13. **Persistence = Postgres** (docker-compose local dev; sqlx embedded migrations), schema mirroring the review's game/turn/rating records.
+14. **Frontend = full viz**: leaderboard, replay, and who-suspected-who suspicion heatmap.
