@@ -29,9 +29,14 @@ pub struct AppConfig {
     pub server: ServerConfig,
     #[serde(default)]
     pub features: HashMap<String, bool>,
+    #[serde(default)]
+    pub secret_hitler: SecretHitlerConfig,
 
     // Secret credentials — never serialized (`skip_serializing` = the security
     // boundary; see the sanitization test). Read via the accessors below.
+    /// Postgres connection string for the eval store (also via `DATABASE_URL`).
+    #[serde(skip_serializing, default)]
+    pub database_url: Option<String>,
     #[serde(skip_serializing)]
     pub openai_api_key: Option<String>,
     #[serde(skip_serializing)]
@@ -199,6 +204,79 @@ pub struct RedactionPattern {
     pub name: String,
     pub regex: String,
     pub placeholder: String,
+}
+
+/// Secret Hitler eval harness settings (see `docs/rating-design.md`).
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct SecretHitlerConfig {
+    /// Simultaneous discussion rounds before each government's vote.
+    #[serde(default = "default_discussion_rounds")]
+    pub discussion_rounds: u8,
+    /// Rethink attempts per decision before the forced legal default.
+    #[serde(default = "default_retry_budget")]
+    pub retry_budget: u32,
+    /// Hard cap on one utterance, in characters.
+    #[serde(default = "default_utterance_cap")]
+    pub utterance_char_cap: usize,
+    /// Max completion tokens per agent call.
+    #[serde(default = "default_agent_max_tokens")]
+    pub agent_max_tokens: u32,
+    /// Sampling temperature for LLM seats (part of the scaffold version).
+    #[serde(default = "default_agent_temperature")]
+    pub agent_temperature: f32,
+    /// Conservatism factor k in the reported score μ − kσ.
+    #[serde(default = "default_rating_k")]
+    pub rating_k: f64,
+    /// Named anchor pools: each entry lists frozen anchor seat specs.
+    #[serde(default)]
+    pub pools: HashMap<String, Vec<AnchorSpec>>,
+}
+
+impl Default for SecretHitlerConfig {
+    fn default() -> Self {
+        Self {
+            discussion_rounds: default_discussion_rounds(),
+            retry_budget: default_retry_budget(),
+            utterance_char_cap: default_utterance_cap(),
+            agent_max_tokens: default_agent_max_tokens(),
+            agent_temperature: default_agent_temperature(),
+            rating_k: default_rating_k(),
+            pools: HashMap::new(),
+        }
+    }
+}
+
+/// One frozen anchor seat: a bot kind or an LLM model with an optional persona.
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct AnchorSpec {
+    pub name: String,
+    /// `random-legal` | `heuristic` | `bayes-history` | `llm`.
+    pub kind: String,
+    #[serde(default)]
+    pub model: Option<String>,
+    #[serde(default)]
+    pub persona: Option<String>,
+}
+
+fn default_discussion_rounds() -> u8 {
+    3
+}
+fn default_retry_budget() -> u32 {
+    3
+}
+fn default_utterance_cap() -> usize {
+    240
+}
+fn default_agent_max_tokens() -> u32 {
+    // Reasoning models (e.g. Gemini 3) spend thinking tokens inside this cap;
+    // too small a cap truncates the JSON reply itself.
+    8192
+}
+fn default_agent_temperature() -> f32 {
+    0.5
+}
+fn default_rating_k() -> f64 {
+    2.0
 }
 
 #[derive(Clone, Copy)]

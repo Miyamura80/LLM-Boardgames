@@ -10,9 +10,11 @@ pub mod commands;
 pub mod context;
 pub mod doctor;
 mod env;
+pub mod llm;
 pub mod platform;
 pub mod probes;
 pub mod scenario;
+pub mod secret_hitler;
 pub mod traits;
 pub mod types;
 
