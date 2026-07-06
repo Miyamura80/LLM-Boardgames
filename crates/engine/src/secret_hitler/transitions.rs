@@ -47,7 +47,7 @@ impl GameState {
             }
             (phase, action) => Err(IllegalMove(format!(
                 "action {action:?} is not valid in the current phase ({})",
-                phase_name(&phase)
+                phase.name()
             ))),
         }
     }
@@ -403,18 +403,6 @@ impl GameState {
         } else {
             self.advance_presidency();
         }
-    }
-}
-
-fn phase_name(phase: &Phase) -> &'static str {
-    match phase {
-        Phase::Nomination => "nomination",
-        Phase::Election { .. } => "election",
-        Phase::LegislativePresident { .. } => "legislative-president",
-        Phase::LegislativeChancellor { .. } => "legislative-chancellor",
-        Phase::VetoConsent { .. } => "veto-consent",
-        Phase::ExecutiveAction { .. } => "executive-action",
-        Phase::GameOver => "game-over",
     }
 }
 

@@ -5,6 +5,7 @@ use crate::llm::{ChatClient, ProviderKeys, RetryPolicy};
 use crate::secret_hitler::agents::{
     BayesHistoryBot, HeuristicBot, LlmSeatAgent, RandomLegalBot, SeatAgent,
 };
+use app_config::AgentKind;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -14,8 +15,7 @@ use std::sync::Arc;
 pub struct AgentSpec {
     /// Display name (anchor name from the pool, or the model string).
     pub name: String,
-    /// `random-legal` | `heuristic` | `bayes-history` | `llm`.
-    pub kind: String,
+    pub kind: AgentKind,
     #[serde(default)]
     pub model: Option<String>,
     #[serde(default)]
@@ -28,17 +28,17 @@ impl AgentSpec {
     pub fn llm(model: &str) -> Self {
         Self {
             name: model.to_string(),
-            kind: "llm".into(),
+            kind: AgentKind::Llm,
             model: Some(model.to_string()),
             persona: None,
             is_anchor: false,
         }
     }
 
-    pub fn bot(kind: &str) -> Self {
+    pub fn bot(kind: AgentKind) -> Self {
         Self {
-            name: format!("bot:{kind}"),
-            kind: kind.to_string(),
+            name: format!("bot:{}", kind.as_str()),
+            kind,
             model: None,
             persona: None,
             is_anchor: false,
@@ -48,7 +48,7 @@ impl AgentSpec {
     pub fn from_anchor(a: &app_config::AnchorSpec) -> Self {
         Self {
             name: a.name.clone(),
-            kind: a.kind.clone(),
+            kind: a.kind,
             model: a.model.clone(),
             persona: a.persona.clone(),
             is_anchor: true,
@@ -59,9 +59,9 @@ impl AgentSpec {
     /// `bot:<kind>` for scripted seats (persona anchors stay distinguishable
     /// via their own model+persona scaffold hash).
     pub fn model_id(&self) -> String {
-        match self.kind.as_str() {
-            "llm" => self.model.clone().unwrap_or_else(|| self.name.clone()),
-            k => format!("bot:{k}"),
+        match self.kind {
+            AgentKind::Llm => self.model.clone().unwrap_or_else(|| self.name.clone()),
+            kind => format!("bot:{}", kind.as_str()),
         }
     }
 }
@@ -90,11 +90,11 @@ impl AgentFactory {
     /// Instantiate the agent for one seat. `seat_seed` seeds bot RNGs so full
     /// bot games replay deterministically.
     pub fn build(&self, spec: &AgentSpec, seat_seed: u64) -> Result<Box<dyn SeatAgent>, String> {
-        match spec.kind.as_str() {
-            "random-legal" => Ok(Box::new(RandomLegalBot::new(seat_seed))),
-            "heuristic" => Ok(Box::new(HeuristicBot::new())),
-            "bayes-history" => Ok(Box::new(BayesHistoryBot::new())),
-            "llm" => {
+        match spec.kind {
+            AgentKind::RandomLegal => Ok(Box::new(RandomLegalBot::new(seat_seed))),
+            AgentKind::Heuristic => Ok(Box::new(HeuristicBot::new())),
+            AgentKind::BayesHistory => Ok(Box::new(BayesHistoryBot::new())),
+            AgentKind::Llm => {
                 let model = spec.model.as_deref().ok_or_else(|| {
                     format!("anchor '{}' is kind=llm but has no model", spec.name)
                 })?;
@@ -111,7 +111,6 @@ impl AgentFactory {
                     self.utterance_char_cap,
                 )))
             }
-            other => Err(format!("unknown agent kind: {other}")),
         }
     }
 }

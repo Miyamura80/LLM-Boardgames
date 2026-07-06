@@ -7,7 +7,7 @@
 //! teammates).
 
 use super::events::EventRecord;
-use super::state::{GameState, Phase};
+use super::state::GameState;
 use super::types::{Party, Role, Seat};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -76,7 +76,7 @@ impl GameState {
                 chancellor: self.gov_chancellor,
                 alive: self.alive_seats(),
                 veto_unlocked: self.veto_unlocked(),
-                phase: phase_label(&self.phase).to_string(),
+                phase: self.phase.name().to_string(),
             },
             history: self
                 .events
@@ -85,17 +85,5 @@ impl GameState {
                 .cloned()
                 .collect(),
         }
-    }
-}
-
-fn phase_label(phase: &Phase) -> &'static str {
-    match phase {
-        Phase::Nomination => "nomination",
-        Phase::Election { .. } => "election",
-        Phase::LegislativePresident { .. } => "legislative-president",
-        Phase::LegislativeChancellor { .. } => "legislative-chancellor",
-        Phase::VetoConsent { .. } => "veto-consent",
-        Phase::ExecutiveAction { .. } => "executive-action",
-        Phase::GameOver => "game-over",
     }
 }

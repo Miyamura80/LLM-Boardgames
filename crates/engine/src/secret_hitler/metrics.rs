@@ -15,6 +15,7 @@
 //!   (Liberal hitting a Fascist/Hitler; Fascist hitting a Liberal).
 //! - **Hitler survival**: rounds survived by the Hitler seat.
 
+use super::events::GameEvent;
 use super::runner::record::GameRecord;
 use super::types::{Party, Role, Seat};
 use schemars::JsonSchema;
@@ -93,35 +94,18 @@ fn score_seat(record: &GameRecord, seat: Seat) -> SeatMetrics {
     }
 
     // -- faction policy throughput (outcome stat, strict attribution) ---------
-    use super::events::GameEvent;
-    let mut open_gov: Option<(Seat, Seat)> = None;
-    for rec in &record.events {
-        match &rec.event {
-            GameEvent::GovernmentFormed {
-                president,
-                chancellor,
-            } => {
-                open_gov = Some((*president, *chancellor));
+    // Top-decked policies never attribute (no personal choice was made).
+    for gov in super::events::government_enactments(&record.events) {
+        if (gov.president == seat || gov.chancellor == seat)
+            && sr
+                .policy_choices
+                .iter()
+                .any(|ch| ch.round == gov.round && !ch.forced)
+        {
+            m.throughput_den += 1;
+            if gov.policy == my_party {
+                m.throughput_num += 1;
             }
-            GameEvent::PolicyEnacted { policy } => {
-                if let Some((p, c)) = open_gov.take() {
-                    if (p == seat || c == seat)
-                        && sr
-                            .policy_choices
-                            .iter()
-                            .any(|ch| ch.round == rec.round && !ch.forced)
-                    {
-                        m.throughput_den += 1;
-                        if *policy == my_party {
-                            m.throughput_num += 1;
-                        }
-                    }
-                }
-            }
-            GameEvent::TopDeckEnacted { .. } => {
-                open_gov = None; // no personal choice → no attribution
-            }
-            _ => {}
         }
     }
 

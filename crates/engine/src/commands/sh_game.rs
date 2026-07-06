@@ -1,14 +1,14 @@
 //! Single-game commands: play one ad-hoc game (smoke tests, demos) and fetch
 //! a stored game's replayable record.
 
-use crate::commands::sh_match::parse_model_spec;
+use crate::commands::sh_match::{open_store, parse_model_spec};
 use crate::commands::{Command, CommandError};
 use crate::context::Ctx;
 use crate::register_command;
 use crate::secret_hitler::metrics::{score_game, SeatMetrics};
 use crate::secret_hitler::runner::record::GameRecord;
 use crate::secret_hitler::runner::{run_game, AgentFactory, GameConfig};
-use crate::secret_hitler::store::{database_url, GameSummary, Store};
+use crate::secret_hitler::store::GameSummary;
 use crate::secret_hitler::types::PLAYER_COUNT;
 use async_trait::async_trait;
 use schemars::JsonSchema;
@@ -84,7 +84,7 @@ impl Command for ShPlayGame {
         let mut agents = Vec::new();
         let mut anchors = Vec::new();
         for seat in 0..PLAYER_COUNT as usize {
-            let spec = parse_model_spec(&models[seat % models.len()]);
+            let spec = parse_model_spec(&models[seat % models.len()])?;
             agents.push(
                 factory
                     .build(&spec, seed ^ (seat as u64) << 8)
@@ -107,12 +107,7 @@ impl Command for ShPlayGame {
         let metrics = score_game(&record);
 
         if let Some(run_id) = &input.store_run {
-            let url = database_url().ok_or_else(|| {
-                CommandError::Unsupported("store_run requires a configured DATABASE_URL".into())
-            })?;
-            let store = Store::connect(&url)
-                .await
-                .map_err(|e| CommandError::Other(e.to_string()))?;
+            let store = open_store().await?;
             store
                 .create_run(run_id, "adhoc", &serde_json::json!({"mode":"adhoc"}))
                 .await
@@ -162,6 +157,9 @@ pub struct ShGameReplayInput {
 #[derive(Debug, Serialize, JsonSchema)]
 pub struct ShGameReplayOutput {
     pub record: GameRecord,
+    /// Canonical omniscient rendering of `record.events`, index-aligned —
+    /// clients display these instead of re-rendering the event union.
+    pub rendered: Vec<String>,
 }
 
 #[async_trait]
@@ -181,12 +179,7 @@ impl Command for ShGameReplay {
         input: ShGameReplayInput,
         _cx: &Ctx<'_>,
     ) -> Result<Self::Output, CommandError> {
-        let url = database_url().ok_or_else(|| {
-            CommandError::Unsupported("replay requires a configured DATABASE_URL".into())
-        })?;
-        let store = Store::connect(&url)
-            .await
-            .map_err(|e| CommandError::Other(e.to_string()))?;
+        let store = open_store().await?;
         let record = store
             .get_game(&input.game_id)
             .await
@@ -194,7 +187,12 @@ impl Command for ShGameReplay {
             .ok_or_else(|| {
                 CommandError::InvalidInput(format!("unknown game: {}", input.game_id))
             })?;
-        Ok(ShGameReplayOutput { record })
+        let rendered = record
+            .events
+            .iter()
+            .map(|r| r.event.render_omniscient())
+            .collect();
+        Ok(ShGameReplayOutput { record, rendered })
     }
 }
 
@@ -234,12 +232,7 @@ impl Command for ShListGames {
         input: ShListGamesInput,
         _cx: &Ctx<'_>,
     ) -> Result<Self::Output, CommandError> {
-        let url = database_url().ok_or_else(|| {
-            CommandError::Unsupported("listing games requires a configured DATABASE_URL".into())
-        })?;
-        let store = Store::connect(&url)
-            .await
-            .map_err(|e| CommandError::Other(e.to_string()))?;
+        let store = open_store().await?;
         let games = store
             .list_games(&input.run_id)
             .await

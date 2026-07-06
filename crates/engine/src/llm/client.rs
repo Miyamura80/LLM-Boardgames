@@ -39,12 +39,6 @@ impl ChatMessage {
             content: content.into(),
         }
     }
-    pub fn assistant(content: impl Into<String>) -> Self {
-        Self {
-            role: "assistant".into(),
-            content: content.into(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, schemars::JsonSchema)]

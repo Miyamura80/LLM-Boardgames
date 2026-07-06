@@ -1,7 +1,7 @@
 //! Simple mechanical baseline: legal, coherent, deliberately weak. Follows a
 //! fixed party-line strategy with no memory and no discussion.
 
-use super::{AgentError, AgentReply, BeliefReport, RoleProbs, SeatAgent};
+use super::{prefer_tile, AgentError, AgentReply, BeliefReport, RoleProbs, SeatAgent};
 use crate::secret_hitler::actions::{Action, DecisionPoint};
 use crate::secret_hitler::observation::Observation;
 use crate::secret_hitler::types::{Party, Role, Seat};
@@ -57,15 +57,15 @@ impl SeatAgent for HeuristicBot {
             DecisionPoint::Vote { .. } => Action::Vote { ja: true },
             DecisionPoint::Discard { tiles, .. } => {
                 let discard = match my_party {
-                    Party::Liberal => pick_tile(tiles, Party::Fascist),
-                    Party::Fascist => pick_tile(tiles, Party::Liberal),
+                    Party::Liberal => prefer_tile(tiles, Party::Fascist),
+                    Party::Fascist => prefer_tile(tiles, Party::Liberal),
                 };
                 Action::Discard { policy: discard }
             }
             DecisionPoint::Enact { tiles, .. } => {
                 let enact = match my_party {
-                    Party::Liberal => pick_tile(tiles, Party::Liberal),
-                    Party::Fascist => pick_tile(tiles, Party::Fascist),
+                    Party::Liberal => prefer_tile(tiles, Party::Liberal),
+                    Party::Fascist => prefer_tile(tiles, Party::Fascist),
                 };
                 Action::Enact { policy: enact }
             }
@@ -99,42 +99,13 @@ impl SeatAgent for HeuristicBot {
         let known: BTreeMap<Seat, Role> = obs.known_teammates.iter().copied().collect();
         for &s in obs.public.alive.iter().filter(|&&s| s != obs.seat) {
             let probs = match known.get(&s) {
-                Some(Role::Fascist) => RoleProbs {
-                    liberal: 0.0,
-                    fascist: 1.0,
-                    hitler: 0.0,
-                },
-                Some(Role::Hitler) => RoleProbs {
-                    liberal: 0.0,
-                    fascist: 0.0,
-                    hitler: 1.0,
-                },
-                Some(Role::Liberal) => RoleProbs {
-                    liberal: 1.0,
-                    fascist: 0.0,
-                    hitler: 0.0,
-                },
-                None if obs.role == Role::Fascist => {
-                    // Everyone a regular Fascist doesn't know is Liberal.
-                    RoleProbs {
-                        liberal: 1.0,
-                        fascist: 0.0,
-                        hitler: 0.0,
-                    }
-                }
+                Some(&role) => RoleProbs::certain(role),
+                // Everyone a regular Fascist doesn't know is Liberal.
+                None if obs.role == Role::Fascist => RoleProbs::certain(Role::Liberal),
                 None => super::prior_for_observer(obs.role == Role::Liberal),
             };
             assessments.insert(s, probs.normalized());
         }
         Ok(Some(BeliefReport { assessments }))
-    }
-}
-
-/// The tile of `want` if held, else whatever is held.
-fn pick_tile(tiles: &[Party], want: Party) -> Party {
-    if tiles.contains(&want) {
-        want
-    } else {
-        tiles[0]
     }
 }

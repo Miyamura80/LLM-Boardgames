@@ -344,7 +344,12 @@ impl Store {
             let role = match r.get::<String, _>("role").as_str() {
                 "Liberal" => Role::Liberal,
                 "Fascist" => Role::Fascist,
-                _ => Role::Hitler,
+                "Hitler" => Role::Hitler,
+                other => {
+                    return Err(sqlx::Error::Decode(
+                        format!("unknown role in sh_ratings: {other}").into(),
+                    ))
+                }
             };
             table.entities.insert(
                 (r.get("model_id"), role),

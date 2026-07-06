@@ -14,7 +14,8 @@ use async_trait::async_trait;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-async fn open_store() -> Result<Store, CommandError> {
+/// Canonical store opener shared by every `sh_*` command.
+pub(crate) async fn open_store() -> Result<Store, CommandError> {
     let url = database_url().ok_or_else(|| {
         CommandError::Unsupported(
             "no Postgres configured: start it with `docker compose up -d` and set APP__DATABASE_URL (see .env.example)".into(),
@@ -26,10 +27,19 @@ async fn open_store() -> Result<Store, CommandError> {
 }
 
 /// Parse `bot:<kind>` or an LLM `provider/model` string into a seat spec.
-pub(crate) fn parse_model_spec(s: &str) -> AgentSpec {
+/// Fails fast on unknown bot kinds — before a run row or any game exists.
+pub(crate) fn parse_model_spec(s: &str) -> Result<AgentSpec, CommandError> {
     match s.strip_prefix("bot:") {
-        Some(kind) => AgentSpec::bot(kind),
-        None => AgentSpec::llm(s),
+        Some(kind) => {
+            let kind: app_config::AgentKind = kind.parse().map_err(CommandError::InvalidInput)?;
+            if kind == app_config::AgentKind::Llm {
+                return Err(CommandError::InvalidInput(
+                    "LLM seats are written as `provider/model`, not `bot:llm`".into(),
+                ));
+            }
+            Ok(AgentSpec::bot(kind))
+        }
+        None => Ok(AgentSpec::llm(s)),
     }
 }
 
@@ -119,7 +129,7 @@ impl Command for ShRunMatch {
                     ))
                 })?;
                 MatchSpec::Controlled {
-                    candidate: parse_model_spec(candidate),
+                    candidate: parse_model_spec(candidate)?,
                     pool_name,
                     pool: pool_cfg.iter().map(AgentSpec::from_anchor).collect(),
                     k: input.k.unwrap_or(1),
@@ -134,7 +144,10 @@ impl Command for ShRunMatch {
                     ));
                 }
                 MatchSpec::Arena {
-                    models: models.iter().map(|m| parse_model_spec(m)).collect(),
+                    models: models
+                        .iter()
+                        .map(|m| parse_model_spec(m))
+                        .collect::<Result<Vec<_>, _>>()?,
                     games: input.games.unwrap_or(21),
                     match_seed,
                 }
@@ -150,12 +163,16 @@ impl Command for ShRunMatch {
         // candidate/pool must be a different run, or resume would silently
         // skip the new candidate's games.
         let run_id = input.run_id.clone().unwrap_or_else(|| {
-            use std::hash::{Hash, Hasher};
-            let mut h = std::collections::hash_map::DefaultHasher::new();
-            serde_json::to_string(&spec)
-                .unwrap_or_default()
-                .hash(&mut h);
-            format!("run-{}-{:08x}", spec.mode(), h.finish() as u32)
+            use sha2::{Digest, Sha256};
+            let digest = Sha256::digest(serde_json::to_string(&spec).unwrap_or_default());
+            format!(
+                "run-{}-{:02x}{:02x}{:02x}{:02x}",
+                spec.mode(),
+                digest[0],
+                digest[1],
+                digest[2],
+                digest[3]
+            )
         });
         let store = open_store().await?;
         store

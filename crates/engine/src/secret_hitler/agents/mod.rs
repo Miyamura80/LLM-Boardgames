@@ -59,6 +59,28 @@ pub struct RoleProbs {
 }
 
 impl RoleProbs {
+    /// Certainty about a known role (Fascists reporting their teammates).
+    pub fn certain(role: super::types::Role) -> Self {
+        use super::types::Role;
+        match role {
+            Role::Liberal => Self {
+                liberal: 1.0,
+                fascist: 0.0,
+                hitler: 0.0,
+            },
+            Role::Fascist => Self {
+                liberal: 0.0,
+                fascist: 1.0,
+                hitler: 0.0,
+            },
+            Role::Hitler => Self {
+                liberal: 0.0,
+                fascist: 0.0,
+                hitler: 1.0,
+            },
+        }
+    }
+
     pub fn normalized(mut self) -> Self {
         let clamp = |x: f64| if x.is_finite() { x.max(0.0) } else { 0.0 };
         self.liberal = clamp(self.liberal);
@@ -124,6 +146,19 @@ pub trait SeatAgent: Send {
     /// Cumulative token usage (zero for bots).
     fn usage(&self) -> TokenUsage {
         TokenUsage::default()
+    }
+}
+
+/// The tile of `want` if held, else whatever is held — the shared mechanical
+/// policy preference for bot agents.
+pub(crate) fn prefer_tile(
+    tiles: &[super::types::Party],
+    want: super::types::Party,
+) -> super::types::Party {
+    if tiles.contains(&want) {
+        want
+    } else {
+        tiles[0]
     }
 }
 

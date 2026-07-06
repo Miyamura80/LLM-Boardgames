@@ -147,7 +147,96 @@ pub enum GameEvent {
     },
 }
 
+/// One government's enacted policy, extracted from a transcript. The canonical
+/// fold pairing `GovernmentFormed` with its `PolicyEnacted`: top-decked
+/// policies clear the open government and are **not** attributed to it.
+/// Shared by the metric suite and the Bayes-history anchor so the two can
+/// never drift.
+#[derive(Debug, Clone)]
+pub struct GovernmentEnactment {
+    pub round: u32,
+    pub president: Seat,
+    pub chancellor: Seat,
+    pub policy: Party,
+    /// The ballots that elected this government, in seat order.
+    pub votes: Vec<(Seat, bool)>,
+}
+
+pub fn government_enactments(events: &[EventRecord]) -> Vec<GovernmentEnactment> {
+    let mut out = Vec::new();
+    let mut open_gov: Option<(Seat, Seat)> = None;
+    let mut last_votes: Vec<(Seat, bool)> = Vec::new();
+    for rec in events {
+        match &rec.event {
+            GameEvent::VotesRevealed { votes, .. } => last_votes = votes.clone(),
+            GameEvent::GovernmentFormed {
+                president,
+                chancellor,
+            } => open_gov = Some((*president, *chancellor)),
+            GameEvent::TopDeckEnacted { .. } => open_gov = None,
+            GameEvent::PolicyEnacted { policy } => {
+                if let Some((president, chancellor)) = open_gov.take() {
+                    out.push(GovernmentEnactment {
+                        round: rec.round,
+                        president,
+                        chancellor,
+                        policy: *policy,
+                        votes: last_votes.clone(),
+                    });
+                }
+            }
+            _ => {}
+        }
+    }
+    out
+}
+
 impl GameEvent {
+    /// Canonical omniscient rendering for replays and reports. The single
+    /// source of truth for event wording: the React replay and the HTML game
+    /// report consume these strings instead of re-rendering the union
+    /// themselves. Differs from [`render`](Self::render) only where that one
+    /// speaks second-person to the owning seat.
+    pub fn render_omniscient(&self) -> String {
+        match self {
+            GameEvent::RolesDealt {
+                seat,
+                role,
+                known_teammates,
+            } => {
+                let mut s = format!("P{seat} was dealt {}.", role.as_str());
+                for (mate, r) in known_teammates {
+                    s.push_str(&format!(" Knows P{mate} is {}.", r.as_str()));
+                }
+                s
+            }
+            GameEvent::PresidentDrew { tiles } => format!(
+                "President drew {}.",
+                tiles
+                    .iter()
+                    .map(|t| t.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+            GameEvent::PresidentDiscarded { policy } => {
+                format!("President discarded a {} policy.", policy.as_str())
+            }
+            GameEvent::ChancellorReceived { tiles } => format!(
+                "Chancellor received {}.",
+                tiles
+                    .iter()
+                    .map(|t| t.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+            GameEvent::InvestigationResult { target, party } => format!(
+                "Investigation: P{target}'s party membership card reads {}.",
+                party.as_str()
+            ),
+            _ => self.render(),
+        }
+    }
+
     /// Human-readable line for prompts and replays, from `seat`'s perspective.
     pub fn render(&self) -> String {
         match self {

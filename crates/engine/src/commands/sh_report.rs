@@ -6,10 +6,10 @@
 //! template lives in the repo (`crates/engine/templates/game_report.html`)
 //! and the data comes straight from the Postgres store.
 
+use crate::commands::sh_match::open_store;
 use crate::commands::{Command, CommandError, Expose};
 use crate::context::Ctx;
 use crate::register_command;
-use crate::secret_hitler::store::{database_url, Store};
 use async_trait::async_trait;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -59,12 +59,7 @@ impl Command for ShExportGameReport {
         input: ShExportGameReportInput,
         cx: &Ctx<'_>,
     ) -> Result<Self::Output, CommandError> {
-        let url = database_url().ok_or_else(|| {
-            CommandError::Unsupported("game reports need a configured DATABASE_URL".into())
-        })?;
-        let store = Store::connect(&url)
-            .await
-            .map_err(|e| CommandError::Other(e.to_string()))?;
+        let store = open_store().await?;
         let record = store
             .get_game(&input.game_id)
             .await
@@ -73,11 +68,24 @@ impl Command for ShExportGameReport {
                 CommandError::InvalidInput(format!("unknown game: {}", input.game_id))
             })?;
 
+        let rendered: Vec<String> = record
+            .events
+            .iter()
+            .map(|r| r.event.render_omniscient())
+            .collect();
         // `</` must not appear inside the inline <script> payload.
-        let data = serde_json::to_string(&record)
-            .map_err(|e| CommandError::Other(e.to_string()))?
-            .replace("</", "<\\/");
-        let html = TEMPLATE.replace("__GAME_DATA__", &data);
+        let escape =
+            |v: &serde_json::Value| serde_json::to_string(v).map(|s| s.replace("</", "<\\/"));
+        let data =
+            escape(&serde_json::to_value(&record).map_err(|e| CommandError::Other(e.to_string()))?)
+                .map_err(|e| CommandError::Other(e.to_string()))?;
+        let lines = escape(
+            &serde_json::to_value(&rendered).map_err(|e| CommandError::Other(e.to_string()))?,
+        )
+        .map_err(|e| CommandError::Other(e.to_string()))?;
+        let html = TEMPLATE
+            .replace("__GAME_DATA__", &data)
+            .replace("__RENDERED__", &lines);
         let bytes = html.len();
 
         if let Some(path) = &input.output_path {

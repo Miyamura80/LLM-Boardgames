@@ -246,12 +246,49 @@ impl Default for SecretHitlerConfig {
     }
 }
 
+/// The closed set of seat-agent kinds. An enum at the config boundary so a
+/// typo in `global_config.yaml` or a CLI arg fails at deserialization, not
+/// mid-run after games have already burned tokens.
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq, Hash, schemars::JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum AgentKind {
+    RandomLegal,
+    Heuristic,
+    BayesHistory,
+    Llm,
+}
+
+impl AgentKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            AgentKind::RandomLegal => "random-legal",
+            AgentKind::Heuristic => "heuristic",
+            AgentKind::BayesHistory => "bayes-history",
+            AgentKind::Llm => "llm",
+        }
+    }
+}
+
+impl std::str::FromStr for AgentKind {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "random-legal" => Ok(AgentKind::RandomLegal),
+            "heuristic" => Ok(AgentKind::Heuristic),
+            "bayes-history" => Ok(AgentKind::BayesHistory),
+            "llm" => Ok(AgentKind::Llm),
+            other => Err(format!(
+                "unknown agent kind '{other}' (expected random-legal | heuristic | bayes-history | llm)"
+            )),
+        }
+    }
+}
+
 /// One frozen anchor seat: a bot kind or an LLM model with an optional persona.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct AnchorSpec {
     pub name: String,
-    /// `random-legal` | `heuristic` | `bayes-history` | `llm`.
-    pub kind: String,
+    pub kind: AgentKind,
     #[serde(default)]
     pub model: Option<String>,
     #[serde(default)]

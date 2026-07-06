@@ -2,6 +2,7 @@
 //! (the CI smoke test), mirrored-seed schedules, and — when DATABASE_URL is
 //! set — the Postgres store + match runner round trip.
 
+use app_config::AgentKind;
 use engine::secret_hitler::metrics::score_game;
 use engine::secret_hitler::rating::{leaderboard, RatingTable};
 use engine::secret_hitler::runner::record::GameRecord;
@@ -23,12 +24,12 @@ fn bot_factory() -> AgentFactory {
 
 fn bot_pool() -> Vec<AgentSpec> {
     vec![
-        AgentSpec::bot("random-legal"),
-        AgentSpec::bot("heuristic"),
-        AgentSpec::bot("bayes-history"),
-        AgentSpec::bot("random-legal"),
-        AgentSpec::bot("heuristic"),
-        AgentSpec::bot("bayes-history"),
+        AgentSpec::bot(AgentKind::RandomLegal),
+        AgentSpec::bot(AgentKind::Heuristic),
+        AgentSpec::bot(AgentKind::BayesHistory),
+        AgentSpec::bot(AgentKind::RandomLegal),
+        AgentSpec::bot(AgentKind::Heuristic),
+        AgentSpec::bot(AgentKind::BayesHistory),
     ]
 }
 
@@ -36,7 +37,11 @@ async fn play_bot_game(seed: u64) -> GameRecord {
     let factory = bot_factory();
     let mut agents: Vec<_> = (0..7)
         .map(|i| {
-            let kind = ["random-legal", "heuristic", "bayes-history"][i % 3];
+            let kind = [
+                AgentKind::RandomLegal,
+                AgentKind::Heuristic,
+                AgentKind::BayesHistory,
+            ][i % 3];
             factory
                 .build(&AgentSpec::bot(kind), seed ^ i as u64)
                 .unwrap()
@@ -154,7 +159,7 @@ async fn match_runner_persists_and_resumes_with_postgres() {
     let run_id = format!("test-run-{}", std::process::id());
 
     let spec = MatchSpec::Controlled {
-        candidate: AgentSpec::bot("heuristic"),
+        candidate: AgentSpec::bot(AgentKind::Heuristic),
         pool_name: "test-pool".into(),
         pool: bot_pool(),
         k: 1,

@@ -123,6 +123,7 @@ ul.obs li{overflow-wrap:anywhere}
 </div>
 <script>
 const GAME = __GAME_DATA__;
+const RENDERED = __RENDERED__; // canonical omniscient lines from GameEvent::render_omniscient, index-aligned with GAME.events
 const $ = (id) => document.getElementById(id);
 const roles = GAME.roles;
 const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
@@ -161,7 +162,8 @@ const renderThoughts = (idx) => (thoughtsAt.get(idx) || []).map(t =>
   `<details class="thought"><summary>💭 P${t.seat} thinking before ${esc(t.decision)}</summary><p>${esc(t.text)}</p></details>`
 ).join("");
 
-// transcript
+// transcript — wording comes from the engine's canonical renderer (RENDERED);
+// this switch only adds visual decoration for a handful of event kinds.
 function renderEvent(rec) {
   const e = rec.event, t = e.type;
   const priv = rec.visibility !== "Public";
@@ -172,28 +174,21 @@ function renderEvent(rec) {
   }
   const line = (html, cls="") => `<div class="ev ${priv ? "private" : cls}">${tag}${html}</div>`;
   switch (t) {
-    case "GameStarted": return line("Game started with 7 players.", "sys");
-    case "RolesDealt": return line(`P${e.seat} was dealt <b>${e.role}</b>.${e.known_teammates.length ? " Knows: " + e.known_teammates.map(([s,r])=>`P${s} (${r})`).join(", ") + "." : ""}`);
-    case "ChancellorNominated": return line(`President P${e.president} nominates <b>P${e.nominee}</b> as Chancellor.`);
-    case "VotesRevealed": return line(`Vote on P${e.nominee}: <span class="votes">${e.votes.map(([s,ja])=>`P${s}=${ja?"Ja":"Nein"}`).join(" ")}</span> → <b>${e.passed?"PASSED":"FAILED"}</b>`);
-    case "ElectionTrackerAdvanced": return line(`Election tracker → ${e.value}/3.`, "sys");
-    case "TopDeckEnacted": return line(`Tracker hit 3: top policy auto-enacted (<span class="policy ${e.policy}">${e.policy}</span>), no power.`);
-    case "GovernmentFormed": return line(`Government formed: President P${e.president}, Chancellor P${e.chancellor}.`, "sys");
-    case "PresidentDrew": return line(`President drew ${e.tiles.map(p=>`<span class="policy ${p}">${p[0]}</span>`).join(" ")}.`);
-    case "PresidentDiscarded": return line(`President discarded a <span class="policy ${e.policy}">${e.policy}</span> tile.`);
-    case "ChancellorReceived": return line(`Chancellor received ${e.tiles.map(p=>`<span class="policy ${p}">${p[0]}</span>`).join(" ")}.`);
-    case "PolicyEnacted": return line(`A <span class="policy ${e.policy}">${e.policy}</span> policy was enacted.`);
-    case "DeckReshuffled": return line(`Deck reshuffled (${e.draw_count} tiles).`, "sys");
-    case "PowerGranted": return line(`Power granted to President P${e.president}: <b>${e.power}</b>.`);
-    case "Investigated": return line(`President P${e.president} investigated P${e.target}.`);
-    case "InvestigationResult": return line(`Investigation: P${e.target}'s party card reads <b>${e.party}</b>.`);
-    case "SpecialElectionCalled": return line(`Special Election: P${e.president} appoints P${e.target} the next President.`);
-    case "Executed": return line(`P${e.president} executed P${e.target}${e.was_hitler ? " — <b>they were Hitler!</b>" : "."}`);
-    case "VetoProposed": return line(`Chancellor P${e.chancellor} proposes a veto.`);
-    case "VetoDecided": return line(`President ${e.approved ? "approves" : "declines"} the veto.`);
-    case "ForcedDefault": return line(`P${e.seat} failed to act — engine forced the default <b>${e.decision}</b>.`);
-    case "GameEnded": return line(`<b>Game over: ${e.winner} team wins (${e.condition}).</b>`);
-    default: return line(esc(t), "sys");
+    case "PolicyEnacted":
+      return line(`A <span class="policy ${e.policy}">${e.policy}</span> policy was enacted.`);
+    case "TopDeckEnacted":
+      return line(`Tracker hit 3: top policy auto-enacted (<span class="policy ${e.policy}">${e.policy}</span>), no power.`);
+    case "VotesRevealed":
+      return line(`Vote on P${e.nominee}: <span class="votes">${e.votes.map(([s,ja])=>`P${s}=${ja?"Ja":"Nein"}`).join(" ")}</span> → <b>${e.passed?"PASSED":"FAILED"}</b>`);
+    case "GameEnded":
+      return line(`<b>${esc(RENDERED[rec.idx] ?? t)}</b>`);
+    case "GameStarted":
+    case "GovernmentFormed":
+    case "ElectionTrackerAdvanced":
+    case "DeckReshuffled":
+      return line(esc(RENDERED[rec.idx] ?? t), "sys");
+    default:
+      return line(esc(RENDERED[rec.idx] ?? t));
   }
 }
 let lastRound = 0;

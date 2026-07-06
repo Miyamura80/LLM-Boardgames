@@ -2,9 +2,9 @@
 //! transcript and converts them into suspicion scores. Stateless between calls
 //! (recomputed from the observation each time), so it is trivially resumable.
 
-use super::{AgentError, AgentReply, BeliefReport, RoleProbs, SeatAgent};
+use super::{prefer_tile, AgentError, AgentReply, BeliefReport, RoleProbs, SeatAgent};
 use crate::secret_hitler::actions::{Action, DecisionPoint};
-use crate::secret_hitler::events::GameEvent;
+use crate::secret_hitler::events::{government_enactments, GameEvent};
 use crate::secret_hitler::observation::Observation;
 use crate::secret_hitler::types::{Party, Role, Seat};
 use async_trait::async_trait;
@@ -24,42 +24,27 @@ impl BayesHistoryBot {
     /// own private investigation results.
     fn suspicion(obs: &Observation) -> BTreeMap<Seat, f64> {
         let mut score: BTreeMap<Seat, f64> = BTreeMap::new();
-        let mut last_gov: Option<(Seat, Seat)> = None;
-        let mut last_votes: Vec<(Seat, bool)> = Vec::new();
-
+        for gov in government_enactments(&obs.history) {
+            let sign = match gov.policy {
+                Party::Fascist => 1.0,
+                Party::Liberal => -1.0,
+            };
+            *score.entry(gov.chancellor).or_default() += 2.0 * sign;
+            *score.entry(gov.president).or_default() += 1.0 * sign;
+            for &(s, ja) in &gov.votes {
+                if ja {
+                    *score.entry(s).or_default() += 0.5 * sign;
+                }
+            }
+        }
         for rec in &obs.history {
-            match &rec.event {
-                GameEvent::VotesRevealed { votes, .. } => last_votes = votes.clone(),
-                GameEvent::GovernmentFormed {
-                    president,
-                    chancellor,
-                } => {
-                    last_gov = Some((*president, *chancellor));
-                }
-                GameEvent::PolicyEnacted { policy } => {
-                    if let Some((p, c)) = last_gov.take() {
-                        let sign = match policy {
-                            Party::Fascist => 1.0,
-                            Party::Liberal => -1.0,
-                        };
-                        *score.entry(c).or_default() += 2.0 * sign;
-                        *score.entry(p).or_default() += 1.0 * sign;
-                        for &(s, ja) in &last_votes {
-                            if ja {
-                                *score.entry(s).or_default() += 0.5 * sign;
-                            }
-                        }
-                    }
-                }
-                GameEvent::InvestigationResult { target, party } => {
-                    // Private, definitive evidence for this observer.
-                    *score.entry(*target).or_default() += if *party == Party::Fascist {
-                        100.0
-                    } else {
-                        -100.0
-                    };
-                }
-                _ => {}
+            if let GameEvent::InvestigationResult { target, party } = &rec.event {
+                // Private, definitive evidence for this observer.
+                *score.entry(*target).or_default() += if *party == Party::Fascist {
+                    100.0
+                } else {
+                    -100.0
+                };
             }
         }
         score
@@ -90,7 +75,9 @@ impl SeatAgent for BayesHistoryBot {
         "bot:bayes-history".into()
     }
     fn scaffold_version(&self) -> String {
-        "bot-v1".into()
+        // v2: government fold now shares the canonical helper, which correctly
+        // excludes top-decked policies from government attribution.
+        "bot-v2".into()
     }
 
     async fn decide(
@@ -118,7 +105,7 @@ impl SeatAgent for BayesHistoryBot {
                 Action::Vote { ja }
             }
             DecisionPoint::Discard { tiles, .. } => Action::Discard {
-                policy: pick(
+                policy: prefer_tile(
                     tiles,
                     if liberalish {
                         Party::Fascist
@@ -128,7 +115,7 @@ impl SeatAgent for BayesHistoryBot {
                 ),
             },
             DecisionPoint::Enact { tiles, .. } => Action::Enact {
-                policy: pick(
+                policy: prefer_tile(
                     tiles,
                     if liberalish {
                         Party::Liberal
@@ -161,16 +148,7 @@ impl SeatAgent for BayesHistoryBot {
         let mut assessments = BTreeMap::new();
         for &s in obs.public.alive.iter().filter(|&&s| s != obs.seat) {
             let probs = match known.get(&s) {
-                Some(Role::Fascist) => RoleProbs {
-                    liberal: 0.0,
-                    fascist: 1.0,
-                    hitler: 0.0,
-                },
-                Some(Role::Hitler) => RoleProbs {
-                    liberal: 0.0,
-                    fascist: 0.0,
-                    hitler: 1.0,
-                },
+                Some(&role @ (Role::Fascist | Role::Hitler)) => RoleProbs::certain(role),
                 _ => {
                     // Squash suspicion into a fascist-probability shift.
                     let x = score.get(&s).copied().unwrap_or(0.0);
@@ -187,13 +165,5 @@ impl SeatAgent for BayesHistoryBot {
             assessments.insert(s, probs.normalized());
         }
         Ok(Some(BeliefReport { assessments }))
-    }
-}
-
-fn pick(tiles: &[Party], want: Party) -> Party {
-    if tiles.contains(&want) {
-        want
-    } else {
-        tiles[0]
     }
 }

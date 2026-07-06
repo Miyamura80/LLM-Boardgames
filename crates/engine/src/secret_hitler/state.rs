@@ -47,6 +47,21 @@ pub enum Phase {
     GameOver,
 }
 
+impl Phase {
+    /// Short kebab name for logs, errors, and observations.
+    pub fn name(&self) -> &'static str {
+        match self {
+            Phase::Nomination => "nomination",
+            Phase::Election { .. } => "election",
+            Phase::LegislativePresident { .. } => "legislative-president",
+            Phase::LegislativeChancellor { .. } => "legislative-chancellor",
+            Phase::VetoConsent { .. } => "veto-consent",
+            Phase::ExecutiveAction { .. } => "executive-action",
+            Phase::GameOver => "game-over",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameState {
     pub seed: u64,

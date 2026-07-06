@@ -10,14 +10,14 @@
 //! dealt from the seed. Duplicates are allowed (rating uses delta-averaging).
 
 use super::pools::AgentSpec;
-use crate::secret_hitler::types::{Role, Seat, PLAYER_COUNT};
+use crate::secret_hitler::types::{Role, PLAYER_COUNT};
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
-use std::hash::{Hash, Hasher};
 
 /// A fully determined single game to play.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -32,10 +32,17 @@ pub struct GamePlan {
     pub seats: Vec<AgentSpec>,
 }
 
+/// Stable across Rust versions (std's DefaultHasher is not): the mirrored-seed
+/// and resume contracts both depend on this function never changing output.
 fn cell_seed(match_seed: u64, tag: &str, a: u64, b: u64, c: u64) -> u64 {
-    let mut h = std::collections::hash_map::DefaultHasher::new();
-    (match_seed, tag, a, b, c).hash(&mut h);
-    h.finish()
+    let mut h = Sha256::new();
+    h.update(match_seed.to_le_bytes());
+    h.update(tag.as_bytes());
+    h.update(a.to_le_bytes());
+    h.update(b.to_le_bytes());
+    h.update(c.to_le_bytes());
+    let d = h.finalize();
+    u64::from_le_bytes(d[..8].try_into().expect("sha256 yields 32 bytes"))
 }
 
 /// The three role buckets a candidate is rotated through.
@@ -79,7 +86,8 @@ pub fn controlled_schedule(
                 anchors.shuffle(&mut rng);
 
                 let mut roles = vec![Role::Liberal; PLAYER_COUNT as usize];
-                let mut seats = vec![AgentSpec::bot("heuristic"); PLAYER_COUNT as usize];
+                let mut seats =
+                    vec![AgentSpec::bot(app_config::AgentKind::Heuristic); PLAYER_COUNT as usize];
                 let mut rest_iter = rest.into_iter();
                 let mut anchor_iter = anchors.into_iter();
                 for s in 0..PLAYER_COUNT {
@@ -164,6 +172,3 @@ pub fn realized_distribution(plans: &[GamePlan]) -> BTreeMap<String, BTreeMap<St
     }
     dist
 }
-
-/// Seat number type re-export for command signatures.
-pub type SeatIndex = Seat;

@@ -15,61 +15,14 @@ import {
 } from "../api/sh";
 import { Heatmap } from "./Heatmap";
 
-function renderEvent(rec: EventRecord): string {
+// Event wording comes from the engine's canonical omniscient renderer
+// (ShGameReplayOutput.rendered); only discussion speech gets extra treatment.
+function renderEvent(rec: EventRecord, rendered: string[]): string {
 	const e = rec.event;
-	const v = (k: string) => String(e[k]);
-	switch (e.type) {
-		case "GameStarted":
-			return `Game started with ${v("players")} players.`;
-		case "RolesDealt":
-			return `P${v("seat")} was dealt ${v("role")}.`;
-		case "ChancellorNominated":
-			return `President P${v("president")} nominated P${v("nominee")} as Chancellor.`;
-		case "VotesRevealed": {
-			const votes = (e.votes as [number, boolean][])
-				.map(([s, ja]) => `P${s}=${ja ? "Ja" : "Nein"}`)
-				.join(", ");
-			return `Vote on P${v("nominee")}: ${votes} → ${e.passed ? "PASSED" : "FAILED"}.`;
-		}
-		case "ElectionTrackerAdvanced":
-			return `Election tracker → ${v("value")}/3.`;
-		case "TopDeckEnacted":
-			return `Tracker hit 3: top policy auto-enacted (${v("policy")}), no power.`;
-		case "GovernmentFormed":
-			return `Government: President P${v("president")}, Chancellor P${v("chancellor")}.`;
-		case "PresidentDrew":
-			return `President drew ${(e.tiles as string[]).join(", ")}.`;
-		case "PresidentDiscarded":
-			return `President discarded a ${v("policy")} policy.`;
-		case "ChancellorReceived":
-			return `Chancellor received ${(e.tiles as string[]).join(", ")}.`;
-		case "PolicyEnacted":
-			return `A ${v("policy")} policy was enacted.`;
-		case "DeckReshuffled":
-			return `Deck reshuffled (${v("draw_count")} tiles).`;
-		case "PowerGranted":
-			return `Power granted to President P${v("president")}: ${v("power")}.`;
-		case "Investigated":
-			return `President P${v("president")} investigated P${v("target")}.`;
-		case "InvestigationResult":
-			return `Investigation: P${v("target")}'s party card reads ${v("party")}.`;
-		case "SpecialElectionCalled":
-			return `Special Election: P${v("president")} appointed P${v("target")}.`;
-		case "Executed":
-			return `P${v("president")} executed P${v("target")}${e.was_hitler ? " — they were Hitler!" : ""}.`;
-		case "VetoProposed":
-			return `Chancellor P${v("chancellor")} proposed a veto.`;
-		case "VetoDecided":
-			return `President ${e.approved ? "approved" : "declined"} the veto.`;
-		case "Utterance":
-			return e.pass ? `P${v("seat")} passes.` : `P${v("seat")}: ${v("text")}`;
-		case "ForcedDefault":
-			return `P${v("seat")} failed to act; engine forced the default ${v("decision")}.`;
-		case "GameEnded":
-			return `Game over: ${v("winner")} team wins (${v("condition")}).`;
-		default:
-			return e.type;
+	if (e.type === "Utterance" && !e.pass) {
+		return `P${String(e.seat)}: ${String(e.text)}`;
 	}
+	return rendered[rec.idx] ?? e.type;
 }
 
 /** Board state derived by folding events up to `step`. */
@@ -97,6 +50,7 @@ export function Replay() {
 	const [games, setGames] = useState<GameSummary[]>([]);
 	const [gameId, setGameId] = useState("");
 	const [record, setRecord] = useState<GameRecord | null>(null);
+	const [rendered, setRendered] = useState<string[]>([]);
 	const [step, setStep] = useState(0);
 	const [checkpoint, setCheckpoint] = useState<number | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -125,6 +79,7 @@ export function Replay() {
 		fetchReplay(gameId)
 			.then((r) => {
 				setRecord(r.record);
+				setRendered(r.rendered);
 				setStep(r.record.events.length);
 				const cps = [...new Set(r.record.beliefs.map((b) => b.checkpoint))];
 				setCheckpoint(cps.length > 0 ? cps[cps.length - 1] : null);
@@ -249,7 +204,7 @@ export function Replay() {
 										private P{(rec.visibility as { Private: number }).Private}
 									</span>
 								)}{" "}
-								{renderEvent(rec)}
+								{renderEvent(rec, rendered)}
 							</li>,
 						])}
 					</ol>

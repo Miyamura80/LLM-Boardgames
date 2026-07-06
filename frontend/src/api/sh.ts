@@ -131,4 +131,6 @@ export const listGames = (runId: string) =>
 	callCommand<{ games: GameSummary[] }>("sh_list_games", { run_id: runId });
 
 export const fetchReplay = (gameId: string) =>
-	callCommand<{ record: GameRecord }>("sh_game_replay", { game_id: gameId });
+	callCommand<{ record: GameRecord; rendered: string[] }>("sh_game_replay", {
+		game_id: gameId,
+	});

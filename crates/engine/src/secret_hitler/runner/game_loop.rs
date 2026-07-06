@@ -100,7 +100,9 @@ pub async fn run_game_from(
         assert!(safety < 5_000, "game loop failed to terminate");
 
         let decisions = state.pending_decisions();
-        if decisions.len() > 1 {
+        // Only the Election phase yields simultaneous decisions; match on the
+        // decision kind so this rule is stated, not assumed.
+        if matches!(decisions[0], DecisionPoint::Vote { .. }) {
             // Simultaneous ballots: discussion first, then parallel votes.
             run_discussion(cfg, &state, agents, &mut trackers)
                 .await
