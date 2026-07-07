@@ -88,6 +88,30 @@ secret_hitler:
         model: gemini/gemini-3-flash-preview
         persona: "Be sceptical of consensus: challenge whatever the table majority believes and float alternative suspect theories."
       - { name: bayes, kind: bayes-history }
+  # Named arena model sets: `sh_run_match --mode arena --set <name>` seats all 7.
+  # Each set is exactly 7 models so arena fills every seat with no duplicates.
+  # These are frontier/reasoning-heavy leagues — expect high per-game cost; use
+  # short runs (tens of games). VERIFY every model id/slug against its provider
+  # before a paid run (a wrong id fails loudly as a transport error). Route via
+  # native prefixes (set the provider key) or repoint any line at openrouter/…
+  # and set OPENROUTER_API_KEY.
+  model_sets:
+    frontier:
+      - openai/gpt-5.5
+      - openrouter/z-ai/glm-5.2
+      - gemini/gemini-3.5-flash
+      - openrouter/minimax/minimax-m3
+      - deepseek/deepseek-v4-pro
+      - openrouter/meta/muse-spark
+      - anthropic/claude-opus-4-8
+    cheap:
+      - deepseek/deepseek-v4-pro
+      - openrouter/openai/gpt-oss-120b
+      - openrouter/minimax/minimax-m3
+      - xai/grok-4.3
+      - openrouter/nvidia/nemotron-3-ultra
+      - openrouter/moonshotai/kimi-k2.6
+      - openrouter/z-ai/glm-5.2
 
 ########################################################
 # Debugging
