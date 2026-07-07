@@ -22,6 +22,22 @@ dark-red/red/blue party colors, the belief heatmap, and reliability/cost.
 
 Default to the **fixture** unless the user asks for latest/live results.
 
+## Finding a past game (when the user says "my last game" / doesn't give an id)
+
+Resolve a `game_id` from the store first, then feed it to `game-report-stored`:
+
+```bash
+# newest runs (pick run_id)
+shbench call sh_list_runs --json
+# games in that run (pick game_id — has winner, rounds, schedule cell)
+shbench call sh_list_games --args '{"run_id":"<run_id>"}' --json
+```
+
+`shbench` = `cargo run -q -p shbench --`. Pick the most recent unless the user
+names one, confirm the choice back to them, then run `game-report-stored`. This
+needs Postgres up (`docker compose up -d`); if it isn't, say so and offer the
+fixture instead.
+
 ## Steps
 
 1. **Generate** the report to a scratch path (not the repo unless asked):
