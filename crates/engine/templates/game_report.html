@@ -7,26 +7,26 @@
 <style>
 :root{
   --paper:#f7f3ea; --panel:#fffdf7; --ink:#26221a; --muted:#847b6a; --line:#e2dbc9;
-  --liberal:#3d6fa5; --liberal-soft:#e3ecf5; --fascist:#b4531d; --fascist-soft:#f6e6da;
-  --hitler:#8f1d1d; --chip:#efe9da;
+  --liberal:#2f6fbe; --liberal-soft:#e3ecf5; --fascist:#c33a22; --fascist-soft:#f6e2da;
+  --hitler:#7d1616; --chip:#efe9da;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   --serif:Georgia,'Times New Roman',serif;
   --sans:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root{
   --paper:#171410; --panel:#1f1b15; --ink:#eae4d4; --muted:#9a9080; --line:#39332a;
-  --liberal:#7aa7d6; --liberal-soft:#22303f; --fascist:#d98a55; --fascist-soft:#3a2718;
-  --hitler:#e07a7a; --chip:#2a2519;
+  --liberal:#78a9dd; --liberal-soft:#22303f; --fascist:#e0553b; --fascist-soft:#3a2418;
+  --hitler:#a92e22; --chip:#2a2519;
 }}
 :root[data-theme="dark"]{
   --paper:#171410; --panel:#1f1b15; --ink:#eae4d4; --muted:#9a9080; --line:#39332a;
-  --liberal:#7aa7d6; --liberal-soft:#22303f; --fascist:#d98a55; --fascist-soft:#3a2718;
-  --hitler:#e07a7a; --chip:#2a2519;
+  --liberal:#78a9dd; --liberal-soft:#22303f; --fascist:#e0553b; --fascist-soft:#3a2418;
+  --hitler:#a92e22; --chip:#2a2519;
 }
 :root[data-theme="light"]{
   --paper:#f7f3ea; --panel:#fffdf7; --ink:#26221a; --muted:#847b6a; --line:#e2dbc9;
-  --liberal:#3d6fa5; --liberal-soft:#e3ecf5; --fascist:#b4531d; --fascist-soft:#f6e6da;
-  --hitler:#8f1d1d; --chip:#efe9da;
+  --liberal:#2f6fbe; --liberal-soft:#e3ecf5; --fascist:#c33a22; --fascist-soft:#f6e2da;
+  --hitler:#7d1616; --chip:#efe9da;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:clamp(13.5px,1.1vw + 9px,15px);line-height:1.55}
@@ -48,6 +48,12 @@ h2{font-family:var(--serif);font-size:clamp(1rem,2.4vw,1.2rem);font-weight:600;m
 .seat .tok{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--muted);font-size:11px;overflow-wrap:anywhere}
 .seat.Liberal{border-left-color:var(--liberal)} .seat.Fascist{border-left-color:var(--fascist)} .seat.Hitler{border-left-color:var(--hitler)}
 .rolechip{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+/* Party reveal (omniscient report): dark red = Hitler, red = Fascist, blue = Liberal. */
+.rolechip.party{color:#fff;padding:.04rem .34rem;border-radius:3px;font-weight:700}
+.rolechip.party.Liberal{background:var(--liberal)} .rolechip.party.Fascist{background:var(--fascist)} .rolechip.party.Hitler{background:var(--hitler)}
+.legend{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;font-size:12px;color:var(--muted);margin-bottom:.6rem}
+.dot{display:inline-block;width:.72em;height:.72em;border-radius:50%;margin-right:.28em;vertical-align:-.05em}
+.dot.Liberal{background:var(--liberal)} .dot.Fascist{background:var(--fascist)} .dot.Hitler{background:var(--hitler)}
 .log{display:grid;gap:.18rem;max-height:70vh;overflow-y:auto;border:1px solid var(--line);border-radius:6px;padding:.7rem .75rem;background:var(--paper)}
 .ev{font-size:13px;overflow-wrap:anywhere}
 .ev .r{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-right:.3rem}
@@ -56,8 +62,13 @@ h2{font-family:var(--serif);font-size:clamp(1rem,2.4vw,1.2rem);font-weight:600;m
 .roundhdr{margin:.6rem 0 .2rem;font-family:var(--serif);font-weight:600;border-bottom:1px solid var(--line);padding-bottom:.15rem}
 .say{display:flex;gap:.4rem;align-items:baseline;padding:.15rem 0;font-size:13px}
 .say>span:last-child{overflow-wrap:anywhere;min-width:0}
-.who{flex:none;font-size:10.5px;font-weight:700;font-family:var(--mono);padding:.05rem .35rem;border-radius:4px;background:var(--chip)}
-.who.Liberal{color:var(--liberal);background:var(--liberal-soft)} .who.Fascist,.who.Hitler{color:var(--fascist);background:var(--fascist-soft)}
+.who{flex:none;font-size:10.5px;font-weight:700;font-family:var(--mono);padding:.05rem .38rem;border-radius:4px;background:var(--chip);color:#fff}
+.who.Liberal{background:var(--liberal)} .who.Fascist{background:var(--fascist)} .who.Hitler{background:var(--hitler)}
+/* Simultaneous-reveal discussion round: all seats wrote without seeing each other. */
+.disc{border:1px solid var(--line);border-radius:6px;padding:.3rem .55rem .45rem;margin:.3rem 0;background:var(--panel)}
+.dischdr{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);display:flex;flex-wrap:wrap;gap:.45rem;align-items:baseline;margin-bottom:.25rem}
+.dischdr .simul{font-size:10.5px;text-transform:none;letter-spacing:0;font-style:italic}
+.say.pass{color:var(--muted)} .say.pass .passtxt{font-style:italic;font-size:12px}
 .policy{font-weight:700}
 .policy.Liberal{color:var(--liberal)} .policy.Fascist{color:var(--fascist)}
 .votes{font-family:var(--mono);font-size:11.5px;overflow-wrap:anywhere}
@@ -100,6 +111,12 @@ ul.obs li{overflow-wrap:anywhere}
 
   <section>
     <h2>The table</h2>
+    <div class="legend">
+      <span><span class="dot Liberal"></span>Liberal</span>
+      <span><span class="dot Fascist"></span>Fascist</span>
+      <span><span class="dot Hitler"></span>Hitler</span>
+      <span class="note">— this omniscient report reveals every player's party</span>
+    </div>
     <div class="seats" id="seats"></div>
   </section>
 
@@ -144,7 +161,7 @@ $("stats").innerHTML = [
 // seats
 $("seats").innerHTML = GAME.seats.map(s => `
   <div class="seat ${s.role}">
-    <div class="nm">P${s.seat} <span class="rolechip">${s.role}${s.survived ? "" : " †"}</span></div>
+    <div class="nm">P${s.seat} <span class="rolechip party ${s.role}">${s.role}</span>${s.survived ? "" : ' <span class="rolechip">†</span>'}</div>
     <div class="tok">${esc(s.model_id.split("/").pop())}</div>
     <div class="tok">${(s.usage.prompt_tokens/1000).toFixed(0)}k in · ${(s.usage.completion_tokens/1000).toFixed(0)}k out</div>
   </div>`).join("");
@@ -191,14 +208,41 @@ function renderEvent(rec) {
       return line(esc(RENDERED[rec.idx] ?? t));
   }
 }
+// Group a government round's discussion into simultaneous-reveal blocks: a run
+// of Utterance events sharing a discussion_round were all written blind — no
+// speaker saw another's message before submitting.
+function renderDiscussion(dr, group) {
+  const rows = group.map(rec => {
+    const e = rec.event, th = renderThoughts(rec.idx);
+    if (e.pass) return `${th}<div class="say pass"><span class="who ${roles[e.seat]}">P${e.seat}</span><span class="passtxt">— passes —</span></div>`;
+    return `${th}<div class="say"><span class="who ${roles[e.seat]}">P${e.seat}</span><span>${esc(e.text)}</span></div>`;
+  }).join("");
+  return `<div class="disc"><div class="dischdr">💬 Discussion · round ${dr+1}<span class="simul">simultaneous — every seat wrote without seeing the others</span></div>${rows}</div>`;
+}
+
 let lastRound = 0;
 const out = [];
-for (const rec of GAME.events) {
+const evs = GAME.events;
+let i = 0;
+while (i < evs.length) {
+  const rec = evs[i];
   if (rec.round !== lastRound) { lastRound = rec.round; out.push(`<div class="roundhdr">Government ${rec.round}</div>`); }
+  if (rec.event.type === "Utterance") {
+    // Consume the whole contiguous simultaneous round and render it as one block.
+    const dr = rec.event.discussion_round;
+    const group = [];
+    while (i < evs.length && evs[i].round === lastRound
+           && evs[i].event.type === "Utterance" && evs[i].event.discussion_round === dr) {
+      group.push(evs[i]); i++;
+    }
+    out.push(renderDiscussion(dr, group));
+    continue;
+  }
   out.push(renderThoughts(rec.idx));
   out.push(renderEvent(rec));
+  i++;
 }
-out.push(renderThoughts(GAME.events.length));
+out.push(renderThoughts(evs.length));
 $("log").innerHTML = out.join("");
 
 // belief heatmaps: sequential single-hue ramp (magnitude), truth via ✦ marker

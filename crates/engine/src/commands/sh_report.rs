@@ -3,19 +3,50 @@
 //! collapsible per-decision thoughts, belief heatmaps, reliability & cost).
 //!
 //! This is the native, token-free path for producing game reports: the
-//! template lives in the repo (`crates/engine/templates/game_report.html`)
-//! and the data comes straight from the Postgres store.
+//! template lives in the repo (`crates/engine/templates/game_report.html`).
+//! [`render_game_report`] is the shared renderer — this command feeds it a
+//! record from the Postgres store, while `sh_play_game { report_path }` feeds it
+//! an in-memory record for a DB-free artifact.
 
 use crate::commands::sh_match::open_store;
 use crate::commands::{Command, CommandError, Expose};
 use crate::context::Ctx;
 use crate::register_command;
+use crate::secret_hitler::runner::record::GameRecord;
 use async_trait::async_trait;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 const TEMPLATE: &str = include_str!("../../templates/game_report.html");
+
+/// Render a complete game record into the self-contained HTML report. Shared by
+/// the store-backed `sh_export_game_report` command and the DB-free
+/// `sh_play_game { report_path }` path, so both emit byte-identical artifacts.
+pub(crate) fn render_game_report(record: &GameRecord) -> Result<String, CommandError> {
+    let rendered: Vec<String> = record
+        .events
+        .iter()
+        .map(|r| r.event.render_omniscient())
+        .collect();
+    // `</` must not appear inside the inline <script> payload.
+    let escape = |v: &serde_json::Value| serde_json::to_string(v).map(|s| s.replace("</", "<\\/"));
+    let data =
+        escape(&serde_json::to_value(record).map_err(|e| CommandError::Other(e.to_string()))?)
+            .map_err(|e| CommandError::Other(e.to_string()))?;
+    let lines =
+        escape(&serde_json::to_value(&rendered).map_err(|e| CommandError::Other(e.to_string()))?)
+            .map_err(|e| CommandError::Other(e.to_string()))?;
+    // Split at the markers instead of sequential global replaces: model-authored
+    // text inside the payloads could itself contain a marker.
+    let (before, rest) = TEMPLATE
+        .split_once("__GAME_DATA__")
+        .ok_or_else(|| CommandError::Other("template missing __GAME_DATA__".into()))?;
+    let (between, after) = rest
+        .split_once("__RENDERED__")
+        .ok_or_else(|| CommandError::Other("template missing __RENDERED__".into()))?;
+    Ok(format!("{before}{data}{between}{lines}{after}"))
+}
 
 #[derive(Default)]
 pub struct ShExportGameReport;
@@ -68,30 +99,7 @@ impl Command for ShExportGameReport {
                 CommandError::InvalidInput(format!("unknown game: {}", input.game_id))
             })?;
 
-        let rendered: Vec<String> = record
-            .events
-            .iter()
-            .map(|r| r.event.render_omniscient())
-            .collect();
-        // `</` must not appear inside the inline <script> payload.
-        let escape =
-            |v: &serde_json::Value| serde_json::to_string(v).map(|s| s.replace("</", "<\\/"));
-        let data =
-            escape(&serde_json::to_value(&record).map_err(|e| CommandError::Other(e.to_string()))?)
-                .map_err(|e| CommandError::Other(e.to_string()))?;
-        let lines = escape(
-            &serde_json::to_value(&rendered).map_err(|e| CommandError::Other(e.to_string()))?,
-        )
-        .map_err(|e| CommandError::Other(e.to_string()))?;
-        // Split at the markers instead of sequential global replaces: model-
-        // authored text inside the payloads could itself contain a marker.
-        let (before, rest) = TEMPLATE
-            .split_once("__GAME_DATA__")
-            .ok_or_else(|| CommandError::Other("template missing __GAME_DATA__".into()))?;
-        let (between, after) = rest
-            .split_once("__RENDERED__")
-            .ok_or_else(|| CommandError::Other("template missing __RENDERED__".into()))?;
-        let html = format!("{before}{data}{between}{lines}{after}");
+        let html = render_game_report(&record)?;
         let bytes = html.len();
 
         if let Some(path) = &input.output_path {

@@ -34,6 +34,9 @@ pub struct ShPlayGameInput {
     pub include_record: bool,
     /// Persist into this run id (requires Postgres) instead of only returning.
     pub store_run: Option<String>,
+    /// Also render the game into a self-contained HTML report at this path.
+    /// Works without Postgres — renders straight from the in-memory record.
+    pub report_path: Option<String>,
 }
 
 #[derive(Debug, Serialize, JsonSchema)]
@@ -52,6 +55,8 @@ pub struct ShPlayGameOutput {
     pub events: usize,
     pub metrics: Vec<SeatMetrics>,
     pub record: Option<GameRecord>,
+    /// Where the HTML report was written, if `report_path` was given.
+    pub report_path: Option<String>,
 }
 
 #[async_trait]
@@ -112,6 +117,13 @@ impl Command for ShPlayGame {
         let record = run_game(&game_cfg, &mut agents, &anchors).await;
         let metrics = score_game(&record);
 
+        // DB-free artifact path: render the in-memory record straight to HTML.
+        if let Some(path) = &input.report_path {
+            let html = super::sh_report::render_game_report(&record)?;
+            cx.fs()
+                .write_file(std::path::Path::new(path), html.as_bytes())?;
+        }
+
         if let Some(run_id) = &input.store_run {
             let store = open_store().await?;
             store
@@ -143,6 +155,7 @@ impl Command for ShPlayGame {
             events: record.events.len(),
             metrics,
             record: input.include_record.then_some(record),
+            report_path: input.report_path,
         })
     }
 }

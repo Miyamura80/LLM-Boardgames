@@ -55,6 +55,28 @@ docs: ## Run docs with bun
 
 
 ########################################################
+# Game Reports (self-contained HTML artifacts)
+########################################################
+
+### Game Reports
+.PHONY: game-report game-report-stored
+
+game-report: ## Play a game and render a self-contained HTML report (no DB). Vars: OUT=, MODELS=, SEED=. Pass LLM MODELS to get discussion.
+	@echo "$(YELLOW)🎲 Playing a game and rendering the report...$(RESET)"
+	@cargo run -q -p shbench -- call sh_play_game --args '{"models":$(or $(MODELS),["bot:bayes-history"]),"seed":$(or $(SEED),7),"discussion_rounds":2,"report_path":"$(or $(OUT),media/game-report.html)"}'
+	@echo "$(GREEN)✅ Report written to $(or $(OUT),media/game-report.html)$(RESET)"
+	@echo "$(YELLOW)ℹ️  Bots don't talk — pass LLM seats for discussion, e.g. MODELS='[\"openai/gpt-4o-mini\"]'$(RESET)"
+
+game-report-stored: ## Export a STORED game (real LLM discussion) to HTML. Requires GAME=<id> and Postgres. Var: OUT=.
+	@if [ -z "$(GAME)" ]; then \
+		echo "$(RED)Error: GAME=<game_id> required (list with a run's games)$(RESET)"; exit 1; \
+	fi
+	@echo "$(YELLOW)🎲 Exporting stored game $(GAME)...$(RESET)"
+	@cargo run -q -p shbench -- call sh_export_game_report --args '{"game_id":"$(GAME)","output_path":"$(or $(OUT),media/game-report.html)"}'
+	@echo "$(GREEN)✅ Report written to $(or $(OUT),media/game-report.html)$(RESET)"
+
+
+########################################################
 # Initialization
 ########################################################
 
