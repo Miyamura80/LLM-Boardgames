@@ -245,34 +245,34 @@
       "report": {
         "assessments": {
           "0": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "2": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "3": {
-            "liberal": 0.01,
-            "fascist": 0.04,
-            "hitler": 0.95
+            "liberal": 0,
+            "fascist": 0,
+            "hitler": 1
           },
           "4": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "5": {
-            "liberal": 0.02,
-            "fascist": 0.97,
-            "hitler": 0.01
+            "liberal": 0,
+            "fascist": 1,
+            "hitler": 0
           },
           "6": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           }
         }
       }
@@ -397,34 +397,34 @@
       "report": {
         "assessments": {
           "0": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "1": {
-            "liberal": 0.02,
-            "fascist": 0.97,
-            "hitler": 0.01
+            "liberal": 0,
+            "fascist": 1,
+            "hitler": 0
           },
           "2": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "3": {
-            "liberal": 0.01,
-            "fascist": 0.04,
-            "hitler": 0.95
+            "liberal": 0,
+            "fascist": 0,
+            "hitler": 1
           },
           "4": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "6": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           }
         }
       }
@@ -511,34 +511,34 @@
       "report": {
         "assessments": {
           "0": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "2": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "3": {
-            "liberal": 0.01,
-            "fascist": 0.04,
-            "hitler": 0.95
+            "liberal": 0,
+            "fascist": 0,
+            "hitler": 1
           },
           "4": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "5": {
-            "liberal": 0.02,
-            "fascist": 0.97,
-            "hitler": 0.01
+            "liberal": 0,
+            "fascist": 1,
+            "hitler": 0
           },
           "6": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           }
         }
       }
@@ -663,34 +663,34 @@
       "report": {
         "assessments": {
           "0": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "1": {
-            "liberal": 0.02,
-            "fascist": 0.97,
-            "hitler": 0.01
+            "liberal": 0,
+            "fascist": 1,
+            "hitler": 0
           },
           "2": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "3": {
-            "liberal": 0.01,
-            "fascist": 0.04,
-            "hitler": 0.95
+            "liberal": 0,
+            "fascist": 0,
+            "hitler": 1
           },
           "4": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "6": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           }
         }
       }
@@ -777,34 +777,34 @@
       "report": {
         "assessments": {
           "0": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "2": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "3": {
-            "liberal": 0.01,
-            "fascist": 0.04,
-            "hitler": 0.95
+            "liberal": 0,
+            "fascist": 0,
+            "hitler": 1
           },
           "4": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "5": {
-            "liberal": 0.02,
-            "fascist": 0.97,
-            "hitler": 0.01
+            "liberal": 0,
+            "fascist": 1,
+            "hitler": 0
           },
           "6": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           }
         }
       }
@@ -929,34 +929,34 @@
       "report": {
         "assessments": {
           "0": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "1": {
-            "liberal": 0.02,
-            "fascist": 0.97,
-            "hitler": 0.01
+            "liberal": 0,
+            "fascist": 1,
+            "hitler": 0
           },
           "2": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "3": {
-            "liberal": 0.01,
-            "fascist": 0.04,
-            "hitler": 0.95
+            "liberal": 0,
+            "fascist": 0,
+            "hitler": 1
           },
           "4": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "6": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           }
         }
       }
@@ -1043,34 +1043,34 @@
       "report": {
         "assessments": {
           "0": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "2": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "3": {
-            "liberal": 0.01,
-            "fascist": 0.04,
-            "hitler": 0.95
+            "liberal": 0,
+            "fascist": 0,
+            "hitler": 1
           },
           "4": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "5": {
-            "liberal": 0.02,
-            "fascist": 0.97,
-            "hitler": 0.01
+            "liberal": 0,
+            "fascist": 1,
+            "hitler": 0
           },
           "6": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           }
         }
       }
@@ -1195,34 +1195,34 @@
       "report": {
         "assessments": {
           "0": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "1": {
-            "liberal": 0.02,
-            "fascist": 0.97,
-            "hitler": 0.01
+            "liberal": 0,
+            "fascist": 1,
+            "hitler": 0
           },
           "2": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "3": {
-            "liberal": 0.01,
-            "fascist": 0.04,
-            "hitler": 0.95
+            "liberal": 0,
+            "fascist": 0,
+            "hitler": 1
           },
           "4": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "6": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           }
         }
       }
@@ -1385,34 +1385,34 @@
       "report": {
         "assessments": {
           "0": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "1": {
-            "liberal": 0.02,
-            "fascist": 0.97,
-            "hitler": 0.01
+            "liberal": 0,
+            "fascist": 1,
+            "hitler": 0
           },
           "2": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "3": {
-            "liberal": 0.01,
-            "fascist": 0.04,
-            "hitler": 0.95
+            "liberal": 0,
+            "fascist": 0,
+            "hitler": 1
           },
           "4": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           },
           "6": {
-            "liberal": 0.95,
-            "fascist": 0.04,
-            "hitler": 0.01
+            "liberal": 1,
+            "fascist": 0,
+            "hitler": 0
           }
         }
       }
