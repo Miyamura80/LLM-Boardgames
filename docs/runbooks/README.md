@@ -4,7 +4,7 @@ Operational runbooks for diagnosing and resolving known issues in this project.
 
 | Runbook | Description |
 |---------|-------------|
-| _(none yet)_ | Add runbooks here as issues are encountered and resolved |
+| [arena-pilot.md](arena-pilot.md) | Run a `model_sets` league (frontier/cheap) end-to-end: verify model ids, calibrate cost/latency, read the go/no-go metrics, scale up. |
 
 ---
 

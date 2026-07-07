@@ -230,6 +230,11 @@ pub struct SecretHitlerConfig {
     /// Named anchor pools: each entry lists frozen anchor seat specs.
     #[serde(default)]
     pub pools: HashMap<String, Vec<AnchorSpec>>,
+    /// Named arena model sets: each entry is a list of seat specs
+    /// (`provider/model` or `bot:<kind>`) that `sh_run_match --mode arena`
+    /// can seat by name instead of listing every model on the CLI.
+    #[serde(default)]
+    pub model_sets: HashMap<String, Vec<String>>,
 }
 
 impl Default for SecretHitlerConfig {
@@ -242,6 +247,7 @@ impl Default for SecretHitlerConfig {
             agent_temperature: default_agent_temperature(),
             rating_k: default_rating_k(),
             pools: HashMap::new(),
+            model_sets: HashMap::new(),
         }
     }
 }

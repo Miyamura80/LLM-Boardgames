@@ -159,9 +159,12 @@ fn full_role_set() -> [Role; PLAYER_COUNT as usize] {
     ]
 }
 
-/// Realized assignment distribution, for the run log: model → seat counts and
-/// (when known up front) role counts.
-pub fn realized_distribution(plans: &[GamePlan]) -> BTreeMap<String, BTreeMap<String, u32>> {
+/// **Planned** assignment distribution from the schedule (intent, before any
+/// game is played): model → seat counts and, when roles are forced up front
+/// (controlled mode), role counts. Compare against the store's realized
+/// distribution to spot coverage gaps in a partial run. Arena roles are dealt
+/// at play time, so they are absent here and only appear in the realized view.
+pub fn planned_distribution(plans: &[GamePlan]) -> BTreeMap<String, BTreeMap<String, u32>> {
     let mut dist: BTreeMap<String, BTreeMap<String, u32>> = BTreeMap::new();
     for plan in plans {
         for (seat, spec) in plan.seats.iter().enumerate() {

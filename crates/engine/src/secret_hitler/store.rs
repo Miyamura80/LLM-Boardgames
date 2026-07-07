@@ -10,6 +10,7 @@ use super::types::Role;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{PgPool, Row};
+use std::collections::BTreeMap;
 
 pub type StoreResult<T> = Result<T, sqlx::Error>;
 
@@ -338,6 +339,36 @@ impl Store {
                 completion_tokens: r.get::<i64, _>("completion_tokens"),
             })
             .collect())
+    }
+
+    /// Realized model→{seat, role} occurrence counts across the games a run
+    /// **actually played** (from persisted seat rows, not the planned
+    /// schedule). Works for both modes: arena roles, dealt from the seed at
+    /// play time, are recorded per seat and therefore counted here too.
+    pub async fn realized_distribution(
+        &self,
+        run_id: &str,
+    ) -> StoreResult<BTreeMap<String, BTreeMap<String, u32>>> {
+        let rows = sqlx::query(
+            "SELECT s.model_id, s.seat, s.role, count(*)::bigint AS n
+             FROM sh_seats s JOIN sh_games g ON g.id = s.game_id
+             WHERE g.run_id = $1
+             GROUP BY s.model_id, s.seat, s.role",
+        )
+        .bind(run_id)
+        .fetch_all(&self.pool)
+        .await?;
+        let mut dist: BTreeMap<String, BTreeMap<String, u32>> = BTreeMap::new();
+        for r in rows {
+            let model_id: String = r.get("model_id");
+            let seat: i16 = r.get("seat");
+            let role: String = r.get("role");
+            let n = r.get::<i64, _>("n") as u32;
+            let by = dist.entry(model_id).or_default();
+            *by.entry(format!("seat{seat}")).or_default() += n;
+            *by.entry(format!("role:{role}")).or_default() += n;
+        }
+        Ok(dist)
     }
 
     pub async fn load_ratings(&self, run_id: &str) -> StoreResult<RatingTable> {
