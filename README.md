@@ -12,6 +12,7 @@
   <a href="#key-features">Key Features</a> •
   <a href="#architecture">Architecture</a> •
   <a href="#quick-start">Quick Start</a> •
+  <a href="#game-reports">Game Reports</a> •
   <a href="#configuration">Configuration</a> •
   <a href="#agent-skills">Agent Skills</a> •
   <a href="#credits">Credits</a>
@@ -130,6 +131,29 @@ Scaffold a new command with `make new name=fetch_url` (or `shbench new
 fetch_url`) — it self-registers, so it's immediately callable over the CLI and
 the API.
 
+## Game Reports
+
+Render any game into a **single self-contained HTML report** — the omniscient
+transcript (discussion grouped into *simultaneous-reveal* rounds), each agent's
+collapsible private reasoning, the who-suspected-who belief heatmap, and per-seat
+reliability + cost. Everything is inlined, so the file opens offline with no server.
+
+```bash
+make game-report-json                      # a fixed sample game — reproducible, no DB → media/game-report.html
+make game-report MODELS='["gemini/gemini-3-flash-preview"]'  # play a fresh game, then render
+make game-report-stored GAME=<game_id>     # export a stored match game (needs Postgres)
+```
+
+Party is revealed by color throughout — **blue Liberal · red Fascist · dark-red
+Hitler** — on the seat cards, discussion speaker chips, policy words, and the
+belief-matrix headers. The suspicion matrix is *directional* (row =
+believer, column = subject), so it is intentionally asymmetric. Bots don't talk,
+so discussion only appears with LLM seats.
+
+The `/game-preview` skill wires this into a shareable Artifact: it runs
+`game-report`, strips the document to page content (`scripts/report_to_artifact.mjs`),
+and publishes it — the preview at the top of this README is produced this way.
+
 ## Asset Generation
 
 - `make logo` / `make banner` regenerate branding assets via the Rust
@@ -155,6 +179,8 @@ Claude Code skills live in `.claude/skills/`. Invoke them with `/skill-name`.
 | Skill | Description |
 |-------|-------------|
 | `/update-backend` | Guide for Rust backend changes — engine commands, traits, CLI/API, testing |
+| `/secret-hitler-brand` | Shared visual brand (palette, self-hosted fonts, design language) every frontend adopts |
+| `/game-preview` | Render a game as a self-contained HTML report and publish it as an Artifact |
 | `/onboarding` | Turn this template into a real project (interview → dry-run → prune) |
 | `/code-quality` | Run formatting and linting checks (Biome + Clippy) |
 | `/prd` | Generate a Product Requirements Document for a new feature |
