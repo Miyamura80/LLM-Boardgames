@@ -17,17 +17,14 @@ docker compose up -d                 # Postgres eval store
 export DATABASE_URL=postgres://shbench:shbench@localhost:5433/shbench
 ```
 
-Set the provider keys you need. Routing is by litellm-style prefix (see
-`crates/engine/src/llm/providers.rs`): **native prefixes route straight to the
-provider and require that provider's own key** — `OPENROUTER_API_KEY` only
-covers `openrouter/…` lines, there is no OpenRouter fallback. The shipped
-`model_sets` mix both (e.g. `deepseek/…`, `xai/…`, `openai/…` are native), so
-set every key a set uses, or repoint those lines at `openrouter/…`:
+Routing is by litellm-style prefix (see `crates/engine/src/llm/providers.rs`):
+**OpenAI / Anthropic / Gemini are first-party** (their own keys); **every other
+family routes through OpenRouter** (`openrouter/<org>/<model>`, one key). The
+shipped `model_sets` follow this split, so a pilot needs just these four keys:
 
 ```bash
-export OPENROUTER_API_KEY=...        # covers openrouter/… lines
 export OPENAI_API_KEY=... ANTHROPIC_API_KEY=... GEMINI_API_KEY=...
-export DEEPSEEK_API_KEY=... MISTRAL_API_KEY=... XAI_API_KEY=...
+export OPENROUTER_API_KEY=...        # covers every openrouter/… seat
 ```
 
 > **Egress:** the seat calls go out to real provider APIs. In a locked-down
@@ -64,9 +61,10 @@ shbench call sh_leaderboard --json --args '{"run_id":"verify-gpt-5.5","include_a
 - **`transport` high** (every call failed) → wrong id or missing/invalid key.
   Fix the string in `model_sets` (or repoint it at `openrouter/…`) and re-smoke.
 
-Repeat for each distinct model. Unverified as of writing: `z-ai/glm-5.2`,
-`deepseek/deepseek-v4-pro`, `meta/muse-spark`, `nvidia/nemotron-3-ultra`,
-`openai/gpt-oss-120b`, `xai/grok-4.3`.
+Repeat for each distinct model. Unverified OpenRouter slugs as of writing:
+`openrouter/z-ai/glm-5.2`, `openrouter/deepseek/deepseek-v4-pro`,
+`openrouter/meta/muse-spark`, `openrouter/nvidia/nemotron-3-ultra`,
+`openrouter/openai/gpt-oss-120b`, `openrouter/x-ai/grok-4.3`.
 
 ---
 

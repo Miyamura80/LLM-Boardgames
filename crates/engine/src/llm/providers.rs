@@ -12,16 +12,12 @@ pub struct ProviderKeys {
     pub groq: Option<String>,
     pub gemini: Option<String>,
     pub openrouter: Option<String>,
-    pub mistral: Option<String>,
-    pub deepseek: Option<String>,
-    pub xai: Option<String>,
 }
 
 impl ProviderKeys {
     /// Pull keys from the app config, falling back to conventional env vars.
-    /// Providers without a dedicated `app_config` accessor are env-only (same
-    /// convention as `openrouter`): set `MISTRAL_API_KEY` / `DEEPSEEK_API_KEY`
-    /// / `XAI_API_KEY` to seat those families directly.
+    /// First-party providers (OpenAI / Anthropic / Gemini) route natively;
+    /// every other family goes through OpenRouter (`OPENROUTER_API_KEY`).
     pub fn from_app_config(cfg: &app_config::AppConfig) -> Self {
         let env = |k: &str| std::env::var(k).ok().filter(|v| !v.trim().is_empty());
         Self {
@@ -42,9 +38,6 @@ impl ProviderKeys {
                 .map(String::from)
                 .or_else(|| env("GEMINI_API_KEY")),
             openrouter: env("OPENROUTER_API_KEY"),
-            mistral: env("MISTRAL_API_KEY"),
-            deepseek: env("DEEPSEEK_API_KEY"),
-            xai: env("XAI_API_KEY"),
         }
     }
 }
@@ -76,19 +69,14 @@ pub fn resolve_provider(model: &str, keys: &ProviderKeys) -> Result<ResolvedProv
             "https://generativelanguage.googleapis.com/v1beta/openai",
             &keys.gemini,
         ),
+        // Everything that isn't a first-party provider above routes through
+        // OpenRouter (one key reaches Mistral / DeepSeek / xAI / GLM / MiniMax /
+        // etc.), so those seats are written `openrouter/<org>/<model>`.
         "openrouter" => (
             "openrouter",
             "https://openrouter.ai/api/v1",
             &keys.openrouter,
         ),
-        // Native OpenAI-compatible endpoints for the cheap non-reasoning
-        // families (diversifies the anchor pool off Gemini). NB: each API uses
-        // its own model ids — DeepSeek expects `deepseek-chat`/`deepseek-reasoner`,
-        // Mistral date-suffixed ids (`mistral-small-2506`), xAI `grok-*` — so
-        // verify the exact id against the provider before a paid run.
-        "mistral" => ("mistral", "https://api.mistral.ai/v1", &keys.mistral),
-        "deepseek" => ("deepseek", "https://api.deepseek.com/v1", &keys.deepseek),
-        "xai" => ("xai", "https://api.x.ai/v1", &keys.xai),
         other => return Err(format!("unknown LLM provider prefix: {other}")),
     };
     let api_key = key
@@ -113,9 +101,6 @@ mod tests {
             groq: Some("k".into()),
             gemini: Some("k".into()),
             openrouter: Some("k".into()),
-            mistral: Some("k".into()),
-            deepseek: Some("k".into()),
-            xai: Some("k".into()),
         }
     }
 
@@ -133,21 +118,16 @@ mod tests {
                 "https://api.anthropic.com/v1",
                 "claude-haiku-4-5",
             ),
-            (
-                "mistral/mistral-small-2506",
-                "https://api.mistral.ai/v1",
-                "mistral-small-2506",
-            ),
-            (
-                "deepseek/deepseek-chat",
-                "https://api.deepseek.com/v1",
-                "deepseek-chat",
-            ),
-            ("xai/grok-4-fast", "https://api.x.ai/v1", "grok-4-fast"),
+            // Non-first-party families route through OpenRouter (org/model kept).
             (
                 "openrouter/minimax/minimax-m3",
                 "https://openrouter.ai/api/v1",
                 "minimax/minimax-m3",
+            ),
+            (
+                "openrouter/x-ai/grok-4.3",
+                "https://openrouter.ai/api/v1",
+                "x-ai/grok-4.3",
             ),
         ];
         for (input, base, model) in cases {
@@ -167,8 +147,11 @@ mod tests {
     #[test]
     fn missing_key_is_an_error_not_a_panic() {
         let keys = ProviderKeys::default(); // no keys configured
-        let err = resolve_provider("deepseek/deepseek-chat", &keys).unwrap_err();
-        assert!(err.contains("deepseek"), "error names the provider: {err}");
+        let err = resolve_provider("openrouter/minimax/minimax-m3", &keys).unwrap_err();
+        assert!(
+            err.contains("openrouter"),
+            "error names the provider: {err}"
+        );
     }
 
     #[test]
