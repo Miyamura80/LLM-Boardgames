@@ -89,6 +89,13 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .hm tr>th:first-child{position:sticky;left:0;background:var(--panel);z-index:1}
 .hm td{border:none;min-width:2.2rem;height:1.7rem;text-align:center;border-radius:4px;font-family:var(--mono)}
 .hm td.empty{background:var(--chip)}
+/* Axis captions: which way is believer vs subject. */
+.hm .axistop{text-align:center;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:10.5px}
+.hm .axisleft{text-align:left;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:10.5px;white-space:nowrap}
+.hm .axistop span,.hm .axisleft span{font-weight:400;text-transform:none;letter-spacing:0;font-style:italic}
+.hm .corner{background:transparent}
+/* A believer with no snapshot at this checkpoint (usually executed). */
+.hm td.nosnap{background:transparent;color:var(--muted);font-style:italic;font-family:var(--sans);text-align:left;padding-left:.5rem}
 .cpbtns{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.6rem}
 .cpbtns button{font:inherit;font-size:12px;padding:.22rem .6rem;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
 .cpbtns button:focus-visible{outline:2px solid var(--liberal)}
@@ -258,11 +265,21 @@ const RAMP = ["#f2f7fc","#dcebf7","#c0dcf0","#9ac8e6","#6face0","#4a90d9","#2f6f
 const cps = [...new Set(GAME.beliefs.map(b=>b.checkpoint))];
 function drawHm(cp) {
   const snaps = GAME.beliefs.filter(b=>b.checkpoint===cp);
-  // Header labels are tinted by each player's true party (blue / red / dark red).
-  let h = `<table class="hm"><tr><th><span class="hdrlabel">believer ↓ / subject →</span></th>${roles.map((r,i)=>`<th><span class="pw ${r}">P${i}</span>${r!=="Liberal"?" ✦":""}</th>`).join("")}</tr>`;
+  // Two caption rows name the axes; the P# headers are tinted by true party.
+  let h = `<table class="hm">`
+    + `<tr><th class="corner"></th><th class="axistop" colspan="7">subject → <span>the player being judged</span></th></tr>`
+    + `<tr><th class="axisleft">believer ↓ <span>the judging player</span></th>${roles.map((r,i)=>`<th><span class="pw ${r}">P${i}</span>${r!=="Liberal"?" ✦":""}</th>`).join("")}</tr>`;
   for (let b = 0; b < 7; b++) {
     const snap = snaps.find(s=>s.seat===b);
     h += `<tr><th><span class="pw ${roles[b]}">P${b}</span> <span class="rolechip party ${roles[b]}">${roles[b]}</span></th>`;
+    if (!snap) {
+      // No belief snapshot — a dead (executed) seat records none at game end.
+      const why = GAME.seats[b] && !GAME.seats[b].survived
+        ? "executed — no beliefs recorded"
+        : "no snapshot at this checkpoint";
+      h += `<td class="nosnap" colspan="7">— ${why} —</td></tr>`;
+      continue;
+    }
     for (let subj = 0; subj < 7; subj++) {
       const probs = snap?.report.assessments[String(subj)];
       if (b === subj || !probs) { h += `<td class="empty"></td>`; continue; }
