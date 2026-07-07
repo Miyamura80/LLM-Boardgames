@@ -1,6 +1,6 @@
 ---
 name: game-preview
-description: Produce a Secret Hitler game preview as an Artifact by running the native game-report generator (never a hand-built mock). Use whenever the user asks to preview/show/screenshot a game, replay, transcript, or the UI "as an artifact" — default to the fixed sample fixture, or use recent/live results when asked.
+description: Produce a Secret Hitler game preview as an Artifact by running the native game-report generator (never a hand-built mock). Trigger whenever the user asks to preview/show/screenshot/visualize a game, run, match, replay, transcript, report, or the UI (e.g. "show me a preview", "preview of the run", "make an artifact of my last game", "artifact of that match") — default to the fixed sample fixture, or use recent/stored/live results when asked. A "run" or "match" holds many games: list its games and pick the decisive one (or ask) rather than treating it as a single game.
 ---
 
 # Game Preview → Artifact
@@ -22,9 +22,11 @@ dark-red/red/blue party colors, the belief heatmap, and reliability/cost.
 
 Default to the **fixture** unless the user asks for latest/live results.
 
-## Finding a past game (when the user says "my last game" / doesn't give an id)
+## Finding a past game (when the user says "my last game" / "the run" / gives no id)
 
-Resolve a `game_id` from the store first, then feed it to `game-report-stored`:
+A report renders **one** game, but "the run" / "the match" is a batch of many.
+Resolve a single `game_id` from the store first, then feed it to
+`game-report-stored`:
 
 ```bash
 # newest runs (pick run_id)
