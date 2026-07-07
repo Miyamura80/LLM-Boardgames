@@ -148,7 +148,6 @@ Claude Code skills live in `.claude/skills/`. Invoke them with `/skill-name`.
 |-------|-------------|
 | `/update-backend` | Guide for Rust backend changes — engine commands, traits, CLI/API, testing |
 | `/code-quality` | Run formatting and linting checks (Biome + Clippy) |
-| `/prd` | Generate a Product Requirements Document for a new feature |
 | `/cleanup` | Git branch hygiene — delete merged branches, prune stale refs, sync deps |
 
 ## Credits
