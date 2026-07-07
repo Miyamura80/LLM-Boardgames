@@ -173,7 +173,7 @@ test_flaky: ## Repeat fast tests to detect flaky tests
 ########################################################
 
 ### Code Quality
-.PHONY: fmt lint knip audit link-check ci
+.PHONY: fmt lint knip audit link-check file_len_check brand_sync_check ci
 
 fmt: ## Format code with Biome and rustfmt
 	@echo "$(YELLOW)✨ Formatting and linting with Biome...$(RESET)"
@@ -221,7 +221,12 @@ file_len_check: ## Check TS/RS files don't exceed max line count
 	@bun run scripts/check_file_length.ts
 	@echo "$(GREEN)✅ File length check completed.$(RESET)"
 
-ci: fmt lint knip audit link-check test file_len_check ## Run all CI checks
+brand_sync_check: ## Verify the frontend brand tokens match the skill's canonical copy
+	@echo "$(YELLOW)🔍 Checking brand token sync...$(RESET)"
+	@node scripts/check_brand_sync.mjs
+	@echo "$(GREEN)✅ Brand sync check completed.$(RESET)"
+
+ci: fmt lint knip audit link-check test file_len_check brand_sync_check ## Run all CI checks
 	@echo "$(GREEN)✅ CI checks completed.$(RESET)"
 
 

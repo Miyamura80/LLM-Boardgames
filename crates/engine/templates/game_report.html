@@ -196,14 +196,12 @@ const renderThoughts = (idx) => (thoughtsAt.get(idx) || []).map(t =>
 
 // transcript — wording comes from the engine's canonical renderer (RENDERED);
 // this switch only adds visual decoration for a handful of event kinds.
+// Utterances never reach here: the main loop groups each simultaneous
+// discussion round via renderDiscussion() before calling renderEvent.
 function renderEvent(rec) {
   const e = rec.event, t = e.type;
   const priv = rec.visibility !== "Public";
   const tag = priv ? `<span class="r">[private P${rec.visibility.Private}]</span>` : "";
-  if (t === "Utterance") {
-    if (e.pass) return `<div class="ev sys"><span class="r">d${e.discussion_round+1}</span>P${e.seat} passes.</div>`;
-    return `<div class="say"><span class="who ${roles[e.seat]}">P${e.seat}</span><span>${esc(e.text)}</span></div>`;
-  }
   const line = (html, cls="") => `<div class="ev ${priv ? "private" : cls}">${tag}${html}</div>`;
   switch (t) {
     case "PolicyEnacted":

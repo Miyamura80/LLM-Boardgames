@@ -23,10 +23,18 @@ const html = readFileSync(inPath, "utf8");
 const title =
 	(html.match(/<title>([\s\S]*?)<\/title>/) || [])[1] ||
 	"Secret Hitler — Game Report";
-const style = (html.match(/<style>[\s\S]*?<\/style>/) || [])[0] || "";
-const body = (html.match(/<body>([\s\S]*?)<\/body>/) || [])[1] || "";
+const style = (html.match(/<style[^>]*>[\s\S]*?<\/style>/) || [])[0] || "";
+const body = (html.match(/<body[^>]*>([\s\S]*?)<\/body>/) || [])[1] || "";
+// Fail loudly rather than silently ship a broken/unstyled artifact — the
+// template and this extractor are maintained separately and can drift.
 if (!body) {
 	console.error(`no <body> found in ${inPath} — is it a game report?`);
+	process.exit(1);
+}
+if (!style) {
+	console.error(
+		`no <style> found in ${inPath} — the artifact would be unstyled`,
+	);
 	process.exit(1);
 }
 
