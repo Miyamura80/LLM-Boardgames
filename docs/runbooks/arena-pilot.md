@@ -61,10 +61,14 @@ shbench call sh_leaderboard --json --args '{"run_id":"verify-gpt-5.5","include_a
 - **`transport` high** (every call failed) → wrong id or missing/invalid key.
   Fix the string in `model_sets` (or repoint it at `openrouter/…`) and re-smoke.
 
-Repeat for each distinct model. Unverified OpenRouter slugs as of writing:
-`openrouter/z-ai/glm-5.2`, `openrouter/deepseek/deepseek-v4-pro`,
-`openrouter/meta/muse-spark`, `openrouter/nvidia/nemotron-3-ultra`,
-`openrouter/openai/gpt-oss-120b`, `openrouter/x-ai/grok-4.3`.
+Repeat for **every distinct model in the set** — treat all `openrouter/…` slugs
+as unverified until a smoke test passes, since none were confirmed against
+`openrouter.ai/models` when the sets were written. As of writing that is every
+`openrouter/…` entry in `frontier` and `cheap`: `z-ai/glm-5.2`,
+`deepseek/deepseek-v4-pro`, `minimax/minimax-m3`, `meta/muse-spark`,
+`nvidia/nemotron-3-ultra`, `openai/gpt-oss-120b`, `x-ai/grok-4.3`,
+`moonshotai/kimi-k2.6`. The first-party `openai/`, `anthropic/`, `gemini/`
+entries use known-good ids.
 
 ---
 
