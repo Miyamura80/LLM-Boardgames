@@ -2,12 +2,11 @@
 
 The `shbench` binary drives the shared `engine` game engine and eval command
 registry over multiple transports: the CLI (`call` / `probe` / `doctor` /
-`run-scenario`) and the axum HTTP API (`serve`). `init` onboards the template
-into a real project, `new` scaffolds a command, and `mcp` is a stub for the
-future MCP transport.
+`run-scenario`) and the axum HTTP API (`serve`). `new` scaffolds a command, and
+`mcp` is a stub for the future MCP transport.
 
 The `cli` and `http-api` surfaces are cargo features (both on by default), so
-`shbench init` can prune one and still leave a compiling binary.
+one can be pruned and still leave a compiling binary.
 
 ## Build
 

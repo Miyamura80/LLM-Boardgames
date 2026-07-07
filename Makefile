@@ -86,7 +86,7 @@ game-report-stored: ## Export a STORED game (real LLM discussion) to HTML. Requi
 ########################################################
 
 ### Initialization
-.PHONY: setup init new banner logo
+.PHONY: setup new banner logo
 
 setup: ## Set up dev environment from scratch (installs deps, copies .env, checks tooling)
 	@echo "$(BLUE)🔧 Setting up dev environment...$(RESET)"
@@ -107,13 +107,6 @@ setup: ## Set up dev environment from scratch (installs deps, copies .env, check
 		echo "$(GREEN)✅ .env already exists$(RESET)"; \
 	fi
 	@echo "$(GREEN)✅ Setup complete. Run 'make run' to start the server.$(RESET)"
-
-init: ## Onboard the template into a real project (shbench init). Bare = wizard; PROFILE=/CONFIG=/DRY_RUN=1/ARGS= for headless.
-	@cargo run -q -p shbench -- init \
-		$(if $(PROFILE),--profile $(PROFILE),) \
-		$(if $(CONFIG),--config $(CONFIG),) \
-		$(if $(DRY_RUN),--dry-run,) \
-		$(ARGS)
 
 new: ## Scaffold a new engine command (usage: make new name=fetch_url [description="..."])
 	@if [ -z "$(name)" ]; then \

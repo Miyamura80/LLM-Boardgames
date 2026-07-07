@@ -43,16 +43,25 @@ secret_hitler:
   agent_max_tokens: 8192
   agent_temperature: 0.5
   rating_k: 2.0
-  # Frozen anchor pools. NOTE: all default LLM anchors are Gemini-family
-  # because only GEMINI_API_KEY ships with this repo — diversify providers
-  # before publishing results (model-family collusion caveat, rating-design §3).
+  # Frozen anchor pools. The LLM anchors span three distinct model families
+  # (Mistral / DeepSeek / Google) to avoid the same-family collusion caveat in
+  # rating-design §3. All three tiers are cheap NON-REASONING models so per-game
+  # cost stays flat and predictable (reasoning tokens bill as output and this
+  # harness is output-volume-bound). Routing is litellm-style: OpenAI / Anthropic
+  # / Gemini use first-party keys; every other family routes through OpenRouter
+  # (`openrouter/<org>/<model>`, one OPENROUTER_API_KEY). VERIFY the exact
+  # slugs before a paid run — a wrong id surfaces as a transport error, not a
+  # silent bad game.
   pools:
     pool-a:
       - { name: random, kind: random-legal }
       - { name: heuristic, kind: heuristic }
       - { name: bayes, kind: bayes-history }
-      - { name: llm-cheap, kind: llm, model: gemini/gemini-2.5-flash-preview }
-      - { name: llm-mid, kind: llm, model: gemini/gemini-3-flash-preview }
+      # llm-cheap: Mistral Small 3.2 — cheapest coherent non-reasoner (AA II 11).
+      - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.2 }
+      # llm-mid: DeepSeek V3.2 non-reasoning — best cheap/coherent workhorse (AA II 25).
+      - { name: llm-mid, kind: llm, model: openrouter/deepseek/deepseek-chat }
+      # llm-strong: Gemini 3 Flash (non-reasoning) — fast, 1M ctx, first-party key.
       - name: llm-strong
         kind: llm
         model: gemini/gemini-3-flash-preview
@@ -79,6 +88,29 @@ secret_hitler:
         model: gemini/gemini-3-flash-preview
         persona: "Be sceptical of consensus: challenge whatever the table majority believes and float alternative suspect theories."
       - { name: bayes, kind: bayes-history }
+  # Named arena model sets: `sh_run_match --mode arena --set <name>` seats all 7.
+  # Each set is exactly 7 models so arena fills every seat with no duplicates.
+  # These are frontier/reasoning-heavy leagues — expect high per-game cost; use
+  # short runs (tens of games). Routing: OpenAI / Anthropic / Gemini first-party;
+  # everything else via OpenRouter. VERIFY every slug against its provider before
+  # a paid run (a wrong id fails loudly as a transport error).
+  model_sets:
+    frontier:
+      - openai/gpt-5.5
+      - openrouter/z-ai/glm-5.2
+      - gemini/gemini-3.5-flash
+      - openrouter/minimax/minimax-m3
+      - openrouter/deepseek/deepseek-v4-pro
+      - openrouter/meta/muse-spark
+      - anthropic/claude-opus-4-8
+    cheap:
+      - openrouter/deepseek/deepseek-v4-pro
+      - openrouter/openai/gpt-oss-120b
+      - openrouter/minimax/minimax-m3
+      - openrouter/x-ai/grok-4.3
+      - openrouter/nvidia/nemotron-3-ultra
+      - openrouter/moonshotai/kimi-k2.6
+      - openrouter/z-ai/glm-5.2
 
 ########################################################
 # Debugging

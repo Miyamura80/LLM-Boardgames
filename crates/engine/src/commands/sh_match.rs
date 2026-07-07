@@ -76,8 +76,11 @@ pub struct ShRunMatchInput {
     pub pool: Option<String>,
     /// Controlled mode: repetitions per role-seat cell (21·K games).
     pub k: Option<u32>,
-    /// Arena mode: the models to seat.
+    /// Arena mode: the models to seat. Mutually exclusive with `set`.
     pub models: Option<Vec<String>>,
+    /// Arena mode: a named model set from config (`model_sets`, e.g.
+    /// `frontier` / `cheap`) to seat instead of listing `models`.
+    pub set: Option<String>,
     /// Arena mode: number of games.
     pub games: Option<u32>,
     pub match_seed: Option<u64>,
@@ -137,10 +140,32 @@ impl Command for ShRunMatch {
                 }
             }
             "arena" => {
-                let models = input.models.clone().unwrap_or_default();
+                // Seat from an explicit `models` list or a named `set` from
+                // config — the two are mutually exclusive; providing both is
+                // ambiguous, so refuse rather than pick one.
+                if input.set.is_some() && input.models.is_some() {
+                    return Err(CommandError::InvalidInput(
+                        "arena mode takes `models` or `set`, not both".into(),
+                    ));
+                }
+                let models = match (&input.models, &input.set) {
+                    (Some(m), _) => m.clone(),
+                    (None, Some(set)) => cfg
+                        .secret_hitler
+                        .model_sets
+                        .get(set)
+                        .cloned()
+                        .ok_or_else(|| {
+                            CommandError::InvalidInput(format!(
+                                "unknown model set '{set}' (configured: {:?})",
+                                cfg.secret_hitler.model_sets.keys().collect::<Vec<_>>()
+                            ))
+                        })?,
+                    (None, None) => Vec::new(),
+                };
                 if models.is_empty() {
                     return Err(CommandError::InvalidInput(
-                        "arena mode needs `models`".into(),
+                        "arena mode needs `models` or a named `set`".into(),
                     ));
                 }
                 MatchSpec::Arena {

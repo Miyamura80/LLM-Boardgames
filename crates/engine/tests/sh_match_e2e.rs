@@ -192,6 +192,27 @@ async fn match_runner_persists_and_resumes_with_postgres() {
     assert!(!rows.is_empty());
     assert_eq!(summary["games"], 21);
 
+    // Realized distribution is computed from the games actually played (persisted
+    // seat rows), so seat- and role-occurrences each total 21 games × 7 seats.
+    let realized = summary["realized_distribution"]
+        .as_object()
+        .expect("realized_distribution present");
+    let (mut seat_occ, mut role_occ) = (0u64, 0u64);
+    for model in realized.values() {
+        for (key, count) in model.as_object().unwrap() {
+            let n = count.as_u64().unwrap();
+            if key.starts_with("seat") {
+                seat_occ += n;
+            } else if key.starts_with("role:") {
+                role_occ += n;
+            }
+        }
+    }
+    assert_eq!(seat_occ, 147, "21 games × 7 seats recorded");
+    assert_eq!(role_occ, 147, "every played seat has a recorded role");
+    // Planned (schedule intent) is emitted alongside for gap comparison.
+    assert!(summary["planned_distribution"].is_object());
+
     // Replay path: stored record deserializes back into a GameRecord.
     let games = store.list_games(&run_id).await.unwrap();
     assert_eq!(games.len(), 21);

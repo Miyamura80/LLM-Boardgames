@@ -202,7 +202,10 @@ impl SeatAgent for LlmSeatAgent {
     }
 }
 
-fn decision_ask(decision: &DecisionPoint) -> String {
+/// The natural-language "what to decide now" line shown above the JSON schema
+/// in every decision prompt. `pub(crate)` so the scaffold golden render can
+/// hash it — it is model-visible, so wording changes must move the scaffold id.
+pub(crate) fn decision_ask(decision: &DecisionPoint) -> String {
     match decision {
         DecisionPoint::Nominate { eligible, .. } => {
             format!("As President, nominate a Chancellor from {eligible:?}.")

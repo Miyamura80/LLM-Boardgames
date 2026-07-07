@@ -87,7 +87,7 @@ An optional React/Vite frontend visualizes games and replays over `fetch`.
 - `crates/engine/` — all real logic; a typed, async `Command` registry with
   self-registration (`inventory`). No CLI/HTTP dependency.
 - `crates/cli/` — the `shbench` binary. The `cli` and `http-api` surfaces are
-  cargo features (both on by default) so `shbench init` can prune one.
+  cargo features (both on by default) so one can be pruned.
 - `crates/config/` — `AppConfig` (with secrets) vs the sanitized
   `FrontendConfig` served over HTTP. The sanitizer is a security boundary.
 - `crates/assetgen/` — `asset-gen` binary for `make banner` / `make logo`.
@@ -181,10 +181,7 @@ Claude Code skills live in `.claude/skills/`. Invoke them with `/skill-name`.
 | `/update-backend` | Guide for Rust backend changes — engine commands, traits, CLI/API, testing |
 | `/secret-hitler-brand` | Shared visual brand (palette, self-hosted fonts, design language) every frontend adopts |
 | `/game-preview` | Render a game as a self-contained HTML report and publish it as an Artifact |
-| `/onboarding` | Turn this template into a real project (interview → dry-run → prune) |
 | `/code-quality` | Run formatting and linting checks (Biome + Clippy) |
-| `/prd` | Generate a Product Requirements Document for a new feature |
-| `/ralph` | Convert a PRD to `prd.json` for the Ralph autonomous agent |
 | `/cleanup` | Git branch hygiene — delete merged branches, prune stale refs, sync deps |
 
 ## Credits

@@ -35,6 +35,13 @@ fn test_load_config() {
         "gemini/gemini-3-flash-preview"
     );
     assert_eq!(config.llm_config.retry.max_attempts, 3);
+
+    // The two arena leagues load and each fills exactly 7 seats.
+    let sets = &config.secret_hitler.model_sets;
+    let frontier = sets.get("frontier").expect("frontier model set");
+    let cheap = sets.get("cheap").expect("cheap model set");
+    assert_eq!(frontier.len(), 7, "frontier seats every player");
+    assert_eq!(cheap.len(), 7, "cheap seats every player");
 }
 
 #[test]

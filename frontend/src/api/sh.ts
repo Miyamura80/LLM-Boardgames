@@ -18,6 +18,7 @@ export interface LeaderboardRow {
 	fascist: RoleLine | null;
 	hitler: RoleLine | null;
 	overall_mu: number;
+	overall_sigma: number;
 	overall_conservative: number;
 	total_games: number;
 	high_uncertainty: boolean;
