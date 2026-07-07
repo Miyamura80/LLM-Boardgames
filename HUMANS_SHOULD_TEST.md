@@ -38,10 +38,3 @@ live wiring are best verified in a browser.
 - [ ] **Non-default port** — Run the server on a non-default port and start the
   dev server with `VITE_API_PROXY=http://127.0.0.1:<port>`; confirm the proxy
   still reaches the API.
-
-## Onboarding prune (`shbench init`)
-
-- [ ] **Pruned project builds** — In a scratch copy, run `shbench init` for each
-  profile (`cli-only`, `server-only`, `cli+server`) and separately with the
-  `--no-frontend` flag, then run `cargo build --workspace` and `make ci` in the
-  initialized project and confirm it is green.

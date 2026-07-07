@@ -2,14 +2,12 @@
 //!
 //! Runs the shared `engine` game engine and eval command registry over multiple
 //! transports: `serve` (axum HTTP API) plus the CLI diagnostics (`call`, `probe`,
-//! `doctor`, `run-scenario`). `init` onboards the template into a real project,
-//! `new` scaffolds a fresh engine command, and `mcp` is a stub for the future MCP
-//! transport. Transports are cargo features (`cli`, `http-api`) so `shbench
-//! init` can prune a surface and still leave a compiling project.
+//! `doctor`, `run-scenario`). `new` scaffolds a fresh engine command, and `mcp`
+//! is a stub for the future MCP transport. Transports are cargo features (`cli`,
+//! `http-api`) so a surface can be dropped and still leave a compiling project.
 
 #[cfg(feature = "cli")]
 mod diagnostics;
-mod init;
 mod mcp;
 mod scaffold;
 #[cfg(feature = "http-api")]
@@ -37,9 +35,6 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Onboard this template into a real project (rename, prune, .env).
-    Init(init::InitArgs),
-
     /// Scaffold a new engine command from the template.
     New(scaffold::NewArgs),
 
@@ -133,12 +128,6 @@ async fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Init(args) => {
-            if let Err(e) = init::run(args) {
-                eprintln!("error: {e:#}");
-                std::process::exit(1);
-            }
-        }
         Commands::New(args) => {
             if let Err(e) = scaffold::run(args) {
                 eprintln!("error: {e:#}");

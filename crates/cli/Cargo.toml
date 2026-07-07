@@ -10,9 +10,9 @@ name = "shbench"
 path = "src/main.rs"
 
 [features]
-# The template ships with every surface enabled. `shbench init` prunes a surface
-# by dropping its feature from this `default` list (via toml_edit), so a
-# `cli-only` or `server-only` project compiles without the code it doesn't use.
+# The template ships with every surface enabled. Dropping a feature from this
+# `default` list yields a `cli-only` or `server-only` project that compiles
+# without the code it doesn't use.
 default = ["cli", "http-api"]
 # CLI diagnostic subcommands (doctor / call / probe / run-scenario).
 cli = []
@@ -36,10 +36,4 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 uuid = { version = "1", features = ["v4"] }
 dialoguer = "0.12.0"
-walkdir = "2"
-toml_edit = "0.22"
-comfy-table = "7"
 anyhow = "1"
-
-[dev-dependencies]
-tempfile = "3.27.0"
