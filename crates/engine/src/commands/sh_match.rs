@@ -140,8 +140,9 @@ impl Command for ShRunMatch {
                 }
             }
             "arena" => {
-                // A named `set` expands from config; explicit `models` overrides.
-                // Providing both is ambiguous — refuse rather than pick one.
+                // Seat from an explicit `models` list or a named `set` from
+                // config — the two are mutually exclusive; providing both is
+                // ambiguous, so refuse rather than pick one.
                 if input.set.is_some() && input.models.is_some() {
                     return Err(CommandError::InvalidInput(
                         "arena mode takes `models` or `set`, not both".into(),

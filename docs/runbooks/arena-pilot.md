@@ -17,8 +17,12 @@ docker compose up -d                 # Postgres eval store
 export DATABASE_URL=postgres://shbench:shbench@localhost:5433/shbench
 ```
 
-Set the provider keys you need. One OpenRouter key reaches every family; native
-keys work too (litellm-style prefixes, see `crates/engine/src/llm/providers.rs`):
+Set the provider keys you need. Routing is by litellm-style prefix (see
+`crates/engine/src/llm/providers.rs`): **native prefixes route straight to the
+provider and require that provider's own key** — `OPENROUTER_API_KEY` only
+covers `openrouter/…` lines, there is no OpenRouter fallback. The shipped
+`model_sets` mix both (e.g. `deepseek/…`, `xai/…`, `openai/…` are native), so
+set every key a set uses, or repoint those lines at `openrouter/…`:
 
 ```bash
 export OPENROUTER_API_KEY=...        # covers openrouter/… lines
@@ -92,8 +96,9 @@ shbench call sh_leaderboard --json --args '{"run_id":"run-arena-<hash>"}'
 | `completion_tokens` / games | within budget | The cost driver. Reasoning models at max effort balloon here — this is the "overthinking tax". |
 | `transport` | 0 | Flaky provider or rate-limiting; retries are burning into forced-defaults. |
 
-Cost per game ≈ `(prompt_tokens + completion_tokens)` priced at each seat's
-provider rate. `completion_tokens` dominates for reasoning models.
+Cost per game ≈ `prompt_tokens × input_rate + completion_tokens × output_rate`
+for each seat's provider (input and output are billed at **separate** rates).
+`completion_tokens` × the output rate dominates for reasoning models.
 
 ---
 

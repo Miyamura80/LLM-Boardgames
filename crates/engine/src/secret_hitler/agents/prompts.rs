@@ -126,8 +126,10 @@ const PROMPT_REVISION: &str = "prompts-v1";
 /// `PROMPT_REVISION` bump required, so rating attribution can't silently drift.
 fn golden_prompt_render() -> String {
     use crate::secret_hitler::actions::DecisionPoint;
+    use crate::secret_hitler::agents::llm_agent::decision_ask;
+    use crate::secret_hitler::events::GameEvent;
     use crate::secret_hitler::state::GameState;
-    use crate::secret_hitler::types::{Party, Power, PLAYER_COUNT};
+    use crate::secret_hitler::types::{Party, Power, WinCondition, PLAYER_COUNT};
 
     // Fixed arrangement: seats 0-3 Liberal, 4-5 Fascist, 6 Hitler. The seed is
     // constant so the fixture (and thus the digest) is fully deterministic.
@@ -194,7 +196,98 @@ fn golden_prompt_render() -> String {
         },
     ];
     for d in &decisions {
+        // Both the schema AND the natural-language ask are shown to the model.
         s.push_str(&decision_schema(d));
+        s.push('\n');
+        s.push_str(&decision_ask(d));
+        s.push('\n');
+    }
+
+    // Exercise GameEvent::render() for every variant directly: with_roles seeds
+    // only RolesDealt into history, so a fixture game would leave most render
+    // arms (powers, veto, execution, game-end) uncovered. Hashing each variant's
+    // render output means editing any transcript wording moves the scaffold id.
+    let events = [
+        GameEvent::GameStarted { players: 7 },
+        GameEvent::RolesDealt {
+            seat: 4,
+            role: Role::Fascist,
+            known_teammates: vec![(5, Role::Fascist), (6, Role::Hitler)],
+        },
+        GameEvent::ChancellorNominated {
+            president: 0,
+            nominee: 1,
+        },
+        GameEvent::VotesRevealed {
+            nominee: 1,
+            votes: vec![(0, true), (1, false), (2, true)],
+            passed: true,
+        },
+        GameEvent::ElectionTrackerAdvanced { value: 2 },
+        GameEvent::TopDeckEnacted {
+            policy: Party::Fascist,
+        },
+        GameEvent::GovernmentFormed {
+            president: 0,
+            chancellor: 1,
+        },
+        GameEvent::PresidentDrew {
+            tiles: vec![Party::Liberal, Party::Fascist, Party::Fascist],
+        },
+        GameEvent::PresidentDiscarded {
+            policy: Party::Liberal,
+        },
+        GameEvent::ChancellorReceived {
+            tiles: vec![Party::Fascist, Party::Fascist],
+        },
+        GameEvent::PolicyEnacted {
+            policy: Party::Fascist,
+        },
+        GameEvent::DeckReshuffled { draw_count: 14 },
+        GameEvent::PowerGranted {
+            president: 0,
+            power: Power::InvestigateLoyalty,
+        },
+        GameEvent::Investigated {
+            president: 0,
+            target: 3,
+        },
+        GameEvent::InvestigationResult {
+            target: 3,
+            party: Party::Liberal,
+        },
+        GameEvent::SpecialElectionCalled {
+            president: 0,
+            target: 4,
+        },
+        GameEvent::Executed {
+            president: 0,
+            target: 3,
+            was_hitler: false,
+        },
+        GameEvent::VetoProposed { chancellor: 1 },
+        GameEvent::VetoDecided {
+            president: 0,
+            approved: true,
+        },
+        GameEvent::Utterance {
+            seat: 2,
+            discussion_round: 0,
+            text: "I trust Player 0.".into(),
+            pass: false,
+        },
+        GameEvent::ForcedDefault {
+            seat: 3,
+            decision: "vote".into(),
+        },
+        GameEvent::GameEnded {
+            winner: Party::Liberal,
+            condition: WinCondition::HitlerExecuted,
+            roles: roles.to_vec(),
+        },
+    ];
+    for e in &events {
+        s.push_str(&e.render());
         s.push('\n');
     }
     s
@@ -240,7 +333,18 @@ mod tests {
             "veto_consent",
             "use_power",
         ] {
-            assert!(g.contains(token), "golden render missing {token}");
+            assert!(g.contains(token), "golden render missing schema {token}");
+        }
+        // ...the natural-language decision_ask lines...
+        assert!(g.contains("nominate a Chancellor"), "missing decision_ask");
+        // ...and GameEvent::render() output (both public and private arms).
+        for token in [
+            "Game started with 7 players",
+            "Government formed",
+            "top policy auto-enacted",
+            "policy tiles",
+        ] {
+            assert!(g.contains(token), "golden render missing event {token}");
         }
     }
 
