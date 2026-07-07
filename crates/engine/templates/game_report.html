@@ -71,6 +71,9 @@ h2{font-family:var(--serif);font-size:clamp(1rem,2.4vw,1.2rem);font-weight:600;m
 .say.pass{color:var(--muted)} .say.pass .passtxt{font-style:italic;font-size:12px}
 .policy{font-weight:700}
 .policy.Liberal{color:var(--liberal)} .policy.Fascist{color:var(--fascist)}
+/* Inline party words in transcript prose (draws, discards, tiles received). */
+.pw{font-weight:600}
+.pw.Liberal{color:var(--liberal)} .pw.Fascist{color:var(--fascist)} .pw.Hitler{color:var(--hitler)}
 .votes{font-family:var(--mono);font-size:11.5px;overflow-wrap:anywhere}
 details.thought{margin:.1rem 0 .1rem .2rem;border-left:2px dotted var(--line);padding-left:.55rem}
 details.thought summary{cursor:pointer;color:var(--muted);font-size:12px;list-style-position:inside}
@@ -144,6 +147,11 @@ const RENDERED = __RENDERED__; // canonical omniscient lines from GameEvent::ren
 const $ = (id) => document.getElementById(id);
 const roles = GAME.roles;
 const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+// Tint party words (Liberal blue, Fascist red) in already-escaped prose lines
+// — draws, discards, tiles received, etc. Run only on escaped plain text so it
+// never matches inside an existing tag or class name.
+const colorParties = (s) => s.replace(/\b(Liberals?|Fascists?)\b/g,
+  (m) => `<span class="pw ${m.startsWith("Lib") ? "Liberal" : "Fascist"}">${m}</span>`);
 
 // header
 const mins = Math.round(GAME.duration_ms/60000);
@@ -198,14 +206,14 @@ function renderEvent(rec) {
     case "VotesRevealed":
       return line(`Vote on P${e.nominee}: <span class="votes">${e.votes.map(([s,ja])=>`P${s}=${ja?"Ja":"Nein"}`).join(" ")}</span> → <b>${e.passed?"PASSED":"FAILED"}</b>`);
     case "GameEnded":
-      return line(`<b>${esc(RENDERED[rec.idx] ?? t)}</b>`);
+      return line(`<b>${colorParties(esc(RENDERED[rec.idx] ?? t))}</b>`);
     case "GameStarted":
     case "GovernmentFormed":
     case "ElectionTrackerAdvanced":
     case "DeckReshuffled":
-      return line(esc(RENDERED[rec.idx] ?? t), "sys");
+      return line(colorParties(esc(RENDERED[rec.idx] ?? t)), "sys");
     default:
-      return line(esc(RENDERED[rec.idx] ?? t));
+      return line(colorParties(esc(RENDERED[rec.idx] ?? t)));
   }
 }
 // Group a government round's discussion into simultaneous-reveal blocks: a run
@@ -250,10 +258,11 @@ const RAMP = ["#f2f7fc","#dcebf7","#c0dcf0","#9ac8e6","#6face0","#4a90d9","#2f6f
 const cps = [...new Set(GAME.beliefs.map(b=>b.checkpoint))];
 function drawHm(cp) {
   const snaps = GAME.beliefs.filter(b=>b.checkpoint===cp);
-  let h = `<table class="hm"><tr><th><span class="hdrlabel">believer ↓ / subject →</span></th>${roles.map((r,i)=>`<th>P${i}${r!=="Liberal"?" ✦":""}</th>`).join("")}</tr>`;
+  // Header labels are tinted by each player's true party (blue / red / dark red).
+  let h = `<table class="hm"><tr><th><span class="hdrlabel">believer ↓ / subject →</span></th>${roles.map((r,i)=>`<th><span class="pw ${r}">P${i}</span>${r!=="Liberal"?" ✦":""}</th>`).join("")}</tr>`;
   for (let b = 0; b < 7; b++) {
     const snap = snaps.find(s=>s.seat===b);
-    h += `<tr><th>P${b} <span class="rolechip">${roles[b]}</span></th>`;
+    h += `<tr><th><span class="pw ${roles[b]}">P${b}</span> <span class="rolechip party ${roles[b]}">${roles[b]}</span></th>`;
     for (let subj = 0; subj < 7; subj++) {
       const probs = snap?.report.assessments[String(subj)];
       if (b === subj || !probs) { h += `<td class="empty"></td>`; continue; }
