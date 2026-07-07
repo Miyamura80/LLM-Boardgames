@@ -53,7 +53,11 @@ pub struct ShExportGameReport;
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct ShExportGameReportInput {
-    pub game_id: String,
+    /// A stored game id (needs Postgres). Provide this or `record_path`.
+    pub game_id: Option<String>,
+    /// Path to a `GameRecord` JSON to render directly, bypassing the store —
+    /// the reproducible "fixed JSON" path (no database required).
+    pub record_path: Option<String>,
     /// Where to write the HTML file. Omit to only return the HTML inline.
     pub output_path: Option<String>,
     /// Include the rendered HTML in the response (default true when no
@@ -90,15 +94,25 @@ impl Command for ShExportGameReport {
         input: ShExportGameReportInput,
         cx: &Ctx<'_>,
     ) -> Result<Self::Output, CommandError> {
-        let store = open_store().await?;
-        let record = store
-            .get_game(&input.game_id)
-            .await
-            .map_err(|e| CommandError::Other(e.to_string()))?
-            .ok_or_else(|| {
-                CommandError::InvalidInput(format!("unknown game: {}", input.game_id))
-            })?;
+        let record = if let Some(path) = &input.record_path {
+            let bytes = cx.fs().read_file(Path::new(path))?;
+            serde_json::from_slice::<GameRecord>(&bytes).map_err(|e| {
+                CommandError::InvalidInput(format!("invalid GameRecord JSON in {path}: {e}"))
+            })?
+        } else if let Some(id) = &input.game_id {
+            open_store()
+                .await?
+                .get_game(id)
+                .await
+                .map_err(|e| CommandError::Other(e.to_string()))?
+                .ok_or_else(|| CommandError::InvalidInput(format!("unknown game: {id}")))?
+        } else {
+            return Err(CommandError::InvalidInput(
+                "provide either game_id (stored) or record_path (a GameRecord JSON file)".into(),
+            ));
+        };
 
+        let game_id = record.game_id.clone();
         let html = render_game_report(&record)?;
         let bytes = html.len();
 
@@ -107,7 +121,7 @@ impl Command for ShExportGameReport {
         }
         let include_html = input.include_html.unwrap_or(input.output_path.is_none());
         Ok(ShExportGameReportOutput {
-            game_id: input.game_id,
+            game_id,
             bytes,
             output_path: input.output_path,
             html: include_html.then_some(html),

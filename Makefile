@@ -59,7 +59,12 @@ docs: ## Run docs with bun
 ########################################################
 
 ### Game Reports
-.PHONY: game-report game-report-stored
+.PHONY: game-report game-report-json game-report-stored
+
+game-report-json: ## Render a fixed sample GameRecord JSON to a self-contained HTML report (reproducible, no DB). Vars: REC=, OUT=.
+	@echo "$(YELLOW)🎲 Rendering report from $(or $(REC),crates/engine/fixtures/sample_game.json)...$(RESET)"
+	@cargo run -q -p shbench -- call sh_export_game_report --args '{"record_path":"$(or $(REC),crates/engine/fixtures/sample_game.json)","output_path":"$(or $(OUT),media/game-report.html)"}'
+	@echo "$(GREEN)✅ Report written to $(or $(OUT),media/game-report.html)$(RESET)"
 
 game-report: ## Play a game and render a self-contained HTML report (no DB). Vars: OUT=, MODELS=, SEED=. Pass LLM MODELS to get discussion.
 	@echo "$(YELLOW)🎲 Playing a game and rendering the report...$(RESET)"

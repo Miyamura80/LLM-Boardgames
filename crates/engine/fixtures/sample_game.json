@@ -1,0 +1,2735 @@
+{
+  "game_id": "demo-0007",
+  "seed": 70707,
+  "player_count": 7,
+  "rules_version": "sh-7p-v1",
+  "schedule_label": "R7 · opus vs field",
+  "winner": "Liberal",
+  "win_condition": "HitlerExecuted",
+  "rounds": 5,
+  "roles": [
+    "Liberal",
+    "Fascist",
+    "Liberal",
+    "Hitler",
+    "Liberal",
+    "Fascist",
+    "Liberal"
+  ],
+  "seats": [
+    {
+      "seat": 0,
+      "model_id": "claude-opus-4.8",
+      "agent_kind": "llm",
+      "scaffold_version": "v3",
+      "temperature": 0.7,
+      "role": "Liberal",
+      "is_anchor": false,
+      "survived": true,
+      "won": true,
+      "reliability": {
+        "malformed_outputs": 0,
+        "illegal_moves": 0,
+        "forced_defaults": 0,
+        "transport_failures": 0
+      },
+      "policy_choices": [],
+      "executions": [],
+      "thoughts": [
+        {
+          "round": 5,
+          "at_event": 93,
+          "decision": "execute",
+          "text": "P1 is dead and wasn't Hitler. P3 investigated then shot their own — classic Hitler misdirection. The only read that fits every government is P3 = Hitler. Taking the shot to win."
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 18000,
+        "completion_tokens": 5200
+      }
+    },
+    {
+      "seat": 1,
+      "model_id": "gpt-5.5",
+      "agent_kind": "llm",
+      "scaffold_version": "v3",
+      "temperature": 0.7,
+      "role": "Fascist",
+      "is_anchor": false,
+      "survived": false,
+      "won": false,
+      "reliability": {
+        "malformed_outputs": 0,
+        "illegal_moves": 0,
+        "forced_defaults": 0,
+        "transport_failures": 0
+      },
+      "policy_choices": [],
+      "executions": [],
+      "thoughts": [],
+      "usage": {
+        "prompt_tokens": 18900,
+        "completion_tokens": 5500
+      }
+    },
+    {
+      "seat": 2,
+      "model_id": "gemini-3.5-flash",
+      "agent_kind": "llm",
+      "scaffold_version": "v3",
+      "temperature": 0.7,
+      "role": "Liberal",
+      "is_anchor": false,
+      "survived": true,
+      "won": true,
+      "reliability": {
+        "malformed_outputs": 0,
+        "illegal_moves": 0,
+        "forced_defaults": 0,
+        "transport_failures": 0
+      },
+      "policy_choices": [],
+      "executions": [],
+      "thoughts": [],
+      "usage": {
+        "prompt_tokens": 19800,
+        "completion_tokens": 5800
+      }
+    },
+    {
+      "seat": 3,
+      "model_id": "glm-5.2-max",
+      "agent_kind": "llm",
+      "scaffold_version": "v3",
+      "temperature": 0.7,
+      "role": "Hitler",
+      "is_anchor": false,
+      "survived": false,
+      "won": false,
+      "reliability": {
+        "malformed_outputs": 0,
+        "illegal_moves": 0,
+        "forced_defaults": 0,
+        "transport_failures": 0
+      },
+      "policy_choices": [],
+      "executions": [],
+      "thoughts": [
+        {
+          "round": 4,
+          "at_event": 90,
+          "decision": "execute",
+          "text": "Investigation says P1 is Fascist. If I shoot P1 I remove a known fascist and keep my cover as the 'liberal investigator'. Risk: if a liberal gets the next gun they may read me. Worth it to look clean."
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 20700,
+        "completion_tokens": 6100
+      }
+    },
+    {
+      "seat": 4,
+      "model_id": "deepseek-v4-pro-max",
+      "agent_kind": "llm",
+      "scaffold_version": "v3",
+      "temperature": 0.7,
+      "role": "Liberal",
+      "is_anchor": false,
+      "survived": true,
+      "won": true,
+      "reliability": {
+        "malformed_outputs": 0,
+        "illegal_moves": 0,
+        "forced_defaults": 1,
+        "transport_failures": 0
+      },
+      "policy_choices": [],
+      "executions": [],
+      "thoughts": [],
+      "usage": {
+        "prompt_tokens": 21600,
+        "completion_tokens": 6400
+      }
+    },
+    {
+      "seat": 5,
+      "model_id": "minimax-m3",
+      "agent_kind": "llm",
+      "scaffold_version": "v3",
+      "temperature": 0.7,
+      "role": "Fascist",
+      "is_anchor": false,
+      "survived": true,
+      "won": false,
+      "reliability": {
+        "malformed_outputs": 0,
+        "illegal_moves": 0,
+        "forced_defaults": 0,
+        "transport_failures": 0
+      },
+      "policy_choices": [],
+      "executions": [],
+      "thoughts": [],
+      "usage": {
+        "prompt_tokens": 22500,
+        "completion_tokens": 6700
+      }
+    },
+    {
+      "seat": 6,
+      "model_id": "muse-spark",
+      "agent_kind": "llm",
+      "scaffold_version": "v3",
+      "temperature": 0.7,
+      "role": "Liberal",
+      "is_anchor": false,
+      "survived": true,
+      "won": true,
+      "reliability": {
+        "malformed_outputs": 0,
+        "illegal_moves": 0,
+        "forced_defaults": 0,
+        "transport_failures": 0
+      },
+      "policy_choices": [],
+      "executions": [],
+      "thoughts": [],
+      "usage": {
+        "prompt_tokens": 23400,
+        "completion_tokens": 7000
+      }
+    }
+  ],
+  "beliefs": [
+    {
+      "checkpoint": 1,
+      "seat": 0,
+      "report": {
+        "assessments": {
+          "1": {
+            "liberal": 0.6499999999999999,
+            "fascist": 0.30000000000000004,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.7,
+            "fascist": 0.1,
+            "hitler": 0.2
+          },
+          "4": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.6499999999999999,
+            "fascist": 0.30000000000000004,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 1,
+      "seat": 1,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "2": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "4": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "6": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 1,
+      "seat": 2,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.6499999999999999,
+            "fascist": 0.30000000000000004,
+            "hitler": 0.05
+          },
+          "3": {
+            "liberal": 0.7,
+            "fascist": 0.1,
+            "hitler": 0.2
+          },
+          "4": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.6499999999999999,
+            "fascist": 0.30000000000000004,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 1,
+      "seat": 3,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "2": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "4": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "6": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 1,
+      "seat": 4,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.6499999999999999,
+            "fascist": 0.30000000000000004,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.7,
+            "fascist": 0.1,
+            "hitler": 0.2
+          },
+          "5": {
+            "liberal": 0.6499999999999999,
+            "fascist": 0.30000000000000004,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 1,
+      "seat": 5,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "2": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "4": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "6": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 1,
+      "seat": 6,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.6499999999999999,
+            "fascist": 0.30000000000000004,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.7,
+            "fascist": 0.1,
+            "hitler": 0.2
+          },
+          "4": {
+            "liberal": 0.82,
+            "fascist": 0.13999999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.6499999999999999,
+            "fascist": 0.30000000000000004,
+            "hitler": 0.05
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 2,
+      "seat": 0,
+      "report": {
+        "assessments": {
+          "1": {
+            "liberal": 0.5249999999999999,
+            "fascist": 0.42500000000000004,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.575,
+            "fascist": 0.1,
+            "hitler": 0.325
+          },
+          "4": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.5249999999999999,
+            "fascist": 0.42500000000000004,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 2,
+      "seat": 1,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "2": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "4": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "6": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 2,
+      "seat": 2,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.5249999999999999,
+            "fascist": 0.42500000000000004,
+            "hitler": 0.05
+          },
+          "3": {
+            "liberal": 0.575,
+            "fascist": 0.1,
+            "hitler": 0.325
+          },
+          "4": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.5249999999999999,
+            "fascist": 0.42500000000000004,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 2,
+      "seat": 3,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "2": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "4": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "6": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 2,
+      "seat": 4,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.5249999999999999,
+            "fascist": 0.42500000000000004,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.575,
+            "fascist": 0.1,
+            "hitler": 0.325
+          },
+          "5": {
+            "liberal": 0.5249999999999999,
+            "fascist": 0.42500000000000004,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 2,
+      "seat": 5,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "2": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "4": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "6": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 2,
+      "seat": 6,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.5249999999999999,
+            "fascist": 0.42500000000000004,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.575,
+            "fascist": 0.1,
+            "hitler": 0.325
+          },
+          "4": {
+            "liberal": 0.8325,
+            "fascist": 0.1275,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.5249999999999999,
+            "fascist": 0.42500000000000004,
+            "hitler": 0.05
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 3,
+      "seat": 0,
+      "report": {
+        "assessments": {
+          "1": {
+            "liberal": 0.39999999999999997,
+            "fascist": 0.55,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.45000000000000007,
+            "fascist": 0.1,
+            "hitler": 0.44999999999999996
+          },
+          "4": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.39999999999999997,
+            "fascist": 0.55,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 3,
+      "seat": 1,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "2": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "4": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "6": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 3,
+      "seat": 2,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.39999999999999997,
+            "fascist": 0.55,
+            "hitler": 0.05
+          },
+          "3": {
+            "liberal": 0.45000000000000007,
+            "fascist": 0.1,
+            "hitler": 0.44999999999999996
+          },
+          "4": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.39999999999999997,
+            "fascist": 0.55,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 3,
+      "seat": 3,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "2": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "4": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "6": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 3,
+      "seat": 4,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.39999999999999997,
+            "fascist": 0.55,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.45000000000000007,
+            "fascist": 0.1,
+            "hitler": 0.44999999999999996
+          },
+          "5": {
+            "liberal": 0.39999999999999997,
+            "fascist": 0.55,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 3,
+      "seat": 5,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "2": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "4": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "6": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 3,
+      "seat": 6,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.39999999999999997,
+            "fascist": 0.55,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.45000000000000007,
+            "fascist": 0.1,
+            "hitler": 0.44999999999999996
+          },
+          "4": {
+            "liberal": 0.845,
+            "fascist": 0.11499999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.39999999999999997,
+            "fascist": 0.55,
+            "hitler": 0.05
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 4,
+      "seat": 0,
+      "report": {
+        "assessments": {
+          "1": {
+            "liberal": 0.3,
+            "fascist": 0.65,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.35,
+            "fascist": 0.1,
+            "hitler": 0.55
+          },
+          "4": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.3,
+            "fascist": 0.65,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 4,
+      "seat": 2,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.3,
+            "fascist": 0.65,
+            "hitler": 0.05
+          },
+          "3": {
+            "liberal": 0.35,
+            "fascist": 0.1,
+            "hitler": 0.55
+          },
+          "4": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.3,
+            "fascist": 0.65,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 4,
+      "seat": 3,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "2": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "4": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "6": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 4,
+      "seat": 4,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.3,
+            "fascist": 0.65,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.35,
+            "fascist": 0.1,
+            "hitler": 0.55
+          },
+          "5": {
+            "liberal": 0.3,
+            "fascist": 0.65,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 4,
+      "seat": 5,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "2": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "4": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "6": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 4,
+      "seat": 6,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.3,
+            "fascist": 0.65,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.35,
+            "fascist": 0.1,
+            "hitler": 0.55
+          },
+          "4": {
+            "liberal": 0.855,
+            "fascist": 0.10499999999999998,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.3,
+            "fascist": 0.65,
+            "hitler": 0.05
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 255,
+      "seat": 0,
+      "report": {
+        "assessments": {
+          "1": {
+            "liberal": 0.25000000000000006,
+            "fascist": 0.7,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.30000000000000004,
+            "fascist": 0.1,
+            "hitler": 0.6
+          },
+          "4": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.25000000000000006,
+            "fascist": 0.7,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 255,
+      "seat": 1,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "2": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "4": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "6": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 255,
+      "seat": 2,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.25000000000000006,
+            "fascist": 0.7,
+            "hitler": 0.05
+          },
+          "3": {
+            "liberal": 0.30000000000000004,
+            "fascist": 0.1,
+            "hitler": 0.6
+          },
+          "4": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.25000000000000006,
+            "fascist": 0.7,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 255,
+      "seat": 3,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "2": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "4": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "6": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 255,
+      "seat": 4,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.25000000000000006,
+            "fascist": 0.7,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.30000000000000004,
+            "fascist": 0.1,
+            "hitler": 0.6
+          },
+          "5": {
+            "liberal": 0.25000000000000006,
+            "fascist": 0.7,
+            "hitler": 0.05
+          },
+          "6": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 255,
+      "seat": 5,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "2": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.94,
+            "fascist": 0.03,
+            "hitler": 0.03
+          },
+          "4": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "6": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          }
+        }
+      }
+    },
+    {
+      "checkpoint": 255,
+      "seat": 6,
+      "report": {
+        "assessments": {
+          "0": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "1": {
+            "liberal": 0.25000000000000006,
+            "fascist": 0.7,
+            "hitler": 0.05
+          },
+          "2": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "3": {
+            "liberal": 0.30000000000000004,
+            "fascist": 0.1,
+            "hitler": 0.6
+          },
+          "4": {
+            "liberal": 0.86,
+            "fascist": 0.09999999999999999,
+            "hitler": 0.04
+          },
+          "5": {
+            "liberal": 0.25000000000000006,
+            "fascist": 0.7,
+            "hitler": 0.05
+          }
+        }
+      }
+    }
+  ],
+  "events": [
+    {
+      "idx": 0,
+      "round": 0,
+      "visibility": "Public",
+      "event": {
+        "type": "GameStarted",
+        "players": 7
+      }
+    },
+    {
+      "idx": 1,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 0,
+        "discussion_round": 0,
+        "text": "Opening government matters. I'll back a pair nobody has a read on yet.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 2,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 1,
+        "discussion_round": 0,
+        "text": "Agreed, let's just get a policy down and watch the draw.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 3,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 2,
+        "discussion_round": 0,
+        "text": "Happy to be Chancellor if P0 wants a clean test.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 4,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 3,
+        "discussion_round": 0,
+        "text": "No strong reads round one. Keep it simple.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 5,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 4,
+        "discussion_round": 0,
+        "text": "",
+        "pass": true
+      }
+    },
+    {
+      "idx": 6,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 5,
+        "discussion_round": 0,
+        "text": "Fine by me. Let's move.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 7,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 6,
+        "discussion_round": 0,
+        "text": "Vote it up, gather data.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 8,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 0,
+        "discussion_round": 1,
+        "text": "Nominating P2 — straightforward.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 9,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 1,
+        "discussion_round": 1,
+        "text": "I'll vote Ja.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 10,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 2,
+        "discussion_round": 1,
+        "text": "Thanks. I'll enact whatever's forced.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 11,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 3,
+        "discussion_round": 1,
+        "text": "",
+        "pass": true
+      }
+    },
+    {
+      "idx": 12,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 4,
+        "discussion_round": 1,
+        "text": "Ja.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 13,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 5,
+        "discussion_round": 1,
+        "text": "Ja, but I'm watching the discard.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 14,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 6,
+        "discussion_round": 1,
+        "text": "Ja.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 15,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "ChancellorNominated",
+        "president": 0,
+        "nominee": 2
+      }
+    },
+    {
+      "idx": 16,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "VotesRevealed",
+        "nominee": 2,
+        "votes": [
+          [
+            0,
+            true
+          ],
+          [
+            1,
+            true
+          ],
+          [
+            2,
+            true
+          ],
+          [
+            3,
+            false
+          ],
+          [
+            4,
+            true
+          ],
+          [
+            5,
+            true
+          ],
+          [
+            6,
+            true
+          ]
+        ],
+        "passed": true
+      }
+    },
+    {
+      "idx": 17,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "GovernmentFormed",
+        "president": 0,
+        "chancellor": 2
+      }
+    },
+    {
+      "idx": 18,
+      "round": 1,
+      "visibility": {
+        "Private": 0
+      },
+      "event": {
+        "type": "PresidentDrew",
+        "tiles": [
+          "Liberal",
+          "Liberal",
+          "Fascist"
+        ]
+      }
+    },
+    {
+      "idx": 19,
+      "round": 1,
+      "visibility": {
+        "Private": 0
+      },
+      "event": {
+        "type": "PresidentDiscarded",
+        "policy": "Fascist"
+      }
+    },
+    {
+      "idx": 20,
+      "round": 1,
+      "visibility": {
+        "Private": 2
+      },
+      "event": {
+        "type": "ChancellorReceived",
+        "tiles": [
+          "Liberal",
+          "Liberal"
+        ]
+      }
+    },
+    {
+      "idx": 21,
+      "round": 1,
+      "visibility": "Public",
+      "event": {
+        "type": "PolicyEnacted",
+        "policy": "Liberal"
+      }
+    },
+    {
+      "idx": 22,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 0,
+        "discussion_round": 0,
+        "text": "That Liberal was clean. Now who wants the deck next?",
+        "pass": false
+      }
+    },
+    {
+      "idx": 23,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 1,
+        "discussion_round": 0,
+        "text": "I'll take President. We need momentum.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 24,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 2,
+        "discussion_round": 0,
+        "text": "P1 pushing hard for the deck so early — noting it.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 25,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 3,
+        "discussion_round": 0,
+        "text": "Let P1 cook, we'll see the discard.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 26,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 4,
+        "discussion_round": 0,
+        "text": "I don't love P1/P5 together if that's the pitch.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 27,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 5,
+        "discussion_round": 0,
+        "text": "It's the best available government, P4. Relax.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 28,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 6,
+        "discussion_round": 0,
+        "text": "",
+        "pass": true
+      }
+    },
+    {
+      "idx": 29,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 0,
+        "discussion_round": 1,
+        "text": "I'll vote it but I'm watching P1's discard.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 30,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 1,
+        "discussion_round": 1,
+        "text": "Nominating P5.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 31,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 2,
+        "discussion_round": 1,
+        "text": "Ja, reluctantly.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 32,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 3,
+        "discussion_round": 1,
+        "text": "Ja.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 33,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 4,
+        "discussion_round": 1,
+        "text": "Nein. This pair worries me.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 34,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 5,
+        "discussion_round": 1,
+        "text": "Ja, obviously.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 35,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 6,
+        "discussion_round": 1,
+        "text": "Ja.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 36,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "ChancellorNominated",
+        "president": 1,
+        "nominee": 5
+      }
+    },
+    {
+      "idx": 37,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "VotesRevealed",
+        "nominee": 5,
+        "votes": [
+          [
+            0,
+            true
+          ],
+          [
+            1,
+            true
+          ],
+          [
+            2,
+            true
+          ],
+          [
+            3,
+            true
+          ],
+          [
+            4,
+            false
+          ],
+          [
+            5,
+            true
+          ],
+          [
+            6,
+            true
+          ]
+        ],
+        "passed": true
+      }
+    },
+    {
+      "idx": 38,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "GovernmentFormed",
+        "president": 1,
+        "chancellor": 5
+      }
+    },
+    {
+      "idx": 39,
+      "round": 2,
+      "visibility": {
+        "Private": 1
+      },
+      "event": {
+        "type": "PresidentDrew",
+        "tiles": [
+          "Fascist",
+          "Fascist",
+          "Liberal"
+        ]
+      }
+    },
+    {
+      "idx": 40,
+      "round": 2,
+      "visibility": {
+        "Private": 1
+      },
+      "event": {
+        "type": "PresidentDiscarded",
+        "policy": "Liberal"
+      }
+    },
+    {
+      "idx": 41,
+      "round": 2,
+      "visibility": {
+        "Private": 5
+      },
+      "event": {
+        "type": "ChancellorReceived",
+        "tiles": [
+          "Fascist",
+          "Fascist"
+        ]
+      }
+    },
+    {
+      "idx": 42,
+      "round": 2,
+      "visibility": "Public",
+      "event": {
+        "type": "PolicyEnacted",
+        "policy": "Fascist"
+      }
+    },
+    {
+      "idx": 43,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 0,
+        "discussion_round": 0,
+        "text": "P1 discarded a Liberal there. That's a real mark against them.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 44,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 1,
+        "discussion_round": 0,
+        "text": "Or the draw was ugly. You're pattern-matching on noise.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 45,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 2,
+        "discussion_round": 0,
+        "text": "Two through P1's hands would be damning. Watching.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 46,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 3,
+        "discussion_round": 0,
+        "text": "Board needs a government or the tracker climbs.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 47,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 4,
+        "discussion_round": 0,
+        "text": "I'm telling you — P1 and P5 are the fascists.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 48,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 5,
+        "discussion_round": 0,
+        "text": "You've accused half the table, P4.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 49,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 6,
+        "discussion_round": 0,
+        "text": "Let's just get someone trustworthy in.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 50,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 0,
+        "discussion_round": 1,
+        "text": "I'll run it. Nominating P6.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 51,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 1,
+        "discussion_round": 1,
+        "text": "",
+        "pass": true
+      }
+    },
+    {
+      "idx": 52,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 2,
+        "discussion_round": 1,
+        "text": "Ja.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 53,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 3,
+        "discussion_round": 1,
+        "text": "Ja.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 54,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 4,
+        "discussion_round": 1,
+        "text": "Ja, finally a clean pair.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 55,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 5,
+        "discussion_round": 1,
+        "text": "Ja.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 56,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 6,
+        "discussion_round": 1,
+        "text": "Thanks, I'll enact honestly.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 57,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "ChancellorNominated",
+        "president": 3,
+        "nominee": 6
+      }
+    },
+    {
+      "idx": 58,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "VotesRevealed",
+        "nominee": 6,
+        "votes": [
+          [
+            0,
+            true
+          ],
+          [
+            1,
+            false
+          ],
+          [
+            2,
+            true
+          ],
+          [
+            3,
+            true
+          ],
+          [
+            4,
+            true
+          ],
+          [
+            5,
+            true
+          ],
+          [
+            6,
+            true
+          ]
+        ],
+        "passed": true
+      }
+    },
+    {
+      "idx": 59,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "GovernmentFormed",
+        "president": 3,
+        "chancellor": 6
+      }
+    },
+    {
+      "idx": 60,
+      "round": 3,
+      "visibility": {
+        "Private": 3
+      },
+      "event": {
+        "type": "PresidentDrew",
+        "tiles": [
+          "Fascist",
+          "Fascist",
+          "Fascist"
+        ]
+      }
+    },
+    {
+      "idx": 61,
+      "round": 3,
+      "visibility": {
+        "Private": 3
+      },
+      "event": {
+        "type": "PresidentDiscarded",
+        "policy": "Fascist"
+      }
+    },
+    {
+      "idx": 62,
+      "round": 3,
+      "visibility": {
+        "Private": 6
+      },
+      "event": {
+        "type": "ChancellorReceived",
+        "tiles": [
+          "Fascist",
+          "Fascist"
+        ]
+      }
+    },
+    {
+      "idx": 63,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "PolicyEnacted",
+        "policy": "Fascist"
+      }
+    },
+    {
+      "idx": 64,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "PowerGranted",
+        "president": 3,
+        "power": "InvestigateLoyalty"
+      }
+    },
+    {
+      "idx": 65,
+      "round": 3,
+      "visibility": "Public",
+      "event": {
+        "type": "Investigated",
+        "president": 3,
+        "target": 1
+      }
+    },
+    {
+      "idx": 66,
+      "round": 3,
+      "visibility": {
+        "Private": 3
+      },
+      "event": {
+        "type": "InvestigationResult",
+        "target": 1,
+        "party": "Fascist"
+      }
+    },
+    {
+      "idx": 67,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 0,
+        "discussion_round": 0,
+        "text": "P3 investigated P1 and went quiet. P3, what did you see?",
+        "pass": false
+      }
+    },
+    {
+      "idx": 68,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 1,
+        "discussion_round": 0,
+        "text": "Careful, P0 — pushing P3 to reveal helps the fascists narrow Hitler.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 69,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 2,
+        "discussion_round": 0,
+        "text": "I trust P0's instinct here.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 70,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 3,
+        "discussion_round": 0,
+        "text": "I'll say this: I'm confident where the execution should go.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 71,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 4,
+        "discussion_round": 0,
+        "text": "P1 is fascist. I'd stake the game on it.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 72,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 5,
+        "discussion_round": 0,
+        "text": "This is a witch hunt.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 73,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 6,
+        "discussion_round": 0,
+        "text": "If P3 has the shot, I trust P3.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 74,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 0,
+        "discussion_round": 1,
+        "text": "Give P3 the presidency and the gun.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 75,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 1,
+        "discussion_round": 1,
+        "text": "Nein. Obviously.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 76,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 2,
+        "discussion_round": 1,
+        "text": "Ja.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 77,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 3,
+        "discussion_round": 1,
+        "text": "I'll take it.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 78,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 4,
+        "discussion_round": 1,
+        "text": "Ja — end it.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 79,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 5,
+        "discussion_round": 1,
+        "text": "Nein.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 80,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 6,
+        "discussion_round": 1,
+        "text": "Ja.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 81,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "ChancellorNominated",
+        "president": 3,
+        "nominee": 0
+      }
+    },
+    {
+      "idx": 82,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "VotesRevealed",
+        "nominee": 0,
+        "votes": [
+          [
+            0,
+            true
+          ],
+          [
+            1,
+            false
+          ],
+          [
+            2,
+            true
+          ],
+          [
+            3,
+            true
+          ],
+          [
+            4,
+            true
+          ],
+          [
+            5,
+            false
+          ],
+          [
+            6,
+            true
+          ]
+        ],
+        "passed": true
+      }
+    },
+    {
+      "idx": 83,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "GovernmentFormed",
+        "president": 3,
+        "chancellor": 0
+      }
+    },
+    {
+      "idx": 84,
+      "round": 4,
+      "visibility": {
+        "Private": 3
+      },
+      "event": {
+        "type": "PresidentDrew",
+        "tiles": [
+          "Fascist",
+          "Fascist",
+          "Liberal"
+        ]
+      }
+    },
+    {
+      "idx": 85,
+      "round": 4,
+      "visibility": {
+        "Private": 3
+      },
+      "event": {
+        "type": "PresidentDiscarded",
+        "policy": "Fascist"
+      }
+    },
+    {
+      "idx": 86,
+      "round": 4,
+      "visibility": {
+        "Private": 0
+      },
+      "event": {
+        "type": "ChancellorReceived",
+        "tiles": [
+          "Fascist",
+          "Liberal"
+        ]
+      }
+    },
+    {
+      "idx": 87,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "PolicyEnacted",
+        "policy": "Fascist"
+      }
+    },
+    {
+      "idx": 88,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "PowerGranted",
+        "president": 3,
+        "power": "Execution"
+      }
+    },
+    {
+      "idx": 89,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 3,
+        "discussion_round": 0,
+        "text": "I investigated P1 as Fascist — but the real danger is the quiet one. My read says P1 is the Hitler cover. Taking the shot.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 90,
+      "round": 4,
+      "visibility": "Public",
+      "event": {
+        "type": "Executed",
+        "president": 3,
+        "target": 1,
+        "was_hitler": false
+      }
+    },
+    {
+      "idx": 91,
+      "round": 5,
+      "visibility": "Public",
+      "event": {
+        "type": "PowerGranted",
+        "president": 0,
+        "power": "Execution"
+      }
+    },
+    {
+      "idx": 92,
+      "round": 5,
+      "visibility": "Public",
+      "event": {
+        "type": "Utterance",
+        "seat": 0,
+        "discussion_round": 0,
+        "text": "P1 wasn't Hitler. That leaves the one who kept steering us away from P3. I'm shooting P3.",
+        "pass": false
+      }
+    },
+    {
+      "idx": 93,
+      "round": 5,
+      "visibility": "Public",
+      "event": {
+        "type": "Executed",
+        "president": 0,
+        "target": 3,
+        "was_hitler": true
+      }
+    },
+    {
+      "idx": 94,
+      "round": 5,
+      "visibility": "Public",
+      "event": {
+        "type": "GameEnded",
+        "winner": "Liberal",
+        "condition": "HitlerExecuted",
+        "roles": [
+          "Liberal",
+          "Fascist",
+          "Liberal",
+          "Hitler",
+          "Liberal",
+          "Fascist",
+          "Liberal"
+        ]
+      }
+    }
+  ],
+  "duration_ms": 214000,
+  "discussion_rounds": 2
+}
