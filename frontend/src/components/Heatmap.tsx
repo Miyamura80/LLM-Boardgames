@@ -37,6 +37,9 @@ interface HeatmapProps {
 	alive: boolean[];
 }
 
+// Party tint (matches the seat cards): liberal teal, fascist red, Hitler edge.
+const partySuffix = (r: Role) => r.toLowerCase();
+
 export function Heatmap({ beliefs, checkpoint, roles, alive }: HeatmapProps) {
 	const snaps = beliefs.filter((b) => b.checkpoint === checkpoint);
 	if (snaps.length === 0) {
@@ -48,11 +51,20 @@ export function Heatmap({ beliefs, checkpoint, roles, alive }: HeatmapProps) {
 		<div className="sh-table-wrap">
 			<table className="sh-heatmap" aria-label="who suspects whom">
 				<thead>
+					{/* Axis captions: which way is believer vs subject. */}
 					<tr>
-						<th scope="col">believer ↓ / subject →</th>
+						<th className="sh-hm-corner" />
+						<th className="sh-hm-axis-top" colSpan={seats.length}>
+							subject → <em>the player being judged</em>
+						</th>
+					</tr>
+					<tr>
+						<th className="sh-hm-axis-left" scope="col">
+							believer ↓ <em>the judging player</em>
+						</th>
 						{seats.map((s) => (
 							<th key={s} scope="col">
-								P{s}
+								<span className={`sh-pw-${partySuffix(roles[s])}`}>P{s}</span>
 								{roles[s] !== "Liberal" && (
 									<span title={`ground truth: ${roles[s]}`}> ✦</span>
 								)}
@@ -62,14 +74,38 @@ export function Heatmap({ beliefs, checkpoint, roles, alive }: HeatmapProps) {
 				</thead>
 				<tbody>
 					{seats.map((believer) => {
+						const role = roles[believer];
+						const label = (
+							<th scope="row">
+								<span className={`sh-pw-${partySuffix(role)}`}>
+									P{believer}
+								</span>{" "}
+								<span className={`sh-hm-pill sh-hm-pill-${partySuffix(role)}`}>
+									{role}
+								</span>
+								{!alive[believer] && <span className="sh-muted"> †</span>}
+							</th>
+						);
 						const snap = snaps.find((b) => b.seat === believer);
+						// A believer with no snapshot (a dead/executed seat records none
+						// at game end) explains itself instead of showing empty cells.
+						if (!snap) {
+							return (
+								<tr key={believer}>
+									{label}
+									<td className="sh-hm-nosnap" colSpan={seats.length}>
+										—{" "}
+										{alive[believer]
+											? "no snapshot at this checkpoint"
+											: "executed — no beliefs recorded"}{" "}
+										—
+									</td>
+								</tr>
+							);
+						}
 						return (
 							<tr key={believer}>
-								<th scope="row">
-									P{believer}
-									<span className="sh-muted sh-small"> {roles[believer]}</span>
-									{!alive[believer] && <span className="sh-muted"> †</span>}
-								</th>
+								{label}
 								{seats.map((subject) => {
 									const probs = snap?.report.assessments[String(subject)];
 									if (believer === subject || !probs) {
@@ -97,9 +133,10 @@ export function Heatmap({ beliefs, checkpoint, roles, alive }: HeatmapProps) {
 				</tbody>
 			</table>
 			<p className="sh-muted sh-small">
-				Cell = stated P(subject is on the Fascist team), 0–100. ✦ marks the true
-				Fascists/Hitler; † marks executed players. Beliefs are private — no
-				player saw another's row.
+				Row = believer (judging), column = subject (judged) — the matrix is
+				directional, not symmetric. Cell = stated P(subject is on the Fascist
+				team), 0–100. ✦ marks the true Fascists/Hitler; † marks executed
+				players. Beliefs are private — no player saw another's row.
 			</p>
 		</div>
 	);

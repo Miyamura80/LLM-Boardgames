@@ -411,3 +411,71 @@ body {
 	background: var(--color-bg);
 	border-radius: 4px;
 }
+
+/* Party tint on the belief-matrix headers (matches the seat cards). */
+.sh-pw-liberal {
+	color: var(--sh-liberal);
+	font-weight: 700;
+}
+.sh-pw-fascist {
+	color: var(--sh-fascist);
+	font-weight: 700;
+}
+.sh-pw-hitler {
+	color: var(--sh-hitler-edge);
+	font-weight: 700;
+}
+
+.sh-hm-pill {
+	color: #fff;
+	padding: 0.02rem 0.32rem;
+	border-radius: 3px;
+	font-family: var(--font-display);
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	font-weight: 600;
+}
+.sh-hm-pill-liberal {
+	background: var(--sh-liberal);
+}
+.sh-hm-pill-fascist {
+	background: var(--sh-fascist);
+}
+.sh-hm-pill-hitler {
+	background: var(--sh-hitler-edge);
+}
+
+/* Axis captions: which way is believer vs subject. */
+.sh-hm-axis-top,
+.sh-hm-axis-left {
+	color: var(--color-text-secondary);
+	font-family: var(--font-display);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	font-size: 10.5px;
+	font-weight: 600;
+}
+.sh-hm-axis-top {
+	text-align: center;
+}
+.sh-hm-axis-top em,
+.sh-hm-axis-left em {
+	font-family: var(--font-sans);
+	text-transform: none;
+	letter-spacing: 0;
+	font-weight: 400;
+	font-style: italic;
+}
+.sh-hm-corner {
+	background: transparent;
+}
+
+/* A believer with no snapshot at this checkpoint (usually executed). */
+.sh-hm-nosnap {
+	color: var(--color-text-secondary);
+	font-style: italic;
+	text-align: left;
+	padding-left: 0.5rem;
+	font-family: var(--font-sans);
+}
