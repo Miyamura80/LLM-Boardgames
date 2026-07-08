@@ -1,0 +1,134 @@
+/* ============================================================================
+   Secret Hitler — canonical brand tokens (SINGLE SOURCE OF TRUTH)
+   ----------------------------------------------------------------------------
+   Evokes the board game's 1930s Weimar / Art-Deco propaganda-poster look:
+   aged parchment, fascist red-orange, liberal teal, mustard gold, heavy ink,
+   condensed Oswald display type + a Special Elite typewriter accent.
+
+   HOW TO USE
+   - Copy this file into a frontend and import it once (globally).
+   - Copy assets/fonts/*.woff2 into that app's statically-served dir and fix the
+     two url() paths below to match (Vite: /fonts/…, Next: /fonts/…).
+   - Consume the --sh-* tokens; never hardcode brand hexes in components.
+   - Framework token systems (e.g. Fumadocs --color-fd-*, Tailwind @theme) should
+     be MAPPED to these --sh-* values, not redefined.
+   Keep edits to the palette/type here and let every surface inherit them.
+   ========================================================================== */
+
+/* ─── Fonts (self-hosted; no runtime Google dependency) ─────────────────── */
+@font-face {
+	font-family: "Oswald";
+	font-style: normal;
+	font-weight: 500 700; /* variable range */
+	font-display: swap;
+	src: url("/fonts/oswald-latin.woff2") format("woff2");
+}
+@font-face {
+	font-family: "Special Elite";
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("/fonts/special-elite-latin.woff2") format("woff2");
+}
+
+:root {
+	/* ─── Brand palette (fixed ink values, theme-independent) ───────────── */
+	--sh-fascist: #c33a22; /* fascist red-orange — PRIMARY brand accent   */
+	--sh-fascist-deep: #992a18; /* pressed / hover                        */
+	--sh-liberal: #2e7c8c; /* liberal teal-blue                           */
+	--sh-liberal-deep: #1f5c6b;
+	--sh-hitler: #17110b; /* near-black (Hitler / darkest ink)            */
+	--sh-gold: #c79a3e; /* mustard gold accent                           */
+
+	/* ─── Light "Parchment" theme (default) ─────────────────────────────── */
+	--sh-bg: #ece0c6; /* page — aged paper                               */
+	--sh-surface: #f6eeda; /* cards / panels — lighter stock            */
+	--sh-surface-sunken: #e3d4b4; /* wells, table zebra                 */
+	--sh-ink: #211a12; /* primary text — warm near-black                 */
+	--sh-ink-soft: #6d5e46; /* secondary text — sepia                    */
+	--sh-line: #cdb98f; /* borders / rules — tan                        */
+	--sh-line-strong: #a98f5f;
+	--sh-hitler-edge: #17110b; /* Hitler seat-edge — near-black on parchment */
+
+	--sh-btn-bg: var(--sh-hitler);
+	--sh-btn-fg: #f6eeda;
+	--sh-btn-hover: #37291a;
+	--sh-error: #a3271b;
+	--sh-warn-bg: #f0e2bd;
+	--sh-warn-text: #855017;
+
+	/* Faction accents already resolve to brand hues in both themes. */
+	--sh-accent: var(--sh-fascist);
+
+	/* ─── Type ──────────────────────────────────────────────────────────── */
+	--sh-font-display:
+		"Oswald", "Futura", "Century Gothic", "Trebuchet MS", ui-sans-serif,
+		system-ui, sans-serif; /* condensed art-deco headers */
+	--sh-font-body:
+		"Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+		"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--sh-font-typewriter:
+		"Special Elite", "Courier New", ui-monospace, monospace; /* dossier / flavor */
+	--sh-font-mono:
+		ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+	/* Display headers are set in condensed uppercase with generous tracking. */
+	--sh-display-transform: uppercase;
+	--sh-display-tracking: 0.06em;
+
+	--sh-radius: 3px; /* art-deco geometry: crisp, minimal rounding */
+	--sh-radius-lg: 5px;
+}
+
+/* ─── Dark "Noir" theme ─────────────────────────────────────────────────── */
+:root.dark,
+:root[data-theme="dark"] {
+	--sh-bg: #16120c; /* dark sepia-black                               */
+	--sh-surface: #20190f;
+	--sh-surface-sunken: #120e09;
+	--sh-ink: #f1e6cf; /* parchment text on ink                         */
+	--sh-ink-soft: #b09a76;
+	--sh-line: #3a2f1f;
+	--sh-line-strong: #574632;
+	--sh-hitler-edge: #8f2417; /* near-black vanishes on Noir — lift to oxblood */
+
+	/* Factions brighten so they carry on the dark ground. */
+	--sh-fascist: #e0553b;
+	--sh-fascist-deep: #c33a22;
+	--sh-liberal: #4fa9bc;
+	--sh-liberal-deep: #2e7c8c;
+	--sh-gold: #d8ae4e;
+
+	--sh-btn-bg: #e9dcc0;
+	--sh-btn-fg: #16120c;
+	--sh-btn-hover: #d8c6a0;
+	--sh-error: #f0836f;
+	--sh-warn-bg: rgba(216, 174, 78, 0.16);
+	--sh-warn-text: #e2c072;
+	--sh-accent: var(--sh-fascist);
+}
+
+@media (prefers-color-scheme: dark) {
+	/* Systems without an explicit .dark/data-theme class still get Noir. */
+	:root:not(.light):not([data-theme="light"]) {
+		--sh-bg: #16120c;
+		--sh-surface: #20190f;
+		--sh-surface-sunken: #120e09;
+		--sh-ink: #f1e6cf;
+		--sh-ink-soft: #b09a76;
+		--sh-line: #3a2f1f;
+		--sh-line-strong: #574632;
+		--sh-hitler-edge: #8f2417;
+		--sh-fascist: #e0553b;
+		--sh-fascist-deep: #c33a22;
+		--sh-liberal: #4fa9bc;
+		--sh-liberal-deep: #2e7c8c;
+		--sh-gold: #d8ae4e;
+		--sh-btn-bg: #e9dcc0;
+		--sh-btn-fg: #16120c;
+		--sh-btn-hover: #d8c6a0;
+		--sh-error: #f0836f;
+		--sh-warn-bg: rgba(216, 174, 78, 0.16);
+		--sh-warn-text: #e2c072;
+	}
+}

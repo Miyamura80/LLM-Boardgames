@@ -55,6 +55,33 @@ docs: ## Run docs with bun
 
 
 ########################################################
+# Game Reports (self-contained HTML artifacts)
+########################################################
+
+### Game Reports
+.PHONY: game-report game-report-json game-report-stored
+
+game-report-json: ## Render a fixed sample GameRecord JSON to a self-contained HTML report (reproducible, no DB). Vars: REC=, OUT=.
+	@echo "$(YELLOW)🎲 Rendering report from $(or $(REC),crates/engine/fixtures/sample_game.json)...$(RESET)"
+	@cargo run -q -p shbench -- call sh_export_game_report --args '{"record_path":"$(or $(REC),crates/engine/fixtures/sample_game.json)","output_path":"$(or $(OUT),media/game-report.html)"}'
+	@echo "$(GREEN)✅ Report written to $(or $(OUT),media/game-report.html)$(RESET)"
+
+game-report: ## Play a game and render a self-contained HTML report (no DB). Vars: OUT=, MODELS=, SEED=. Pass LLM MODELS to get discussion.
+	@echo "$(YELLOW)🎲 Playing a game and rendering the report...$(RESET)"
+	@cargo run -q -p shbench -- call sh_play_game --args '{"models":$(or $(MODELS),["bot:bayes-history"]),"seed":$(or $(SEED),7),"discussion_rounds":2,"report_path":"$(or $(OUT),media/game-report.html)"}'
+	@echo "$(GREEN)✅ Report written to $(or $(OUT),media/game-report.html)$(RESET)"
+	@echo "$(YELLOW)ℹ️  Bots don't talk — pass LLM seats for discussion, e.g. MODELS='[\"openai/gpt-4o-mini\"]'$(RESET)"
+
+game-report-stored: ## Export a STORED game (real LLM discussion) to HTML. Requires GAME=<id> and Postgres. Var: OUT=.
+	@if [ -z "$(GAME)" ]; then \
+		echo "$(RED)Error: GAME=<game_id> required (list with a run's games)$(RESET)"; exit 1; \
+	fi
+	@echo "$(YELLOW)🎲 Exporting stored game $(GAME)...$(RESET)"
+	@cargo run -q -p shbench -- call sh_export_game_report --args '{"game_id":"$(GAME)","output_path":"$(or $(OUT),media/game-report.html)"}'
+	@echo "$(GREEN)✅ Report written to $(or $(OUT),media/game-report.html)$(RESET)"
+
+
+########################################################
 # Initialization
 ########################################################
 
@@ -139,7 +166,7 @@ test_flaky: ## Repeat fast tests to detect flaky tests
 ########################################################
 
 ### Code Quality
-.PHONY: fmt lint knip audit link-check ci
+.PHONY: fmt lint knip audit link-check file_len_check brand_sync_check ci
 
 fmt: ## Format code with Biome and rustfmt
 	@echo "$(YELLOW)✨ Formatting and linting with Biome...$(RESET)"
@@ -187,7 +214,12 @@ file_len_check: ## Check TS/RS files don't exceed max line count
 	@bun run scripts/check_file_length.ts
 	@echo "$(GREEN)✅ File length check completed.$(RESET)"
 
-ci: fmt lint knip audit link-check test file_len_check ## Run all CI checks
+brand_sync_check: ## Verify the frontend brand tokens match the skill's canonical copy
+	@echo "$(YELLOW)🔍 Checking brand token sync...$(RESET)"
+	@node scripts/check_brand_sync.mjs
+	@echo "$(GREEN)✅ Brand sync check completed.$(RESET)"
+
+ci: fmt lint knip audit link-check test file_len_check brand_sync_check ## Run all CI checks
 	@echo "$(GREEN)✅ CI checks completed.$(RESET)"
 
 

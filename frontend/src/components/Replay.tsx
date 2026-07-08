@@ -44,6 +44,40 @@ function foldBoard(record: GameRecord, step: number) {
 	return { liberal, fascist, tracker, alive };
 }
 
+/** One-line outcome for a round's collapsed header (most salient event wins). */
+function roundSummary(recs: EventRecord[]): string {
+	const utterances = recs.filter(
+		(r) => r.event.type === "Utterance" && !r.event.pass,
+	).length;
+	const speech = utterances > 0 ? `${utterances} spoke` : "";
+	for (const r of recs) {
+		const e = r.event;
+		if (e.type === "Executed") return `☠ P${String(e.target)} executed`;
+		if (e.type === "PolicyEnacted")
+			return `${e.policy === "Liberal" ? "🔵" : "🔴"} ${String(e.policy)} policy${speech ? ` · ${speech}` : ""}`;
+		if (e.type === "TopDeckEnacted") return "⚠ chaos — policy top-decked";
+	}
+	for (const r of recs) {
+		const e = r.event;
+		if (e.type === "ElectionResult")
+			return `${e.passed ? "govt elected" : "election failed"}${speech ? ` · ${speech}` : ""}`;
+	}
+	return speech || "…";
+}
+
+/** Fold the (step-sliced) transcript into contiguous per-round groups. */
+function groupByRound(
+	recs: EventRecord[],
+): { round: number; recs: EventRecord[] }[] {
+	const groups: { round: number; recs: EventRecord[] }[] = [];
+	for (const rec of recs) {
+		const last = groups[groups.length - 1];
+		if (last && last.round === rec.round) last.recs.push(rec);
+		else groups.push({ round: rec.round, recs: [rec] });
+	}
+	return groups;
+}
+
 export function Replay() {
 	const [runs, setRuns] = useState<RunSummary[]>([]);
 	const [runId, setRunId] = useState("");
@@ -54,6 +88,10 @@ export function Replay() {
 	const [step, setStep] = useState(0);
 	const [checkpoint, setCheckpoint] = useState<number | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	// Rounds are expanded by default; this holds the ones the user has folded.
+	const [collapsedRounds, setCollapsedRounds] = useState<Set<number>>(
+		new Set(),
+	);
 
 	useEffect(() => {
 		listRuns()
@@ -89,6 +127,8 @@ export function Replay() {
 				setRecord(r.record);
 				setRendered(r.rendered);
 				setStep(r.record.events.length);
+				// New game starts fully expanded — don't inherit the prior fold state.
+				setCollapsedRounds(new Set());
 				const cps = [...new Set(r.record.beliefs.map((b) => b.checkpoint))];
 				setCheckpoint(cps.length > 0 ? cps[cps.length - 1] : null);
 				setError(null);
@@ -122,6 +162,16 @@ export function Replay() {
 		}
 		return map;
 	}, [record]);
+
+	// Transcript folded into per-round groups, up to the current scrub position.
+	const roundGroups = useMemo(
+		() => (record ? groupByRound(record.events.slice(0, step)) : []),
+		[record, step],
+	);
+	const allRounds = useMemo(
+		() => roundGroups.map((g) => g.round),
+		[roundGroups],
+	);
 
 	return (
 		<section className="sh-panel">
@@ -187,35 +237,84 @@ export function Replay() {
 							onChange={(e) => setStep(Number(e.target.value))}
 						/>
 					</label>
-					<ol className="sh-log">
-						{record.events.slice(0, step).flatMap((rec) => [
-							...(thoughtsByEvent.get(rec.idx) ?? []).map((t) => (
-								<li
-									key={`t-${rec.idx}-${t.seat}-${t.decision}`}
-									className="sh-thought"
-								>
-									<details>
-										<summary>
-											💭 P{t.seat} thinking before {t.decision}
-										</summary>
-										<p>{t.text}</p>
-									</details>
-								</li>
-							)),
-							<li
-								key={rec.idx}
-								className={rec.visibility === "Public" ? "" : "sh-private"}
+					<div className="sh-log-head">
+						<span className="sh-muted sh-small">
+							{roundGroups.length} round{roundGroups.length === 1 ? "" : "s"}
+						</span>
+						<span className="sh-log-actions">
+							<button
+								type="button"
+								className="sh-linkbtn"
+								onClick={() => setCollapsedRounds(new Set())}
 							>
-								<span className="sh-muted sh-mono sh-small">r{rec.round}</span>{" "}
-								{rec.visibility !== "Public" && (
-									<span className="sh-tag">
-										private P{(rec.visibility as { Private: number }).Private}
-									</span>
-								)}{" "}
-								{renderEvent(rec, rendered)}
-							</li>,
-						])}
-					</ol>
+								Expand all
+							</button>
+							<button
+								type="button"
+								className="sh-linkbtn"
+								onClick={() => setCollapsedRounds(new Set(allRounds))}
+							>
+								Collapse all
+							</button>
+						</span>
+					</div>
+					<div className="sh-log">
+						{roundGroups.map((g) => (
+							<details
+								key={g.round}
+								className="sh-round"
+								open={!collapsedRounds.has(g.round)}
+								onToggle={(e) => {
+									// Controlled fold state: mirror the native <details> open
+									// flag back into React (also catches expand/collapse-all).
+									const isOpen = e.currentTarget.open;
+									setCollapsedRounds((prev) => {
+										if (isOpen === !prev.has(g.round)) return prev;
+										const next = new Set(prev);
+										if (isOpen) next.delete(g.round);
+										else next.add(g.round);
+										return next;
+									});
+								}}
+							>
+								<summary>
+									<span className="sh-round-title">Round {g.round}</span>
+									<span className="sh-round-tag">{roundSummary(g.recs)}</span>
+								</summary>
+								<ol className="sh-round-body">
+									{g.recs.flatMap((rec) => [
+										...(thoughtsByEvent.get(rec.idx) ?? []).map((t) => (
+											<li
+												key={`t-${rec.idx}-${t.seat}-${t.decision}`}
+												className="sh-thought"
+											>
+												<details>
+													<summary>
+														💭 P{t.seat} thinking before {t.decision}
+													</summary>
+													<p>{t.text}</p>
+												</details>
+											</li>
+										)),
+										<li
+											key={rec.idx}
+											className={
+												rec.visibility === "Public" ? "" : "sh-private"
+											}
+										>
+											{rec.visibility !== "Public" && (
+												<span className="sh-tag">
+													private P
+													{(rec.visibility as { Private: number }).Private}
+												</span>
+											)}{" "}
+											{renderEvent(rec, rendered)}
+										</li>,
+									])}
+								</ol>
+							</details>
+						))}
+					</div>
 					{checkpoints.length > 0 && checkpoint !== null && (
 						<>
 							<h3>Who suspected whom</h3>

@@ -3,13 +3,16 @@
 //! collapsible per-decision thoughts, belief heatmaps, reliability & cost).
 //!
 //! This is the native, token-free path for producing game reports: the
-//! template lives in the repo (`crates/engine/templates/game_report.html`)
-//! and the data comes straight from the Postgres store.
+//! template lives in the repo (`crates/engine/templates/game_report.html`).
+//! [`render_game_report`] is the shared renderer — this command feeds it a
+//! record from the Postgres store, while `sh_play_game { report_path }` feeds it
+//! an in-memory record for a DB-free artifact.
 
 use crate::commands::sh_match::open_store;
 use crate::commands::{Command, CommandError, Expose};
 use crate::context::Ctx;
 use crate::register_command;
+use crate::secret_hitler::runner::record::GameRecord;
 use async_trait::async_trait;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -17,12 +20,44 @@ use std::path::Path;
 
 const TEMPLATE: &str = include_str!("../../templates/game_report.html");
 
+/// Render a complete game record into the self-contained HTML report. Shared by
+/// the store-backed `sh_export_game_report` command and the DB-free
+/// `sh_play_game { report_path }` path, so both emit byte-identical artifacts.
+pub(crate) fn render_game_report(record: &GameRecord) -> Result<String, CommandError> {
+    let rendered: Vec<String> = record
+        .events
+        .iter()
+        .map(|r| r.event.render_omniscient())
+        .collect();
+    // `</` must not appear inside the inline <script> payload.
+    let escape = |v: &serde_json::Value| serde_json::to_string(v).map(|s| s.replace("</", "<\\/"));
+    let data =
+        escape(&serde_json::to_value(record).map_err(|e| CommandError::Other(e.to_string()))?)
+            .map_err(|e| CommandError::Other(e.to_string()))?;
+    let lines =
+        escape(&serde_json::to_value(&rendered).map_err(|e| CommandError::Other(e.to_string()))?)
+            .map_err(|e| CommandError::Other(e.to_string()))?;
+    // Split at the markers instead of sequential global replaces: model-authored
+    // text inside the payloads could itself contain a marker.
+    let (before, rest) = TEMPLATE
+        .split_once("__GAME_DATA__")
+        .ok_or_else(|| CommandError::Other("template missing __GAME_DATA__".into()))?;
+    let (between, after) = rest
+        .split_once("__RENDERED__")
+        .ok_or_else(|| CommandError::Other("template missing __RENDERED__".into()))?;
+    Ok(format!("{before}{data}{between}{lines}{after}"))
+}
+
 #[derive(Default)]
 pub struct ShExportGameReport;
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct ShExportGameReportInput {
-    pub game_id: String,
+    /// A stored game id (needs Postgres). Provide this or `record_path`.
+    pub game_id: Option<String>,
+    /// Path to a `GameRecord` JSON to render directly, bypassing the store —
+    /// the reproducible "fixed JSON" path (no database required).
+    pub record_path: Option<String>,
     /// Where to write the HTML file. Omit to only return the HTML inline.
     pub output_path: Option<String>,
     /// Include the rendered HTML in the response (default true when no
@@ -59,39 +94,37 @@ impl Command for ShExportGameReport {
         input: ShExportGameReportInput,
         cx: &Ctx<'_>,
     ) -> Result<Self::Output, CommandError> {
-        let store = open_store().await?;
-        let record = store
-            .get_game(&input.game_id)
-            .await
-            .map_err(|e| CommandError::Other(e.to_string()))?
-            .ok_or_else(|| {
-                CommandError::InvalidInput(format!("unknown game: {}", input.game_id))
-            })?;
+        // game_id and record_path are mutually exclusive — reject both rather
+        // than silently ignoring game_id and rendering the wrong game.
+        let record = match (&input.game_id, &input.record_path) {
+            (Some(_), Some(_)) => {
+                return Err(CommandError::InvalidInput(
+                    "provide either game_id (stored) or record_path (a GameRecord JSON file), not both"
+                        .into(),
+                ));
+            }
+            (None, Some(path)) => {
+                let bytes = cx.fs().read_file(Path::new(path))?;
+                serde_json::from_slice::<GameRecord>(&bytes).map_err(|e| {
+                    CommandError::InvalidInput(format!("invalid GameRecord JSON in {path}: {e}"))
+                })?
+            }
+            (Some(id), None) => open_store()
+                .await?
+                .get_game(id)
+                .await
+                .map_err(|e| CommandError::Other(e.to_string()))?
+                .ok_or_else(|| CommandError::InvalidInput(format!("unknown game: {id}")))?,
+            (None, None) => {
+                return Err(CommandError::InvalidInput(
+                    "provide either game_id (stored) or record_path (a GameRecord JSON file)"
+                        .into(),
+                ));
+            }
+        };
 
-        let rendered: Vec<String> = record
-            .events
-            .iter()
-            .map(|r| r.event.render_omniscient())
-            .collect();
-        // `</` must not appear inside the inline <script> payload.
-        let escape =
-            |v: &serde_json::Value| serde_json::to_string(v).map(|s| s.replace("</", "<\\/"));
-        let data =
-            escape(&serde_json::to_value(&record).map_err(|e| CommandError::Other(e.to_string()))?)
-                .map_err(|e| CommandError::Other(e.to_string()))?;
-        let lines = escape(
-            &serde_json::to_value(&rendered).map_err(|e| CommandError::Other(e.to_string()))?,
-        )
-        .map_err(|e| CommandError::Other(e.to_string()))?;
-        // Split at the markers instead of sequential global replaces: model-
-        // authored text inside the payloads could itself contain a marker.
-        let (before, rest) = TEMPLATE
-            .split_once("__GAME_DATA__")
-            .ok_or_else(|| CommandError::Other("template missing __GAME_DATA__".into()))?;
-        let (between, after) = rest
-            .split_once("__RENDERED__")
-            .ok_or_else(|| CommandError::Other("template missing __RENDERED__".into()))?;
-        let html = format!("{before}{data}{between}{lines}{after}");
+        let game_id = record.game_id.clone();
+        let html = render_game_report(&record)?;
         let bytes = html.len();
 
         if let Some(path) = &input.output_path {
@@ -99,7 +132,7 @@ impl Command for ShExportGameReport {
         }
         let include_html = input.include_html.unwrap_or(input.output_path.is_none());
         Ok(ShExportGameReportOutput {
-            game_id: input.game_id,
+            game_id,
             bytes,
             output_path: input.output_path,
             html: include_html.then_some(html),
