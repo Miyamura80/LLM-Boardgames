@@ -138,6 +138,14 @@ transcript (discussion grouped into *simultaneous-reveal* rounds), each agent's
 collapsible private reasoning, the who-suspected-who belief heatmap, and per-seat
 reliability + cost. Everything is inlined, so the file opens offline with no server.
 
+<p align="center">
+  <img src="media/game-report-preview.png" alt="Secret Hitler game report: seat roster with per-player party pills (blue Liberal, red Fascist, dark-red Hitler), the private role deals showing the two Fascists know each other and Hitler, and the simultaneous-reveal discussion rounds with party-colored speaker chips" width="760">
+</p>
+
+<p align="center">
+  <sub><i>A game report — party revealed per player, role deals, and the simultaneous-reveal discussion. Data shown is illustrative.</i></sub>
+</p>
+
 ```bash
 make game-report-json                      # a fixed sample game — reproducible, no DB → media/game-report.html
 make game-report MODELS='["gemini/gemini-3-flash-preview"]'  # play a fresh game, then render
@@ -152,7 +160,7 @@ so discussion only appears with LLM seats.
 
 The `/game-preview` skill wires this into a shareable Artifact: it runs
 `game-report`, strips the document to page content (`scripts/report_to_artifact.mjs`),
-and publishes it — the preview at the top of this README is produced this way.
+and publishes it — the report above is produced this way.
 
 ## Asset Generation
 
