@@ -245,15 +245,10 @@ body {
 	border-left-color: var(--sh-fascist);
 }
 
+/* --sh-hitler-edge themes itself (near-black on Parchment, oxblood on Noir),
+   so no per-theme override is needed here — it inherits brand.css's guards. */
 .sh-role-hitler {
-	border-left-color: var(--sh-hitler);
-}
-
-/* Near-black Hitler ink vanishes on the Noir ground — lift it to oxblood. */
-@media (prefers-color-scheme: dark) {
-	.sh-role-hitler {
-		border-left-color: #8f2417;
-	}
+	border-left-color: var(--sh-hitler-edge);
 }
 
 .sh-dead {

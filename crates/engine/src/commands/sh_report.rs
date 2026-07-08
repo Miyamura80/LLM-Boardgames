@@ -94,22 +94,32 @@ impl Command for ShExportGameReport {
         input: ShExportGameReportInput,
         cx: &Ctx<'_>,
     ) -> Result<Self::Output, CommandError> {
-        let record = if let Some(path) = &input.record_path {
-            let bytes = cx.fs().read_file(Path::new(path))?;
-            serde_json::from_slice::<GameRecord>(&bytes).map_err(|e| {
-                CommandError::InvalidInput(format!("invalid GameRecord JSON in {path}: {e}"))
-            })?
-        } else if let Some(id) = &input.game_id {
-            open_store()
+        // game_id and record_path are mutually exclusive — reject both rather
+        // than silently ignoring game_id and rendering the wrong game.
+        let record = match (&input.game_id, &input.record_path) {
+            (Some(_), Some(_)) => {
+                return Err(CommandError::InvalidInput(
+                    "provide either game_id (stored) or record_path (a GameRecord JSON file), not both"
+                        .into(),
+                ));
+            }
+            (None, Some(path)) => {
+                let bytes = cx.fs().read_file(Path::new(path))?;
+                serde_json::from_slice::<GameRecord>(&bytes).map_err(|e| {
+                    CommandError::InvalidInput(format!("invalid GameRecord JSON in {path}: {e}"))
+                })?
+            }
+            (Some(id), None) => open_store()
                 .await?
                 .get_game(id)
                 .await
                 .map_err(|e| CommandError::Other(e.to_string()))?
-                .ok_or_else(|| CommandError::InvalidInput(format!("unknown game: {id}")))?
-        } else {
-            return Err(CommandError::InvalidInput(
-                "provide either game_id (stored) or record_path (a GameRecord JSON file)".into(),
-            ));
+                .ok_or_else(|| CommandError::InvalidInput(format!("unknown game: {id}")))?,
+            (None, None) => {
+                return Err(CommandError::InvalidInput(
+                    "provide either game_id (stored) or record_path (a GameRecord JSON file)".into(),
+                ));
+            }
         };
 
         let game_id = record.game_id.clone();

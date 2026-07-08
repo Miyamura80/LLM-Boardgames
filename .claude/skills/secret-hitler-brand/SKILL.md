@@ -109,6 +109,12 @@ Two supported wiring patterns; both apps in this repo already use them.
    ```
    Keep the Fumadocs sidebar/TOC dark overrides pointed at the Noir surfaces.
 
+   > **Why literal hexes here, not `--sh-*`?** The docs app doesn't import
+   > `brand.css`, so `--sh-*` aren't in scope — the hexes above *are* the brand
+   > values, transcribed. This is the one place the "map onto `--sh-*`" guardrail
+   > below is relaxed; keep the values in step with the token file. (If you do
+   > import `brand.css` into the docs, prefer `--color-fd-*: var(--sh-*)`.)
+
 ### A brand-new frontend
 
 Copy the token file + fonts, import once, then express every color/font through

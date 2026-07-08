@@ -82,8 +82,7 @@ h3,
 .prose h1,
 .prose h2,
 .prose h3,
-#nd-sidebar [data-radix-collection-item],
-[data-nd-brand] {
+#nd-sidebar [data-radix-collection-item] {
 	font-family: var(--font-display);
 	text-transform: uppercase;
 	letter-spacing: 0.04em;

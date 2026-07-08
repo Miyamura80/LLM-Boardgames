@@ -54,13 +54,13 @@ function roundSummary(recs: EventRecord[]): string {
 		const e = r.event;
 		if (e.type === "Executed") return `☠ P${String(e.target)} executed`;
 		if (e.type === "PolicyEnacted")
-			return `${e.policy === "Liberal" ? "🔵" : "🔴"} ${String(e.policy)} policy · ${speech}`;
+			return `${e.policy === "Liberal" ? "🔵" : "🔴"} ${String(e.policy)} policy${speech ? ` · ${speech}` : ""}`;
 		if (e.type === "TopDeckEnacted") return "⚠ chaos — policy top-decked";
 	}
 	for (const r of recs) {
 		const e = r.event;
 		if (e.type === "ElectionResult")
-			return `${e.passed ? "govt elected" : "election failed"} · ${speech}`;
+			return `${e.passed ? "govt elected" : "election failed"}${speech ? ` · ${speech}` : ""}`;
 	}
 	return speech || "…";
 }
@@ -127,6 +127,8 @@ export function Replay() {
 				setRecord(r.record);
 				setRendered(r.rendered);
 				setStep(r.record.events.length);
+				// New game starts fully expanded — don't inherit the prior fold state.
+				setCollapsedRounds(new Set());
 				const cps = [...new Set(r.record.beliefs.map((b) => b.checkpoint))];
 				setCheckpoint(cps.length > 0 ? cps[cps.length - 1] : null);
 				setError(null);
