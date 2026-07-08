@@ -117,7 +117,8 @@ impl Command for ShExportGameReport {
                 .ok_or_else(|| CommandError::InvalidInput(format!("unknown game: {id}")))?,
             (None, None) => {
                 return Err(CommandError::InvalidInput(
-                    "provide either game_id (stored) or record_path (a GameRecord JSON file)".into(),
+                    "provide either game_id (stored) or record_path (a GameRecord JSON file)"
+                        .into(),
                 ));
             }
         };
