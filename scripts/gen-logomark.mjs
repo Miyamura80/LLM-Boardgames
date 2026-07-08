@@ -23,10 +23,11 @@ const OSWALD_B64 = readFileSync(
 const CREAM = "#ede4ce"; // parchment face (banner letter fill)
 const INK = "#17110b"; // near-black extrusion / Hitler ink
 const THEMES = {
-	// Canonical — matches the banner: cream letters on red-orange.
+	// Canonical — matches the banner field (sampled from media/banner.png:
+	// bright upper-centre ~#d5523a fading to warm brick corners ~#c64431).
 	red: {
-		vigCore: "#e0553b", // brighter centre
-		vigEdge: "#a8311c", // darker corners
+		vigCore: "#d5523a", // brighter upper-centre
+		vigEdge: "#c34330", // subtle warm-brick vignette at the corners
 		face: CREAM,
 		extrude: INK,
 	},
