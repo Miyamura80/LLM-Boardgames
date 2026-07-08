@@ -65,8 +65,8 @@ Repeat for **every distinct model in the set** — treat all `openrouter/…` sl
 as unverified until a smoke test passes, since none were confirmed against
 `openrouter.ai/models` when the sets were written. As of writing that is every
 `openrouter/…` entry in `frontier` and `cheap`: `z-ai/glm-5.2`,
-`deepseek/deepseek-v4-pro`, `minimax/minimax-m3`, `meta/muse-spark`,
-`nvidia/nemotron-3-ultra`, `openai/gpt-oss-120b`, `x-ai/grok-4.3`,
+`deepseek/deepseek-v4-pro`, `minimax/minimax-m3`,
+`nvidia/nemotron-3-ultra-550b-a55b`, `openai/gpt-oss-120b`, `x-ai/grok-4.3`,
 `moonshotai/kimi-k2.6`. The first-party `openai/`, `anthropic/`, `gemini/`
 entries use known-good ids.
 

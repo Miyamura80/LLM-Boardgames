@@ -16,8 +16,9 @@ derives per-game and whole-program budgets.
 ## 1. Combined roster (frontier ∪ cheap, deduped)
 
 The two shipped leagues in `crates/config/global_config.yaml`
-(`secret_hitler.model_sets`) are 7 models each; three overlap
-(`deepseek-v4-pro`, `minimax-m3`, `glm-5.2`), leaving **11 distinct models**.
+(`secret_hitler.model_sets`) are 7 models each; four overlap
+(`deepseek-v4-pro`, `minimax-m3`, `glm-5.2`, `grok-4.3`), leaving **10 distinct
+models**.
 "Effective cost" is ranked by Artificial Analysis's *cost to run the
 Intelligence Index* — the honest cross-model comparator, because reasoning-heavy
 models burn hidden thinking tokens that a sticker output price hides.
@@ -34,14 +35,16 @@ models burn hidden thinking tokens that a sticker output price hides.
 | 8 | Gemini 3.5 Flash | `gemini/gemini-3.5-flash` | 1.50 | 9.00 | $1,041 | yes | 1.00× |
 | 9 | GPT-5.5 | `openai/gpt-5.5` | 5.00 | 30.00 | $2,630 | yes (med dflt) | 2.53× |
 | 10 | Claude Opus 4.8 | `anthropic/claude-opus-4-8` | 5.00 | 25.00 | $3,753 | yes (high dflt) | 3.61× |
-| — | Meta Muse Spark | **no public API route** | — | — | (listed $0) | yes | — |
 
-Slug fixes vs the config's best-guesses:
-- **`nvidia/nemotron-3-ultra` → `nvidia/nemotron-3-ultra-550b-a55b`** (the short
-  slug does not resolve on OpenRouter).
-- **`meta/muse-spark` is not a usable public route** — Meta ships it on Meta AI
-  with API in private preview; AA's "$0" is placeholder, not a real price. It
-  must be dropped from `frontier` or replaced before any paid arena run.
+Slug fixes vs the config's original best-guesses (both **applied** to
+`global_config.yaml`):
+- **`nvidia/nemotron-3-ultra` → `nvidia/nemotron-3-ultra-550b-a55b`** — the short
+  slug does not resolve on OpenRouter.
+- **`meta/muse-spark` has no usable public route** — Meta ships it on Meta AI
+  with API in private preview; AA's "$0" is placeholder, not a real price. It is
+  **replaced in `frontier` by Grok 4.3** (`openrouter/x-ai/grok-4.3`): a frontier
+  flagship with a confirmed slug that restores provider-family diversity (a 7th
+  distinct family) and is the cheapest frontier-tier option.
 - All other slugs resolve first-party (`openai/`, `anthropic/`, `gemini/`) or on
   OpenRouter.
 
@@ -104,14 +107,14 @@ non-reasoners so anchor cost never balloons).
 
 | Set | Seats | **$/game** |
 | --- | --- | ---: |
-| `cheap` (7 confirmed) | DeepSeek, GPT-OSS, MiniMax, Grok, Nemotron, Kimi, GLM | **≈ 0.20** |
-| `frontier` (6 confirmed; Muse Spark unusable) | GPT-5.5, Opus 4.8, Flash, GLM, MiniMax, DeepSeek | **≈ 0.59** |
+| `cheap` (7 seats) | DeepSeek, GPT-OSS, MiniMax, Grok, Nemotron, Kimi, GLM | **≈ 0.20** |
+| `frontier` (7 seats) | GPT-5.5, Opus 4.8, Flash, GLM, MiniMax, DeepSeek, Grok 4.3 | **≈ 0.61** |
 
 ## 4. Program budget
 
 Controlled schedule is **21·K games per candidate** (3 roles × 7 seats × K reps;
-`rating-design.md` §2.1). Totals below are the **whole 10-candidate roster**
-(Muse Spark excluded), summed across per-candidate game costs.
+`rating-design.md` §2.1). Totals below are the **whole 10-model roster**, summed
+across per-candidate game costs.
 
 | K (purpose) | games/candidate | roster controlled total |
 | --- | ---: | ---: |
@@ -157,9 +160,9 @@ games.
 
 ## 6. Action items
 
-1. **Muse Spark**: no public API route — drop from `frontier` or replace (nearest
-   confirmed frontier substitute: a second OpenRouter seat, e.g. Grok 4.3).
-2. **Nemotron slug**: fix `global_config.yaml` to
+1. ~~**Muse Spark**: no public API route~~ — **resolved**: `frontier` now seats
+   **Grok 4.3** (`openrouter/x-ai/grok-4.3`) in its place.
+2. ~~**Nemotron slug**~~ — **resolved**: `global_config.yaml` now uses
    `nvidia/nemotron-3-ultra-550b-a55b`.
 3. **Instrument before trusting these numbers.** Log per-turn `output_tokens`,
    `reasoning_tokens`, `cache_read_tokens`, `cache_write_tokens` per seat. The
