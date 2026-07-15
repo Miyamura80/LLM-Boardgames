@@ -58,7 +58,7 @@ secret_hitler:
       - { name: heuristic, kind: heuristic }
       - { name: bayes, kind: bayes-history }
       # llm-cheap: Mistral Small 3.2 — cheapest coherent non-reasoner (AA II 11).
-      - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.2 }
+      - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.2-24b-instruct }
       # llm-mid: DeepSeek V3.2 non-reasoning — best cheap/coherent workhorse (AA II 25).
       - { name: llm-mid, kind: llm, model: openrouter/deepseek/deepseek-chat }
       # llm-strong: Gemini 3 Flash (non-reasoning) — fast, 1M ctx, first-party key.

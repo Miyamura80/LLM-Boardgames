@@ -38,7 +38,7 @@ MODELS=(
   "openrouter/openai/gpt-oss-120b"
   "openrouter/moonshotai/kimi-k2.6"
   # controlled anchor-pool LLMs (pool-a / pool-b in global_config.yaml)
-  "openrouter/mistralai/mistral-small-3.2"
+  "openrouter/mistralai/mistral-small-3.2-24b-instruct"
   "openrouter/deepseek/deepseek-chat"
   "gemini/gemini-3-flash-preview"
 )
