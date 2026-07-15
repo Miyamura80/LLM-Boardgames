@@ -45,9 +45,10 @@ secret_hitler:
   rating_k: 2.0
   # Frozen anchor pools. The LLM anchors span three distinct model families
   # (Mistral / DeepSeek / Google) to avoid the same-family collusion caveat in
-  # rating-design §3. All three tiers are cheap NON-REASONING models so per-game
-  # cost stays flat and predictable (reasoning tokens bill as output and this
-  # harness is output-volume-bound). Routing is litellm-style: OpenAI / Anthropic
+  # rating-design §3. Tiers are cheap per-token models: llm-cheap and llm-strong
+  # are non-reasoning; llm-mid is DeepSeek V4 Pro (reasoning, but its tokens are
+  # near-free so per-game cost stays low). This harness is output-volume-bound.
+  # Routing is litellm-style: OpenAI / Anthropic
   # / Gemini use first-party keys; every other family routes through OpenRouter
   # (`openrouter/<org>/<model>`, one OPENROUTER_API_KEY). VERIFY the exact
   # slugs before a paid run — a wrong id surfaces as a transport error, not a
@@ -59,8 +60,8 @@ secret_hitler:
       - { name: bayes, kind: bayes-history }
       # llm-cheap: Mistral Small 3.2 — cheapest coherent non-reasoner (AA II 11).
       - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.2-24b-instruct }
-      # llm-mid: DeepSeek V3.2 non-reasoning — best cheap/coherent workhorse (AA II 25).
-      - { name: llm-mid, kind: llm, model: openrouter/deepseek/deepseek-chat }
+      # llm-mid: DeepSeek V4 Pro — current DeepSeek flagship; reasoning but very cheap per-token.
+      - { name: llm-mid, kind: llm, model: openrouter/deepseek/deepseek-v4-pro }
       # llm-strong: Gemini 3 Flash (non-reasoning) — fast, 1M ctx, first-party key.
       - name: llm-strong
         kind: llm

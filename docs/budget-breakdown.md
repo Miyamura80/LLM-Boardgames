@@ -81,10 +81,12 @@ that captures how token-hungry each model *actually* is — DeepSeek V4 Pro emit
 Kimi/GLM are "cheap-until-they-talk."
 
 **Anchor block (controlled mode):** pool-a is 3 bots (`random`, `heuristic`,
-`bayes` — zero tokens) + 3 non-reasoning LLM anchors (`mistral-small-3.2`,
-`deepseek-chat`, `gemini-3-flash`). Modeled at **≈ $0.085/game**, dominated by
-the flash-tier strong anchor and deliberately flat (the config picks
-non-reasoners so anchor cost never balloons).
+`bayes` — zero tokens) + 3 LLM anchors (`mistral-small-3.2-24b-instruct`,
+`deepseek-v4-pro`, `gemini-3-flash`). Modeled at **≈ $0.085/game** (V4 Pro
+reasons, but its tokens are cheap enough to stay within rounding), dominated by
+the flash-tier strong anchor. Note `deepseek-v4-pro` is also an arena candidate,
+so in its own controlled cells it partly anchors itself — a known, accepted
+wrinkle.
 
 ## 3. Per-game cost
 
