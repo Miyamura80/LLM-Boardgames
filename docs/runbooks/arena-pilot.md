@@ -61,6 +61,11 @@ shbench call sh_leaderboard --json --args '{"run_id":"verify-gpt-5.5","include_a
 - **`transport` high** (every call failed) → wrong id or missing/invalid key.
   Fix the string in `model_sets` (or repoint it at `openrouter/…`) and re-smoke.
 
+> **Batch it:** `scripts/verify_model_slugs.sh` loops every arena-set and
+> anchor-pool slug through this exact check and prints a pass/fail table with the
+> `transport`/`malformed`/`illegal`/`forced` counters. Run it where the keys and
+> Docker live (it needs real egress to the providers).
+
 Repeat for **every distinct model in the set** — treat all `openrouter/…` slugs
 as unverified until a smoke test passes, since none were confirmed against
 `openrouter.ai/models` when the sets were written. As of writing that is every
