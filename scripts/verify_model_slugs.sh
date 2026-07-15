@@ -69,14 +69,32 @@ ERRLOG="verify_errors.log"
 : > "$ERRLOG"
 slugify() { printf '%s' "$1" | tr '/:.' '-'; }
 
+# FREE=1 pings the :free OpenRouter variant where one exists (currently Nemotron
+# and gpt-oss) for a $0 plumbing/auth dry-run. A :free variant is a DIFFERENT
+# deployment with different limits, so it does NOT verify the exact paid slug —
+# shake out the harness with FREE=1, then run once more without it.
+free_slug() {
+  case "$1" in
+    openrouter/nvidia/nemotron-3-ultra-550b-a55b) echo "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free" ;;
+    openrouter/openai/gpt-oss-120b)               echo "openrouter/openai/gpt-oss-120b:free" ;;
+    *) echo "" ;;
+  esac
+}
+[[ "${FREE:-}" == "1" ]] && \
+  echo "FREE=1: pinging :free variants where available (nemotron, gpt-oss) — verifies plumbing, NOT the paid slug." >&2
+
 printf '%-48s | %5s | %5s | %5s | %5s | %s\n' "model" "trans" "malf" "illg" "frcd" "verdict"
 printf -- '%.0s-' {1..96}; printf '\n'
 
 total_prompt=0; total_completion=0; fails=0
 for model in "${MODELS[@]}"; do
-  rid="verify-$(slugify "$model")$SFX"
+  seat_model="$model"; tag=""
+  if [[ "${FREE:-}" == "1" ]]; then
+    fv=$(free_slug "$model"); [[ -n "$fv" ]] && { seat_model="$fv"; tag=" (free)"; }
+  fi
+  rid="verify-$(slugify "$seat_model")$SFX"
 
-  run_args=$(jq -nc --arg m "$model" --arg rid "$rid" '{
+  run_args=$(jq -nc --arg m "$seat_model" --arg rid "$rid" '{
     mode:"arena",
     models:[$m,"bot:heuristic","bot:heuristic","bot:bayes-history",
             "bot:random-legal","bot:heuristic","bot:random-legal"],
@@ -95,7 +113,7 @@ for model in "${MODELS[@]}"; do
                and ((.model_id | startswith("bot:")) | not)) ] | .[0]' 2>/dev/null)
 
   if [[ -z "$row" || "$row" == "null" ]]; then
-    printf '%-48s | %5s | %5s | %5s | %5s | %s\n' "$model" "?" "?" "?" "?" \
+    printf '%-48s | %5s | %5s | %5s | %5s | %s\n' "$model$tag" "?" "?" "?" "?" \
       "❌ no metrics row — see $ERRLOG"
     fails=$((fails+1)); continue
   fi
@@ -114,7 +132,7 @@ for model in "${MODELS[@]}"; do
     verdict="❌ transport>0 — wrong id or bad/missing key (fix slug on openrouter.ai/models)"
     fails=$((fails+1))
   fi
-  printf '%-48s | %5s | %5s | %5s | %5s | %s\n' "$model" "$trans" "$malf" "$illg" "$frcd" "$verdict"
+  printf '%-48s | %5s | %5s | %5s | %5s | %s\n' "$model$tag" "$trans" "$malf" "$illg" "$frcd" "$verdict"
 done
 
 echo

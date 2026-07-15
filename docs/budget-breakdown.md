@@ -112,6 +112,27 @@ wrinkle.
 | `cheap` (7 seats) | DeepSeek, GPT-OSS, MiniMax, Grok, Nemotron, Kimi, GLM | **≈ 0.20** |
 | `frontier` (7 seats) | GPT-5.5, Opus 4.8, Flash, GLM, MiniMax, DeepSeek, Grok 4.3 | **≈ 0.61** |
 
+### Empirical spot-check (measured — n=1, use with care)
+
+One real game through the engine (1 LLM seat + 6 zero-token bots, discussion
+**off**, beliefs off) gives the first ground-truth token counts:
+
+| Seat (1 game, disc. off) | prompt tok | completion tok | seat cost¹ | reliability |
+| --- | ---: | ---: | ---: | --- |
+| `gemini/gemini-3.5-flash` | 10,180 | 10,439 | ~$0.11 | transport/malf/illg/frcd = 0 ✅ |
+| `gemini/gemini-3-flash-preview` | 10,180 | 15,322 | ~$0.15² | transport/malf/illg/frcd = 0 ✅ |
+
+¹ at $1.50/$9.00 per 1M in/out. ² preview pricing assumed ≈ 3.5-flash.
+
+**What this says about the model above:** one *reasoning*-flash seat already costs
+~$0.11 in a discussion-**off** game — before the 3 discussion rounds that dominate
+a real game. That puts the $0.50 all-7-flash-seat anchor (and everything scaled
+off it) on the **optimistic** side for reasoning-tier flash — exactly the failure
+mode the top caveat warns about (thinking tokens bill as output). Both seats also
+emit schema-valid moves (zero malformed/illegal/forced). Treat §3–§4 as a floor
+for reasoning models until a full discussion-**on** game is measured across
+providers via `scripts/verify_model_slugs.sh` + the per-turn token counters.
+
 ## 4. Program budget
 
 Controlled schedule is **21·K games per candidate** (3 roles × 7 seats × K reps;
