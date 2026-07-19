@@ -139,4 +139,5 @@ echo
 echo "token spend across all verify runs: prompt=${total_prompt} completion=${total_completion}"
 echo "failures: ${fails}"
 [[ "$fails" -gt 0 ]] && echo "→ for each ❌: find the correct slug on the provider's model list, edit crates/config/global_config.yaml, re-run."
-exit 0
+# Non-zero exit when any seat failed, so CI / automated roster validation halts.
+exit $(( fails > 0 ? 1 : 0 ))

@@ -74,7 +74,6 @@ Structure as: `init()` → `continue(id)` → `cleanup(id)`
 - Folder-size CI failure → spawn subagent `.claude/agents/folder-refactor-advisor.md`.
 
 ## Git Workflow
-- **Review**: Always trigger Greptile review MCP before pushing a PR and resolve any branch issues. If the Greptile MCP is not available, explicitly inform the user.
 - **Protected Branch**: `main` is protected. Do not push directly to `main`. Use PRs.
 - **Merge Strategy**: Squash and merge.
 - **Pre-commit CI gate**: Always run `make ci` before committing any changes. Ensure it passes with zero errors. Do not commit if `make ci` fails - fix all issues first, then commit.

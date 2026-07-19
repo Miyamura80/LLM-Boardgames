@@ -84,9 +84,12 @@ Kimi/GLM are "cheap-until-they-talk."
 `bayes` — zero tokens) + 3 LLM anchors (`mistral-small-3.2-24b-instruct`,
 `deepseek-v4-pro`, `gemini-3-flash`). Modeled at **≈ $0.085/game** (V4 Pro
 reasons, but its tokens are cheap enough to stay within rounding), dominated by
-the flash-tier strong anchor. Note `deepseek-v4-pro` is also an arena candidate,
-so in its own controlled cells it partly anchors itself — a known, accepted
-wrinkle.
+the flash-tier strong anchor. **Caveat:** the empirical spot-check below measured
+a single flash seat at ~$0.11–0.15 *discussion-off*, already above this whole
+modeled block — so treat $0.085 (and every controlled/program total scaled from
+it) as a **lower bound**, not a point estimate. Note `deepseek-v4-pro` is also an
+arena candidate, so in its own controlled cells it partly anchors itself — a
+known, accepted wrinkle.
 
 ## 3. Per-game cost
 
@@ -112,12 +115,12 @@ wrinkle.
 | `cheap` (7 seats) | DeepSeek, GPT-OSS, MiniMax, Grok, Nemotron, Kimi, GLM | **≈ 0.20** |
 | `frontier` (7 seats) | GPT-5.5, Opus 4.8, Flash, GLM, MiniMax, DeepSeek, Grok 4.3 | **≈ 0.61** |
 
-### Empirical spot-check (measured — n=1, use with care)
+### Empirical spot-check (measured — n=2, use with care)
 
-One real game through the engine (1 LLM seat + 6 zero-token bots, discussion
-**off**, beliefs off) gives the first ground-truth token counts:
+Two real games (each: 1 LLM seat + 6 zero-token bots, discussion **off**, beliefs
+off — one game per model) give the first ground-truth token counts:
 
-| Seat (1 game, disc. off) | prompt tok | completion tok | seat cost¹ | reliability |
+| Seat (own game, disc. off) | prompt tok | completion tok | seat cost¹ | reliability |
 | --- | ---: | ---: | ---: | --- |
 | `gemini/gemini-3.5-flash` | 10,180 | 10,439 | ~$0.11 | transport/malf/illg/frcd = 0 ✅ |
 | `gemini/gemini-3-flash-preview` | 10,180 | 15,322 | ~$0.15² | transport/malf/illg/frcd = 0 ✅ |
@@ -130,8 +133,11 @@ a real game. That puts the $0.50 all-7-flash-seat anchor (and everything scaled
 off it) on the **optimistic** side for reasoning-tier flash — exactly the failure
 mode the top caveat warns about (thinking tokens bill as output). Both seats also
 emit schema-valid moves (zero malformed/illegal/forced). Treat §3–§4 as a floor
-for reasoning models until a full discussion-**on** game is measured across
-providers via `scripts/verify_model_slugs.sh` + the per-turn token counters.
+for reasoning models until a full discussion-**on** game is measured — which needs
+a discussion-on `sh_run_match` run (the `verify_model_slugs.sh` smoke-test is
+discussion-**off** by design) plus per-turn token instrumentation (Action item 3,
+not built yet — the store today exposes only per-seat aggregate prompt/completion
+totals).
 
 ## 4. Program budget
 
@@ -160,7 +166,8 @@ belief-elicitation side calls, and forced-default rethinks):
 
 The program is dominated by controlled runs of the two costly frontier
 candidates: **Opus 4.8 ($144/candidate @ K=20) and GPT-5.5 ($112)** together are
-~40% of the serious-tier bill; the other eight candidates are $39–$60 each.
+~40% of the serious-tier bill; the other eight candidates are $39–$66 each
+(Gemini 3.5 Flash the priciest of them, ~$66 @ K=20).
 
 ## 5. Findings
 
