@@ -117,3 +117,7 @@ Planning default $0.50/game is plausible for flash-tier models but sensitive to
 full-history prompting. The engine logs per-game input/output tokens and derived
 cost so the review's budget tables (§18–19) can be validated empirically before
 committing to a K.
+
+See [`budget-breakdown.md`](budget-breakdown.md) for the combined
+`frontier` ∪ `cheap` roster costed against Artificial Analysis empirical run
+costs, with per-game (controlled vs arena) and whole-program budget tables.

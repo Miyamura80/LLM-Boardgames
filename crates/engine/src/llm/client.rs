@@ -202,7 +202,7 @@ impl ChatClient {
             status,
             body: format!(
                 "unparseable response ({e}): {}",
-                &text.chars().take(300).collect::<String>()
+                text.chars().take(300).collect::<String>()
             ),
         })?;
         let content = parsed
