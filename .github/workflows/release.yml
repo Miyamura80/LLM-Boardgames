@@ -64,7 +64,7 @@ jobs:
             -DestinationPath "shbench-${{ matrix.target }}.zip"
 
       - name: Publish to GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           # Mark semver pre-release tags (e.g. v1.3.0-beta.1) as pre-releases.
           prerelease: ${{ contains(github.ref_name, '-') }}
