@@ -322,3 +322,34 @@ impl GameState {
         self.winner.is_some()
     }
 }
+
+/// Lets the shared `game_core` rethink loop drive the SH engine. Pure
+/// delegation to the inherent methods — behavior is defined there.
+impl crate::game_core::EngineState for GameState {
+    type Action = crate::secret_hitler::actions::Action;
+    type Observation = crate::secret_hitler::observation::Observation;
+    type Decision = crate::secret_hitler::actions::DecisionPoint;
+
+    fn pending_decisions(&self) -> Vec<Self::Decision> {
+        GameState::pending_decisions(self)
+    }
+    fn observe(&self, seat: Seat) -> Self::Observation {
+        GameState::observe(self, seat)
+    }
+    fn apply(
+        &mut self,
+        seat: Seat,
+        action: Self::Action,
+    ) -> Result<(), crate::game_core::IllegalMove> {
+        GameState::apply(self, seat, action)
+    }
+    fn forced_default(&mut self, decision: &Self::Decision) -> Self::Action {
+        GameState::forced_default(self, decision)
+    }
+    fn push_forced_default(&mut self, seat: Seat, kind: &str) {
+        GameState::push_forced_default(self, seat, kind)
+    }
+    fn is_over(&self) -> bool {
+        GameState::is_over(self)
+    }
+}

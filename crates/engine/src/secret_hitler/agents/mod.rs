@@ -26,23 +26,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-#[derive(Debug, thiserror::Error)]
-pub enum AgentError {
-    /// Output could not be parsed into the required strict JSON schema.
-    /// Counts toward the malformed-output reliability counter.
-    #[error("malformed output: {0}")]
-    Malformed(String),
-    /// The model API failed even after transport-level retries.
-    #[error("transport: {0}")]
-    Transport(String),
-}
+pub use crate::game_core::AgentError;
 
 /// A decision reply: the action plus the model's stated reasoning.
-#[derive(Debug, Clone)]
-pub struct AgentReply {
-    pub action: Action,
-    pub thought: Option<String>,
-}
+pub type AgentReply = crate::game_core::Reply<Action>;
 
 /// A discussion utterance; `None` text is an explicit pass.
 #[derive(Debug, Clone)]
@@ -146,6 +133,19 @@ pub trait SeatAgent: Send {
     /// Cumulative token usage (zero for bots).
     fn usage(&self) -> TokenUsage {
         TokenUsage::default()
+    }
+}
+
+/// Lets the shared `game_core` rethink loop drive any boxed SH seat agent.
+#[async_trait]
+impl crate::game_core::DecisionAgent<super::state::GameState> for Box<dyn SeatAgent> {
+    async fn decide(
+        &mut self,
+        obs: &Observation,
+        decision: &DecisionPoint,
+        feedback: Option<&str>,
+    ) -> Result<AgentReply, AgentError> {
+        SeatAgent::decide(&mut **self, obs, decision, feedback).await
     }
 }
 

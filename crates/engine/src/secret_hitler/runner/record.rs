@@ -45,14 +45,7 @@ pub struct ThoughtRecord {
     pub text: String,
 }
 
-/// Reliability counters, kept strictly separate from play-quality metrics.
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, JsonSchema)]
-pub struct Reliability {
-    pub malformed_outputs: u32,
-    pub illegal_moves: u32,
-    pub forced_defaults: u32,
-    pub transport_failures: u32,
-}
+pub use crate::game_core::Reliability;
 
 /// One seat of one game.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

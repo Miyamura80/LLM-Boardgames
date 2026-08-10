@@ -171,8 +171,8 @@ pub async fn run_game_from(
     }
 }
 
-/// One decision through the rethink loop; falls back to the forced legal
-/// default when the budget is exhausted.
+/// One decision through the shared `game_core` rethink loop, plus SH-specific
+/// metric capture (thoughts, policy choices, executions).
 async fn resolve_decision(
     cfg: &GameConfig,
     state: &mut GameState,
@@ -181,44 +181,24 @@ async fn resolve_decision(
     decision: &DecisionPoint,
 ) {
     let seat = decision.seat();
-    let mut feedback: Option<String> = None;
-
-    for _ in 0..cfg.retry_budget {
-        let obs = state.observe(seat);
-        let reply = agents[seat as usize]
-            .decide(&obs, decision, feedback.as_deref())
-            .await;
-        match reply {
-            Err(AgentError::Malformed(m)) => {
-                trackers[seat as usize].reliability.malformed_outputs += 1;
-                feedback = Some(m);
-            }
-            Err(AgentError::Transport(e)) => {
-                trackers[seat as usize].reliability.transport_failures += 1;
-                tracing::warn!(seat, error = %e, "agent transport failure");
-            }
-            Ok(reply) => match state.apply(seat, reply.action) {
-                Ok(()) => {
-                    record_thought(trackers, state, seat, decision, reply.thought);
-                    record_choice(state, trackers, seat, decision, reply.action, false);
-                    return;
-                }
-                Err(illegal) => {
-                    trackers[seat as usize].reliability.illegal_moves += 1;
-                    feedback = Some(illegal.0);
-                }
-            },
-        }
-    }
-
-    // Budget exhausted: deterministic forced legal default, metric-exempt.
-    let action = state.forced_default(decision);
-    trackers[seat as usize].reliability.forced_defaults += 1;
-    state.push_forced_default(seat, decision.kind());
-    state
-        .apply(seat, action)
-        .expect("forced default must be legal");
-    record_choice(state, trackers, seat, decision, action, true);
+    let outcome = crate::game_core::resolve_decision(
+        cfg.retry_budget,
+        state,
+        &mut agents[seat as usize],
+        decision,
+        &mut trackers[seat as usize].reliability,
+    )
+    .await;
+    // Forced outcomes carry no thought; record_thought drops empty ones.
+    record_thought(trackers, state, seat, decision, outcome.thought);
+    record_choice(
+        state,
+        trackers,
+        seat,
+        decision,
+        outcome.action,
+        outcome.forced,
+    );
 }
 
 /// Capture metric inputs for policy and execution decisions.

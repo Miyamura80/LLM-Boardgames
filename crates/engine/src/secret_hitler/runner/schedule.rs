@@ -16,7 +16,6 @@ use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 
 /// A fully determined single game to play.
@@ -32,18 +31,7 @@ pub struct GamePlan {
     pub seats: Vec<AgentSpec>,
 }
 
-/// Stable across Rust versions (std's DefaultHasher is not): the mirrored-seed
-/// and resume contracts both depend on this function never changing output.
-fn cell_seed(match_seed: u64, tag: &str, a: u64, b: u64, c: u64) -> u64 {
-    let mut h = Sha256::new();
-    h.update(match_seed.to_le_bytes());
-    h.update(tag.as_bytes());
-    h.update(a.to_le_bytes());
-    h.update(b.to_le_bytes());
-    h.update(c.to_le_bytes());
-    let d = h.finalize();
-    u64::from_le_bytes(d[..8].try_into().expect("sha256 yields 32 bytes"))
-}
+use crate::game_core::cell_seed;
 
 /// The three role buckets a candidate is rotated through.
 pub const ROLE_BUCKETS: [Role; 3] = [Role::Liberal, Role::Fascist, Role::Hitler];
