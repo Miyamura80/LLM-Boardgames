@@ -149,3 +149,54 @@ impl Command for CatanPlayGame {
 }
 
 register_command!(CatanPlayGame);
+
+// ---------------------------------------------------------------------------
+// catan_game_replay
+// ---------------------------------------------------------------------------
+
+#[derive(Default)]
+pub struct CatanGameReplay;
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct CatanGameReplayInput {
+    pub game_id: String,
+}
+
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct CatanGameReplayOutput {
+    pub record: GameRecord,
+    /// Omniscient rendered transcript, one line per event.
+    pub rendered: Vec<String>,
+}
+
+#[async_trait]
+impl Command for CatanGameReplay {
+    type Input = CatanGameReplayInput;
+    type Output = CatanGameReplayOutput;
+
+    fn name(&self) -> &'static str {
+        "catan_game_replay"
+    }
+    fn description(&self) -> &'static str {
+        "Fetch a stored Catan game's full replayable record with rendered transcript lines."
+    }
+
+    async fn run(
+        &self,
+        input: CatanGameReplayInput,
+        _cx: &Ctx<'_>,
+    ) -> Result<Self::Output, CommandError> {
+        let store = super::catan_match::open_catan_store().await?;
+        let record = store
+            .get_game(&input.game_id)
+            .await
+            .map_err(|e| CommandError::Other(e.to_string()))?
+            .ok_or_else(|| {
+                CommandError::InvalidInput(format!("no stored game '{}'", input.game_id))
+            })?;
+        let rendered = record.events.iter().map(|r| r.event.render()).collect();
+        Ok(CatanGameReplayOutput { record, rendered })
+    }
+}
+
+register_command!(CatanGameReplay);
