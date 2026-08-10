@@ -88,7 +88,10 @@ impl Terrain {
 }
 
 /// A multiset of resource cards. Indexed by [`Resource`]'s canonical order.
+/// Deserialization treats missing fields as zero, so agents may write partial
+/// sets like `{"brick": 1}`.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
 pub struct ResourceSet {
     pub brick: u8,
     pub lumber: u8,

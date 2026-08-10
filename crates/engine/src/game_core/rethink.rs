@@ -17,6 +17,20 @@ pub struct Reliability {
     pub transport_failures: u32,
 }
 
+/// The model's private reasoning for one decision, captured verbatim from the
+/// `thought_process` field of its reply. Observability only — never fed back
+/// into any observation, so it cannot influence play.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct ThoughtRecord {
+    pub round: u32,
+    /// Transcript position when the decision was made, for interleaving
+    /// thoughts into a replay timeline.
+    pub at_event: u32,
+    /// Decision kind (`nominate`, `vote`, `turn`, …).
+    pub decision: String,
+    pub text: String,
+}
+
 /// How a decision was resolved. `forced` outcomes carry no thought and must be
 /// excluded from play-quality metrics.
 #[derive(Debug, Clone)]

@@ -49,8 +49,68 @@ pub struct Observation {
     pub phase: &'static str,
     pub longest_road: Option<(Seat, u8)>,
     pub largest_army: Option<(Seat, u8)>,
+    /// Whether the active player has already played a dev card this turn
+    /// (public — dev plays are table-visible).
+    pub dev_played_this_turn: bool,
     /// Everything this seat legitimately witnessed, in order.
     pub history: Vec<EventRecord>,
+}
+
+impl Observation {
+    /// Rebuild the dense occupancy arrays the legality helpers consume.
+    pub fn buildings_array(&self) -> Vec<Option<(Seat, bool)>> {
+        let mut b = vec![None; super::board::VERTEX_COUNT];
+        for &(v, owner, is_city) in &self.occupancy.buildings {
+            b[v as usize] = Some((owner, is_city));
+        }
+        b
+    }
+
+    pub fn roads_array(&self) -> Vec<Option<Seat>> {
+        let mut r = vec![None; super::board::EDGE_COUNT];
+        for &(e, owner) in &self.occupancy.roads {
+            r[e as usize] = Some(owner);
+        }
+        r
+    }
+
+    /// Legal settlement sites for this seat right now (normal play).
+    pub fn settlement_sites(&self) -> Vec<VertexId> {
+        super::sites::settlement_sites(&self.buildings_array(), &self.roads_array(), self.seat)
+    }
+
+    /// Legal road edges for this seat right now.
+    pub fn road_sites(&self) -> Vec<EdgeId> {
+        super::sites::road_sites(&self.buildings_array(), &self.roads_array(), self.seat)
+    }
+
+    /// Open vertices under the distance rule (setup placements).
+    pub fn setup_settlement_sites(&self) -> Vec<VertexId> {
+        super::sites::setup_settlement_sites(&self.buildings_array())
+    }
+
+    /// Edges attached to a just-placed setup settlement.
+    pub fn setup_road_sites(&self, settlement: VertexId) -> Vec<EdgeId> {
+        super::sites::setup_road_sites(&self.roads_array(), settlement)
+    }
+
+    /// This seat's best bank rate for a resource (port-aware).
+    pub fn bank_rate(&self, resource: super::types::Resource) -> u8 {
+        use super::board::Port;
+        let mut rate = 4;
+        let buildings = self.buildings_array();
+        for (v, b) in buildings.iter().enumerate() {
+            if !matches!(b, Some((owner, _)) if *owner == self.seat) {
+                continue;
+            }
+            match self.layout.port_at_vertex(v as VertexId) {
+                Some(Port::Resource { resource: r }) if r == resource => return 2,
+                Some(Port::Generic) => rate = rate.min(3),
+                _ => {}
+            }
+        }
+        rate
+    }
 }
 
 impl GameState {
@@ -99,6 +159,7 @@ impl GameState {
             phase: self.phase.name(),
             longest_road: self.longest_road,
             largest_army: self.largest_army,
+            dev_played_this_turn: self.dev_played_this_turn,
             history: self
                 .events
                 .iter()

@@ -41,6 +41,7 @@ use serde_json::Value;
 use std::collections::BTreeMap;
 use std::time::Instant;
 
+mod catan_game;
 mod http_request;
 mod list_dir;
 mod ping;

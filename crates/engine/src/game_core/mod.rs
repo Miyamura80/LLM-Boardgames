@@ -15,6 +15,6 @@ mod state;
 
 pub use agent::{AgentError, DecisionAgent, Reply};
 pub use events::{EventRecord, Visibility};
-pub use rethink::{resolve_decision, DecisionOutcome, Reliability};
+pub use rethink::{resolve_decision, DecisionOutcome, Reliability, ThoughtRecord};
 pub use seeds::cell_seed;
 pub use state::{DecisionOps, EngineState, IllegalMove, Seat};

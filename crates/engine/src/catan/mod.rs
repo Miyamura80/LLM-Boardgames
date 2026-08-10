@@ -12,10 +12,13 @@
 //! ```
 
 pub mod actions;
+pub mod agents;
 pub mod board;
 pub mod events;
 pub mod longest_road;
 pub mod observation;
+mod render;
+pub mod runner;
 pub mod sites;
 pub mod state;
 pub mod testkit;
