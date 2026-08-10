@@ -2,6 +2,7 @@
 //! discussion/belief surface: table talk rides inside trade actions and `say`,
 //! so `decide` is the whole interface.
 
+mod golden;
 mod greedy_bot;
 mod llm_agent;
 pub mod prompts;
