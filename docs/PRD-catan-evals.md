@@ -318,12 +318,29 @@ typed accept/commit actions move resources. *(User-confirmed decision.)*
 - [ ] Lint/Test/Build checks pass.
 
 ### US-C13: Frontend replay + report
+**Description:** As an observer, I want the replay board to look and feel like
+the physical tabletop game — nice enough to *watch*, not just inspect.
+*(User-confirmed: high visual fidelity is a requirement, not a nice-to-have.)*
+
 **Acceptance Criteria:**
 - [ ] Game switcher at the tab level; `client.ts` stays shared; Catan gets its
   own components: SVG hex-board renderer with step-slider replay, per-turn
   collapsible transcript with 💭 thought disclosures, negotiation text inline,
   and a **trade-flow matrix** (who traded what with whom — the Catan analogue
   of the suspicion heatmap).
+- [ ] **Tabletop-faithful board:** each resource hex has a distinct
+  illustrated SVG treatment (fields/forest/pasture/hills/mountains/desert as
+  recognizable terrain art, not flat color swatches); circular number tokens
+  with probability pip dots and red 6/8; ports drawn on the coast with their
+  trade ratios; an ocean border framing the island; the robber as a
+  recognizable piece on its hex.
+- [ ] **Recognizable game pieces in player colors:** roads as bars along
+  edges, settlements as house silhouettes, cities as larger church-like
+  silhouettes — readable at a glance without a legend.
+- [ ] Replay stepping visually highlights the delta (the piece just placed,
+  the robber's move, resources produced on a roll); dice shown as pip faces.
+- [ ] All artwork is **original SVG evoking the tabletop game** — no CATAN
+  trademark, logo, or copied assets (see §6 legal note).
 - [ ] Standalone offline HTML report (`catan_export_game_report`) from a
   Catan-specific template, driven like `make game-report`.
 - [ ] Catan gets its own visual theme; SH's propaganda-poster brand is not
@@ -398,6 +415,16 @@ typed accept/commit actions move resources. *(User-confirmed decision.)*
 - Prior art: **Catanatron** (Catan RL engine — rules-coverage reference),
   **Diplomacy/Cicero** (talk-vs-commit separation), plus the SH PRD's prior
   art for the harness patterns.
+- **Legal note on the board's look:** Secret Hitler's art is CC-licensed,
+  which is why the SH brand skill reproduces it closely; **Catan is not** —
+  its artwork, logo, and trade dress are proprietary (Catan GmbH / Catan
+  Studio). The replay board therefore uses **original illustration in the
+  spirit of a wooden-tabletop hex game**: same information design (terrain
+  hexes, pip tokens, colored pieces), original execution. A
+  `catan-board-brand` skill (analogous to `secret-hitler-brand`) should pin
+  the palette, terrain treatments, and piece silhouettes once designed, so
+  every surface (frontend, offline HTML report, marketing screenshots) stays
+  consistent.
 
 ## 7. Technical Considerations
 
@@ -460,6 +487,9 @@ typed accept/commit actions move resources. *(User-confirmed decision.)*
 3. **Action granularity = atomic act-until-pass** — one LLM call per decision,
    engine as sole legality authority, per-turn action cap with forced
    `end_turn`.
+3a. **Replay board = high visual fidelity** (2026-08-10): tabletop-faithful
+   illustrated board that is pleasant to watch, per US-C13 — with original
+   artwork only (no CATAN trademark/assets; §6 legal note).
 
 **By recommendation (flag if you disagree):**
 
