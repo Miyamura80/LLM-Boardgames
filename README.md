@@ -163,6 +163,11 @@ make catan-game-report GAME=<game_id>       # stored game (needs Postgres)
 make catan-game-report REC=<record.json>    # from a GameRecord JSON, no DB
 ```
 
+Two real Gemini Flash games ship as fixtures, reproducible with no DB or API:
+`crates/engine/fixtures/catan_llm_vs_bots.json` (one LLM seat beats three
+bots) and `catan_llm_vs_llm.json` (two LLM seats negotiate, trade, and take
+1st/2nd, winning on a Longest Road steal).
+
 Scaffold a new command with `make new name=fetch_url` (or `shbench new
 fetch_url`) — it self-registers, so it's immediately callable over the CLI and
 the API.
