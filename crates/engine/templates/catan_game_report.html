@@ -57,7 +57,12 @@ h2{font-family:var(--serif);font-size:clamp(1rem,2.4vw,1.2rem);font-weight:600;m
 .ev.say{background:var(--say);border-radius:4px;padding:.12rem .4rem}
 .who{display:inline-block;font-size:10.5px;font-weight:700;font-family:var(--mono);padding:.05rem .38rem;border-radius:4px;color:#fff;margin-right:.3rem}
 details.turn{border:1px solid var(--line);border-radius:6px;padding:.2rem .55rem .3rem;margin:.25rem 0;background:var(--panel)}
-details.turn>summary{cursor:pointer;font-family:var(--serif);font-weight:600;padding:.2rem 0;list-style:none}
+details.turn>summary{cursor:pointer;font-family:var(--serif);font-weight:600;padding:.2rem 0;list-style:none;display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+.vpstrip{margin-left:auto;display:inline-flex;gap:.25rem}
+.vpstrip .who{margin-right:0;font-weight:600}
+.ev.buy{background:var(--chip);border-radius:4px;padding:.12rem .4rem}
+.handviz{opacity:.75;margin-left:.4rem}
+.vppill{font-family:var(--mono);font-size:10.5px;font-weight:700;border-radius:999px;padding:.05rem .45rem;margin-left:.35rem}
 details.turn>summary::-webkit-details-marker{display:none}
 details.turn>summary::before{content:"▾ ";color:var(--muted)}
 details.turn:not([open])>summary::before{content:"▸ "}
@@ -126,7 +131,7 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
   <section class="panel">
     <h2>Full transcript — every event, public and private</h2>
-    <p class="note" style="margin-bottom:.6rem">Grouped by turn (click to fold) — each opened turn shows the board as it stood at that turn's end. <em>Italic grey lines</em> are private knowledge (visible to one seat only); 💭 entries are the model's private reasoning per decision (collapsible; never fed back into play). Trades, bank exchanges and production are drawn in cards: seat chip, cards given ⇄ cards received, partner chip — green ✓ accepted, red ✕ rejected, amber ⇄ countered (hover any row for the words). A stored replay is omniscient.</p>
+    <p class="note" style="margin-bottom:.6rem">Grouped by turn (click to fold) — each summary row shows whose turn it is and every seat's board-visible score at that turn's end, and each opened turn shows the board as it stood then. Purchases are drawn: buyer chip, cost cards → the piece bought, then the buyer's hand before → after (and a ★ score pill when the build scored). <em>Italic grey lines</em> are private knowledge (visible to one seat only); 💭 entries are the model's private reasoning per decision (collapsible; never fed back into play). Trades, bank exchanges and production are drawn in cards: seat chip, cards given ⇄ cards received, partner chip — green ✓ accepted, red ✕ rejected, amber ⇄ countered (hover any row for the words). A stored replay is omniscient.</p>
     <div class="log" id="log"></div>
   </section>
 
@@ -156,13 +161,25 @@ const RES = {
   ore:{bg:"#9aa1ab", fg:"#39404b", glyph:'<path d="M7 4.5 l3.2 4.3 -3.2 4.3 -3.2 -4.3 Z"/>'},
 };
 const resIcon = (k) => `<svg class="res" viewBox="0 0 14 18" width="14" height="18" role="img" aria-label="${k}"><title>${k}</title><rect x=".5" y=".5" width="13" height="17" rx="2.5" fill="${RES[k].bg}" stroke="${RES[k].fg}"/><g fill="${RES[k].fg}">${RES[k].glyph}</g></svg>`;
-const resIcons = (set) => Object.keys(RES).map(k => resIcon(k).repeat(set[k] || 0)).join("");
+const resIcons = (set) => Object.keys(RES).map(k => resIcon(k).repeat(Math.max(0, set[k] || 0))).join("");
 const SWAP = `<svg class="arr" viewBox="0 0 24 14" width="24" height="14" role="img" aria-label="for" style="color:var(--muted)"><g stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.2 H20 M20 4.2 l-3 -2.4 M20 4.2 l-3 2.4"/><path d="M20 9.8 H4 M4 9.8 l3 -2.4 M4 9.8 l3 2.4"/></g></svg>`;
 const OK = `<svg class="badge" viewBox="0 0 16 16" width="15" height="15" role="img" aria-label="accepted"><circle cx="8" cy="8" r="7.2" fill="#4e7d3a"/><path d="M4.6 8.2 l2.3 2.4 4.4 -4.8" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const NO = `<svg class="badge" viewBox="0 0 16 16" width="15" height="15" role="img" aria-label="rejected"><circle cx="8" cy="8" r="7.2" fill="#a4321f"/><path d="M5.3 5.3 l5.4 5.4 M10.7 5.3 l-5.4 5.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 const CTR = `<svg class="badge" viewBox="0 0 16 16" width="15" height="15" role="img" aria-label="counter-offer"><circle cx="8" cy="8" r="7.2" fill="#b3802d"/><g stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.3 H11.5 M11.5 6.3 l-2 -1.7 M11.5 6.3 l-2 1.7"/><path d="M11.5 9.7 H4.5 M4.5 9.7 l2 -1.7 M4.5 9.7 l2 1.7"/></g></svg>`;
 const BANK = `<svg class="badge" viewBox="0 0 16 16" width="15" height="15" role="img" aria-label="bank"><title>bank</title><g fill="#8a7448"><path d="M1.5 6 L8 1.8 L14.5 6 Z"/><rect x="2.8" y="7" width="1.8" height="5"/><rect x="7.1" y="7" width="1.8" height="5"/><rect x="11.4" y="7" width="1.8" height="5"/><rect x="1.5" y="12.8" width="13" height="1.8"/></g></svg>`;
 const offerViz = (offer) => `<span class="cards">${resIcons(offer.give)}</span>${SWAP}<span class="cards">${resIcons(offer.receive)}</span>`;
+const ARR1 = `<svg class="arr" viewBox="0 0 20 12" width="20" height="12" role="img" aria-label="buys" style="color:var(--muted)"><path d="M3 6 H16 M16 6 l-3 -2.6 M16 6 l-3 2.6" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+// A fan of card backs: marks the "hand before → after" segment.
+const FAN = `<svg class="badge" viewBox="0 0 18 18" width="16" height="16" role="img" aria-label="hand"><g fill="#efe4c8" stroke="#8a7c5f" stroke-width="1"><rect x="1.5" y="4" width="8" height="11" rx="1.5" transform="rotate(-14 5.5 9.5)"/><rect x="5" y="3" width="8" height="11" rx="1.5"/><rect x="8.5" y="4" width="8" height="11" rx="1.5" transform="rotate(14 12.5 9.5)"/></g></svg>`;
+const EMPTYHAND = `<svg class="res" viewBox="0 0 14 18" width="14" height="18" role="img" aria-label="no cards"><rect x=".5" y=".5" width="13" height="17" rx="2.5" fill="none" stroke="var(--muted)" stroke-dasharray="2.5 2" stroke-width="1"/></svg>`;
+// The piece bought, in the buyer's colors.
+function itemIcon(kind, s2) {
+  const fill = PC[s2], line = PS[s2];
+  if (kind === "road") return `<svg class="badge" viewBox="0 0 18 18" width="17" height="17" role="img" aria-label="road"><title>road</title><line x1="4" y1="14" x2="14" y2="4" stroke="${line}" stroke-width="7" stroke-linecap="round"/><line x1="4" y1="14" x2="14" y2="4" stroke="${fill}" stroke-width="4.2" stroke-linecap="round"/></svg>`;
+  if (kind === "settlement") return `<svg class="badge" viewBox="0 0 18 18" width="17" height="17" role="img" aria-label="settlement"><title>settlement</title><path d="M3.5 15 v-6.5 l5.5 -5 l5.5 5 v6.5 Z" fill="${fill}" stroke="${line}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+  if (kind === "city") return `<svg class="badge" viewBox="0 0 20 18" width="19" height="17" role="img" aria-label="city"><title>city</title><path d="M2 16 v-8 l4.5 -4.5 l4.5 4.5 v2.5 h7 v5.5 Z" fill="${fill}" stroke="${line}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+  return `<svg class="res" viewBox="0 0 14 18" width="14" height="18" role="img" aria-label="development card"><title>development card</title><rect x=".5" y=".5" width="13" height="17" rx="2.5" fill="#7a5ba6" stroke="#4a3468"/><path d="M7 4 l1.1 3 3 .4 -2.2 2 .6 3 -2.5 -1.6 -2.5 1.6 .6 -3 -2.2 -2 3 -.4 Z" fill="#f2eadf"/></svg>`;
+}
 
 // ---- header ---------------------------------------------------------------
 const mins = Math.round(GAME.duration_ms/60000);
@@ -391,6 +408,60 @@ for (const s of GAME.seats) for (const t of (s.thoughts || [])) {
 const renderThoughts = (idx) => (thoughtsAt.get(idx) || []).map(t =>
   `<details class="thought"><summary>💭 P${t.seat} thinking before ${esc(t.decision)}</summary><p>${esc(t.text)}</p></details>`).join("");
 
+// Running omniscient table state, advanced event by event as the transcript
+// is built: hands come from the resource ledger (production, discards, robber
+// steals, dev-card plays, trades, build costs), VP is the board-visible tally.
+const COST = {road:{brick:1,lumber:1}, settlement:{brick:1,lumber:1,wool:1,grain:1}, city:{grain:2,ore:3}, dev:{wool:1,grain:1,ore:1}};
+const hands = [0,1,2,3].map(() => ({brick:0,lumber:0,wool:0,grain:0,ore:0}));
+const runVp = [0,0,0,0];
+let runLongest = null, runLargest = null;
+const addSet = (h, set, sign) => { for (const k of Object.keys(RES)) h[k] += sign * (set[k] || 0); };
+function applyEvent(e) {
+  switch (e.type) {
+    case "SetupResourcesGranted": addSet(hands[e.seat], e.gained, 1); break;
+    case "ResourcesProduced": for (const [s2, set] of e.gains) addSet(hands[s2], set, 1); break;
+    case "DiscardedContents": addSet(hands[e.seat], e.resources, -1); break;
+    case "CardStolenContents": hands[e.from][e.resource]--; hands[e.to][e.resource]++; break;
+    case "YearOfPlentyTaken": hands[e.seat][e.first]++; hands[e.seat][e.second]++; break;
+    case "MonopolyResolved": for (const [v, n] of e.taken) { hands[v][e.resource] -= n; hands[e.seat][e.resource] += n; } break;
+    case "BankTraded": addSet(hands[e.seat], e.gave, -1); addSet(hands[e.seat], e.got, 1); break;
+    case "TradeExecuted":
+      addSet(hands[e.proposer], e.offer.give, -1); addSet(hands[e.proposer], e.offer.receive, 1);
+      addSet(hands[e.with], e.offer.give, 1); addSet(hands[e.with], e.offer.receive, -1);
+      break;
+    case "RoadBuilt": if (!e.free) addSet(hands[e.seat], COST.road, -1); break;
+    case "SettlementBuilt": addSet(hands[e.seat], COST.settlement, -1); runVp[e.seat]++; break;
+    case "CityBuilt": addSet(hands[e.seat], COST.city, -1); runVp[e.seat]++; break;
+    case "DevCardBought": addSet(hands[e.seat], COST.dev, -1); break;
+    case "SetupSettlementPlaced": runVp[e.seat]++; break;
+    case "LongestRoadClaimed":
+      if (runLongest !== null) runVp[runLongest] -= 2;
+      runLongest = e.seat ?? null;
+      if (runLongest !== null) runVp[runLongest] += 2;
+      break;
+    case "LargestArmyClaimed":
+      if (runLargest !== null) runVp[runLargest] -= 2;
+      runLargest = e.seat; runVp[e.seat] += 2;
+      break;
+  }
+}
+// A purchase, drawn: buyer chip, cost cards → the piece; then the buyer's hand
+// before → after; then a VP pill when the build changed the score.
+function buyViz(e) {
+  const kind = e.type === "RoadBuilt" ? (e.free ? null : "road")
+    : e.type === "SettlementBuilt" ? "settlement"
+    : e.type === "CityBuilt" ? "city"
+    : e.type === "DevCardBought" ? "dev" : null;
+  if (!kind) return null;
+  const s2 = e.seat;
+  const before = {...hands[s2]};
+  const after = {...before}; addSet(after, COST[kind], -1);
+  const vp = (kind === "settlement" || kind === "city")
+    ? `<span class="vppill" style="background:${PC[s2]};color:${chipFg(s2)}">★ ${runVp[s2]}→${runVp[s2] + 1}</span>` : "";
+  return `<span class="tviz">${chip(s2)}<span class="cards">${resIcons(COST[kind])}</span>${ARR1}${itemIcon(kind, s2)}</span>`
+    + `<span class="tviz handviz">${FAN}<span class="cards">${resIcons(before) || EMPTYHAND}</span>${ARR1}<span class="cards">${resIcons(after) || EMPTYHAND}</span></span>${vp}`;
+}
+
 // Wording comes from the engine's canonical renderer (RENDERED); trade,
 // bank and production events swap the sentence for the pictographic trade
 // language (chips + resource cards + arrows) — the prose stays as a hover
@@ -423,10 +494,11 @@ function renderEvent(rec) {
   const priv = rec.visibility !== "Public";
   const tag = priv ? `<span class="r">[private P${rec.visibility.Private}]</span>` : "";
   const seat = e.seat ?? e.proposer;
-  const viz = tradeViz(e);
+  const viz = buyViz(e) ?? tradeViz(e);
   const cls = e.type === "Said" ? "say"
     : e.type === "TradeExecuted" ? "trade tradex"
     : ["TradeProposed","TradeResponded","BankTraded"].includes(e.type) ? "trade"
+    : viz && ["RoadBuilt","SettlementBuilt","CityBuilt","DevCardBought"].includes(e.type) ? "buy"
     : ["GameStarted","BoardLaid","TurnStarted","TradeWindowClosed"].includes(e.type) ? "sys" : "";
   const pre = seat !== undefined && cls === "say" ? chip(seat) : "";
   const body = viz ?? (e.type === "GameEnded" ? `<b>${line}</b>` : line);
@@ -435,16 +507,21 @@ function renderEvent(rec) {
 }
 
 const out = [];
-let turnBuf = [], turnNo = null, turnEnd = 0;
+let turnBuf = [], turnNo = null, turnEnd = 0, turnSeat = null;
 const flush = () => {
   if (turnNo === null) return;
   const last = turnNo === GAME.events[GAME.events.length-1].round;
-  out.push(`<details class="turn" data-upto="${turnEnd}"${last ? " open" : ""}><summary>${turnNo === 0 ? "Setup" : `Turn ${turnNo}`} <span class="n">(${turnBuf.length} events)</span></summary><div class="turnbody"><div class="evs">${turnBuf.join("")}</div><div class="mini"></div></div></details>`);
+  const strip = runVp.map((v, s2) =>
+    `<span class="who" style="background:${PC[s2]};color:${chipFg(s2)}">P${s2} ${v}</span>`).join("");
+  out.push(`<details class="turn" data-upto="${turnEnd}"${last ? " open" : ""}><summary>${turnNo === 0 ? "Setup" : `Turn ${turnNo}`}${turnSeat !== null ? ` ${chip(turnSeat)}` : ""}<span class="n">(${turnBuf.length} events)</span><span class="vpstrip">${strip}</span></summary><div class="turnbody"><div class="evs">${turnBuf.join("")}</div><div class="mini"></div></div></details>`);
   turnBuf = [];
+  turnSeat = null;
 };
 for (const rec of GAME.events) {
   if (rec.round !== turnNo) { flush(); turnNo = rec.round; }
+  if (rec.event.type === "TurnStarted") turnSeat = rec.event.seat;
   turnBuf.push(renderThoughts(rec.idx) + renderEvent(rec));
+  applyEvent(rec.event);
   turnEnd = rec.idx + 1;
 }
 turnBuf.push(renderThoughts(GAME.events.length));
