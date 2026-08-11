@@ -138,7 +138,7 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
   <section class="panel">
     <h2>Full transcript — every event, public and private</h2>
-    <p class="note" style="margin-bottom:.6rem">Grouped by turn (click to fold) — each summary row shows whose turn it is and every seat's board-visible score at that turn's end, and each opened turn shows the board as it stood then. Purchases are drawn: buyer chip, cost cards → the piece bought, then the buyer's hand before → after — hands show one card per resource with a ×n count. Gained resources (production, setup, year of plenty, monopoly) appear next to the player's current holdings as new cards wearing a green +. <em>Italic grey lines</em> are private knowledge (visible to one seat only); 💭 entries are the model's private reasoning per decision (collapsible; never fed back into play). Trades, bank exchanges and production are drawn in cards: seat chip, cards given ⇄ cards received, partner chip — green ✓ accepted, red ✕ rejected, amber ⇄ countered (hover any row for the words). A stored replay is omniscient.</p>
+    <p class="note" style="margin-bottom:.6rem">Grouped by turn (click to fold) — each summary row shows whose turn it is and every seat's board-visible score at that turn's end (the round road tile marks Longest Road, the shield Largest Army), and each opened turn shows the board as it stood then. Purchases are drawn: buyer chip, cost cards → the piece bought, then the buyer's hand before → after — hands show one card per resource with a ×n count. Gained resources (production, setup, year of plenty, monopoly) appear next to the player's current holdings as new cards wearing a green +. <em>Italic grey lines</em> are private knowledge (visible to one seat only); 💭 entries are the model's private reasoning per decision (collapsible; never fed back into play). Trades, bank exchanges and production are drawn in cards: seat chip, cards given ⇄ cards received, partner chip — green ✓ accepted, red ✕ rejected, amber ⇄ countered (hover any row for the words). A stored replay is omniscient.</p>
     <div class="log" id="log"></div>
   </section>
 
@@ -182,6 +182,9 @@ const SWAP = `<svg class="arr" viewBox="0 0 24 14" width="24" height="14" role="
 const OK = `<svg class="badge" viewBox="0 0 16 16" width="15" height="15" role="img" aria-label="accepted"><circle cx="8" cy="8" r="7.2" fill="#4e7d3a"/><path d="M4.6 8.2 l2.3 2.4 4.4 -4.8" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const NO = `<svg class="badge" viewBox="0 0 16 16" width="15" height="15" role="img" aria-label="rejected"><circle cx="8" cy="8" r="7.2" fill="#a4321f"/><path d="M5.3 5.3 l5.4 5.4 M10.7 5.3 l-5.4 5.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>`;
 const CTR = `<svg class="badge" viewBox="0 0 16 16" width="15" height="15" role="img" aria-label="counter-offer"><circle cx="8" cy="8" r="7.2" fill="#b3802d"/><g stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.3 H11.5 M11.5 6.3 l-2 -1.7 M11.5 6.3 l-2 1.7"/><path d="M11.5 9.7 H4.5 M4.5 9.7 l2 -1.7 M4.5 9.7 l2 1.7"/></g></svg>`;
+// Longest Road / Largest Army: round bonus tokens (road tile, knight shield).
+const LROAD = `<svg class="badge" viewBox="0 0 14 14" width="13" height="13" role="img" aria-label="longest road"><title>longest road</title><circle cx="7" cy="7" r="6.4" fill="#f7f0dc" stroke="#8a7448" stroke-width="1"/><line x1="3.6" y1="10.4" x2="10.4" y2="3.6" stroke="#4a3a20" stroke-width="3.6" stroke-linecap="round"/><line x1="3.6" y1="10.4" x2="10.4" y2="3.6" stroke="#f7f0dc" stroke-width=".9" stroke-dasharray="1.5 1.6"/></svg>`;
+const LARMY = `<svg class="badge" viewBox="0 0 14 14" width="13" height="13" role="img" aria-label="largest army"><title>largest army</title><circle cx="7" cy="7" r="6.4" fill="#f7f0dc" stroke="#8a7448" stroke-width="1"/><path d="M7 2.6 l3.4 1.2 v2.8 c0 2.2 -1.5 3.5 -3.4 4.2 c-1.9 -.7 -3.4 -2 -3.4 -4.2 v-2.8 Z" fill="#7a1f16" stroke="#4a1009" stroke-width=".8"/><path d="M7 4.4 v4.4 M5.4 5.8 h3.2" stroke="#f2d9b0" stroke-width="1" stroke-linecap="round"/></svg>`;
 const BANK = `<svg class="badge" viewBox="0 0 16 16" width="15" height="15" role="img" aria-label="bank"><title>bank</title><g fill="#8a7448"><path d="M1.5 6 L8 1.8 L14.5 6 Z"/><rect x="2.8" y="7" width="1.8" height="5"/><rect x="7.1" y="7" width="1.8" height="5"/><rect x="11.4" y="7" width="1.8" height="5"/><rect x="1.5" y="12.8" width="13" height="1.8"/></g></svg>`;
 const offerViz = (offer) => `<span class="cards">${resIcons(offer.give)}</span>${SWAP}<span class="cards">${resIcons(offer.receive)}</span>`;
 const ARR1 = `<svg class="arr" viewBox="0 0 20 12" width="20" height="12" role="img" aria-label="buys" style="color:var(--muted)"><path d="M3 6 H16 M16 6 l-3 -2.6 M16 6 l-3 2.6" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -406,7 +409,7 @@ function refresh() {
   $("stepinfo").textContent = `event ${step}/${GAME.events.length}${f.lastDice ? ` — last roll ${f.lastDice[0]}+${f.lastDice[1]}` : ""}`;
   $("vps").innerHTML = GAME.seats.map(s => {
     const done = step >= GAME.events.length;
-    const badges = [f.longestRoad === s.seat ? "🛣" : "", f.largestArmy === s.seat ? "⚔" : ""].join("");
+    const badges = [f.longestRoad === s.seat ? LROAD : "", f.largestArmy === s.seat ? LARMY : ""].join("");
     return `<div class="vprow"><span class="pn" style="color:${PT[s.seat]}">P${s.seat} ${badges}</span><b>${done ? `${s.final_vp} VP final` : `${f.publicVp[s.seat]} VP shown`}</b></div>`;
   }).join("");
   drawTrades(step);
@@ -547,7 +550,8 @@ const flush = () => {
   if (turnNo === null) return;
   const last = turnNo === GAME.events[GAME.events.length-1].round;
   const strip = runVp.map((v, s2) =>
-    `<span class="who" style="background:${PC[s2]};color:${chipFg(s2)}">P${s2} ${v}</span>`).join("");
+    `<span class="who" style="background:${PC[s2]};color:${chipFg(s2)}">P${s2} ${v}</span>`
+    + (runLongest === s2 ? LROAD : "") + (runLargest === s2 ? LARMY : "")).join("");
   out.push(`<details class="turn" data-upto="${turnEnd}"${last ? " open" : ""}><summary>${turnNo === 0 ? "Setup" : `Turn ${turnNo}`}${turnSeat !== null ? ` ${chip(turnSeat)}` : ""}<span class="n">(${turnCount} events)</span><span class="vpstrip">${strip}</span></summary><div class="turnbody"><div class="evs">${turnBuf.join("")}</div><div class="mini"></div></div></details>`);
   turnBuf = [];
   turnSeat = null;
