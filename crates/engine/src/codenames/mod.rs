@@ -14,6 +14,7 @@
 //! `Public` and `game_core` needs no team visibility (PRD §9 decision 8).
 
 pub mod actions;
+pub mod agents;
 pub mod board;
 pub mod events;
 pub mod observation;
