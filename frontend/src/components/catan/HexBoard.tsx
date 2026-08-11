@@ -82,15 +82,79 @@ function TerrainDecor({ t, c }: { t: Terrain; c: Point }) {
 				</g>
 			);
 		case "fields":
+			// Wheat stalks: curved stems with paired grain kernels and awns.
 			return (
-				<g stroke="#a87f14" strokeWidth={1.6} opacity={0.8}>
-					{[-0.32, -0.12, 0.08, 0.28].map((dy) => (
-						<path
-							key={dy}
-							fill="none"
-							d={`M ${c.x - 0.5 * s} ${c.y + dy * s} q ${0.25 * s} ${-0.12 * s} ${0.5 * s} 0 q ${0.25 * s} ${0.12 * s} ${0.5 * s} 0`}
-						/>
-					))}
+				<g>
+					{[
+						[-0.4, -0.12, -1],
+						[0.36, -0.05, 1],
+						[-0.06, 0.28, -1],
+						[0.18, 0.34, 1],
+					].map(([dx, dy, lean]) => {
+						const bx = c.x + dx * s;
+						const by = c.y + (dy + 0.42) * s;
+						const tx = bx + lean * 0.08 * s;
+						const ty = c.y + dy * s;
+						// Kernel anchor points along the upper stem.
+						const heads = [0.0, 0.13, 0.26].map((t) => ({
+							x: tx + (bx - tx) * t,
+							y: ty + (by - ty) * t,
+						}));
+						return (
+							<g key={`${dx}-${dy}`}>
+								<path
+									d={`M ${bx} ${by} Q ${bx} ${by - 0.24 * s} ${tx} ${ty}`}
+									fill="none"
+									stroke="#9c7a1c"
+									strokeWidth={1.5}
+								/>
+								{heads.map((h, i) => (
+									<g key={`${h.x.toFixed(1)}-${h.y.toFixed(1)}`}>
+										<ellipse
+											cx={h.x - 0.05 * s}
+											cy={h.y}
+											rx={0.055 * s}
+											ry={0.026 * s}
+											fill="#f2da7a"
+											stroke="#a87f14"
+											strokeWidth={0.7}
+											transform={`rotate(${-38 * lean - 12} ${h.x - 0.05 * s} ${h.y})`}
+										/>
+										<ellipse
+											cx={h.x + 0.05 * s}
+											cy={h.y}
+											rx={0.055 * s}
+											ry={0.026 * s}
+											fill="#f2da7a"
+											stroke="#a87f14"
+											strokeWidth={0.7}
+											transform={`rotate(${38 * lean + 12} ${h.x + 0.05 * s} ${h.y})`}
+										/>
+										{i === 0 && (
+											<>
+												<ellipse
+													cx={h.x}
+													cy={h.y - 0.05 * s}
+													rx={0.026 * s}
+													ry={0.055 * s}
+													fill="#f2da7a"
+													stroke="#a87f14"
+													strokeWidth={0.7}
+												/>
+												<path
+													d={`M ${h.x} ${h.y - 0.08 * s} l ${lean * 0.05 * s} ${-0.14 * s}
+													   M ${h.x} ${h.y - 0.08 * s} l ${lean * 0.12 * s} ${-0.1 * s}`}
+													stroke="#c9a33b"
+													strokeWidth={0.8}
+													fill="none"
+												/>
+											</>
+										)}
+									</g>
+								))}
+							</g>
+						);
+					})}
 				</g>
 			);
 		case "pasture":
