@@ -25,10 +25,11 @@
 //!
 //! **Vector source.** The table is injected, never embedded: the bot takes an
 //! `Arc<VectorTable>` so one match run loads one table and shares it across
-//! seats. No pre-trained asset is vendored in this phase; the real one arrives
-//! behind a `codenames.vectors_path` config knob shaped exactly like the
-//! existing `codenames.wordlist_path` override, wired in the match-layer phase
-//! (`crates/config` is untouched here). Tests drive it from
+//! seats. It comes from the optional `codenames.vectors_path` config knob,
+//! shaped exactly like `codenames.wordlist_path` and loaded once by
+//! [`AgentFactory`](crate::codenames::runner::AgentFactory); with no path
+//! configured the game boundary rejects this kind rather than substituting
+//! another agent. No pre-trained asset is vendored yet — tests drive it from
 //! `crates/engine/fixtures/codenames_test_vectors.txt`.
 
 use super::vectors::VectorTable;

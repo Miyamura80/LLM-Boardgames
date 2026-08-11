@@ -70,13 +70,16 @@ codenames:
   rating_k: 2.0
   # Omit (or null) to use the vendored wordlist; set a path to override it.
   wordlist_path: null
+  # Word vectors for the codenames-embedding anchor (GloVe/word2vec text
+  # format). Null → that anchor kind is rejected at the game boundary.
+  vectors_path: null
   clue_word_max_len: 20
   # Controlled mode seats 1 candidate + exactly 3 frozen anchors across the
   # four fixed seats (spymaster + operative per team).
   pools:
     pool-a:
-      - { name: random, kind: random-legal }
-      - { name: embed, kind: embedding-greedy }
+      - { name: random, kind: codenames-random }
+      - { name: embed, kind: codenames-embedding }
       - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.1 }
   # Arena model sets: exactly 4 seat specs per set.
   model_sets:

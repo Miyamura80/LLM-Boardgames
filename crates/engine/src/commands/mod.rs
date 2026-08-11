@@ -45,6 +45,7 @@ mod catan_game;
 mod catan_match;
 mod catan_report;
 mod codenames_game;
+mod codenames_match;
 mod http_request;
 mod list_dir;
 mod ping;

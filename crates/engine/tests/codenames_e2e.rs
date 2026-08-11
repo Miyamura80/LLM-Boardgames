@@ -14,6 +14,7 @@ fn factory() -> AgentFactory {
         retry: RetryPolicy::default(),
         temperature: 0.5,
         max_tokens: 256,
+        vectors: None,
     }
 }
 

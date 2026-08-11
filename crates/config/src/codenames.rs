@@ -26,6 +26,12 @@ pub struct CodenamesConfig {
     /// (`None` → the vendored ~400-word list, whose hash is recorded per game).
     #[serde(default)]
     pub wordlist_path: Option<String>,
+    /// Path to the word-vector table backing `codenames-embedding` seats
+    /// (GloVe/word2vec text format). `None` → the embedding anchor is
+    /// unavailable and asking for it is a load-time error, never a silent
+    /// substitution. Shaped exactly like [`Self::wordlist_path`].
+    #[serde(default)]
+    pub vectors_path: Option<String>,
     /// Hard cap on a single clue word, in characters (tune-later: decision 12).
     #[serde(default = "default_codenames_clue_word_max_len")]
     pub clue_word_max_len: usize,
@@ -46,6 +52,7 @@ impl Default for CodenamesConfig {
             agent_temperature: super::default_agent_temperature(),
             rating_k: super::default_rating_k(),
             wordlist_path: None,
+            vectors_path: None,
             clue_word_max_len: default_codenames_clue_word_max_len(),
             pools: HashMap::new(),
             model_sets: HashMap::new(),

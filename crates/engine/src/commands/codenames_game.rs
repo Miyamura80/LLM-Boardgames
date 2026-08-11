@@ -1,10 +1,5 @@
-//! Codenames single-game command: play one ad-hoc 4-seat game with any mix of
-//! LLM seats and bots.
-//!
-//! There is no `codenames_game_replay` yet: the Catan/SH replay commands read a
-//! stored record out of their game store, and the `codenames_*` tables land
-//! with the match layer (PRD-codenames-evals US-CN11, build-order step 4).
-//! Until then `include_record: true` returns the full replayable record inline.
+//! Codenames single-game commands: play one ad-hoc 4-seat game with any mix of
+//! LLM seats and bots, and replay a stored one out of the `codenames_*` tables.
 
 use crate::codenames::runner::{
     rules_from_config, run_game, wordlist_from_config, AgentFactory, AgentSpec, CodenamesAgentKind,
@@ -132,7 +127,7 @@ impl Command for CodenamesPlayGame {
             )));
         }
         let seed = input.seed.unwrap_or(42);
-        let factory = AgentFactory::from_app_config(cfg);
+        let factory = AgentFactory::from_app_config(cfg).map_err(CommandError::InvalidInput)?;
 
         let mut agents = Vec::new();
         let mut anchors = Vec::new();
@@ -214,6 +209,59 @@ impl Command for CodenamesPlayGame {
 }
 
 register_command!(CodenamesPlayGame);
+
+// ---------------------------------------------------------------------------
+// codenames_game_replay
+// ---------------------------------------------------------------------------
+
+#[derive(Default)]
+pub struct CodenamesGameReplay;
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct CodenamesGameReplayInput {
+    pub game_id: String,
+}
+
+#[derive(Debug, Serialize, JsonSchema)]
+pub struct CodenamesGameReplayOutput {
+    pub record: GameRecord,
+    /// Rendered transcript, one line per event. Every Codenames event is
+    /// public, so this is the omniscient *and* the seat view — except for the
+    /// key card, which is state and never appears here.
+    pub rendered: Vec<String>,
+}
+
+#[async_trait]
+impl Command for CodenamesGameReplay {
+    type Input = CodenamesGameReplayInput;
+    type Output = CodenamesGameReplayOutput;
+
+    fn name(&self) -> &'static str {
+        "codenames_game_replay"
+    }
+    fn description(&self) -> &'static str {
+        "Fetch a stored Codenames game's full replayable record with rendered transcript lines."
+    }
+
+    async fn run(
+        &self,
+        input: CodenamesGameReplayInput,
+        _cx: &Ctx<'_>,
+    ) -> Result<Self::Output, CommandError> {
+        let store = super::codenames_match::open_codenames_store().await?;
+        let record = store
+            .get_game(&input.game_id)
+            .await
+            .map_err(|e| CommandError::Other(e.to_string()))?
+            .ok_or_else(|| {
+                CommandError::InvalidInput(format!("no stored game '{}'", input.game_id))
+            })?;
+        let rendered = record.events.iter().map(|r| r.event.render()).collect();
+        Ok(CodenamesGameReplayOutput { record, rendered })
+    }
+}
+
+register_command!(CodenamesGameReplay);
 
 #[cfg(test)]
 mod tests {

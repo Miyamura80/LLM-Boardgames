@@ -2,7 +2,9 @@
 //! validated here at the game boundary (PRD-codenames-evals US-CN06; Catan
 //! decision #10 — config does not accrete per-game bot taxonomies).
 
-use crate::codenames::agents::{CodenamesAgentKind, LlmSeatAgent, RandomLegalBot, SeatAgent};
+use crate::codenames::agents::{
+    CodenamesAgentKind, EmbeddingGreedyBot, LlmSeatAgent, RandomLegalBot, SeatAgent, VectorTable,
+};
 use crate::codenames::types::GameConfig as RulesConfig;
 use crate::codenames::wordlist::Wordlist;
 use crate::llm::{ChatClient, ProviderKeys, RetryPolicy};
@@ -82,16 +84,26 @@ pub struct AgentFactory {
     pub retry: RetryPolicy,
     pub temperature: f32,
     pub max_tokens: u32,
+    /// The word-vector table backing `codenames-embedding` seats. Loaded once
+    /// per run and shared across every seat that asks for it (`Arc`), because a
+    /// real vector subset is megabytes and four seats must not each hold one.
+    /// `None` when no `codenames.vectors_path` is configured — then the kind is
+    /// rejected at [`Self::build`] rather than silently substituted.
+    pub vectors: Option<Arc<VectorTable>>,
 }
 
 impl AgentFactory {
-    pub fn from_app_config(cfg: &app_config::AppConfig) -> Self {
-        Self {
+    /// Build the factory from config, loading the vector table eagerly so a
+    /// broken `vectors_path` fails here, before any tokens are spent (the same
+    /// posture as [`wordlist_from_config`]).
+    pub fn from_app_config(cfg: &app_config::AppConfig) -> Result<Self, String> {
+        Ok(Self {
             keys: ProviderKeys::from_app_config(cfg),
             retry: RetryPolicy::from_app_config(cfg),
             temperature: cfg.codenames.agent_temperature,
             max_tokens: cfg.codenames.agent_max_tokens,
-        }
+            vectors: vectors_from_config(&cfg.codenames)?,
+        })
     }
 
     /// Instantiate the agent for one seat. `seat_seed` seeds bot RNGs so full
@@ -99,15 +111,19 @@ impl AgentFactory {
     pub fn build(&self, spec: &AgentSpec, seat_seed: u64) -> Result<Box<dyn SeatAgent>, String> {
         match spec.kind {
             CodenamesAgentKind::Random => Ok(Box::new(RandomLegalBot::new(seat_seed))),
-            // The embedding anchor and its vendored vector subset are
-            // build-order step 3; until it is wired in here, the boundary
-            // rejects it rather than silently substituting another agent, so a
-            // record never names an anchor that did not play.
-            CodenamesAgentKind::Embedding => Err(format!(
-                "seat '{}' asks for the codenames-embedding anchor, which is not available at this \
-                 game boundary yet (use codenames-random or an llm seat)",
-                spec.name
-            )),
+            // The embedding anchor needs a vector table. Without one the
+            // boundary rejects the seat rather than silently substituting
+            // another agent, so a record never names an anchor that did not
+            // play. The bot itself is deterministic and ignores `seat_seed`.
+            CodenamesAgentKind::Embedding => match &self.vectors {
+                Some(vectors) => Ok(Box::new(EmbeddingGreedyBot::new(vectors.clone()))),
+                None => Err(format!(
+                    "seat '{}' asks for the codenames-embedding anchor, but no \
+                     codenames.vectors_path is configured (set one, or use codenames-random \
+                     or an llm seat)",
+                    spec.name
+                )),
+            },
             CodenamesAgentKind::Llm => {
                 let model = spec
                     .model
@@ -157,6 +173,20 @@ pub fn wordlist_from_config(cfg: &app_config::CodenamesConfig) -> Result<Wordlis
     }
 }
 
+/// The configured vector table for the embedding anchor, loaded once. `None`
+/// when no path is set; a set-but-broken path is an error, never a silent
+/// downgrade to "no anchor available".
+pub fn vectors_from_config(
+    cfg: &app_config::CodenamesConfig,
+) -> Result<Option<Arc<VectorTable>>, String> {
+    match &cfg.vectors_path {
+        None => Ok(None),
+        Some(path) => VectorTable::from_path(path)
+            .map(|t| Some(Arc::new(t)))
+            .map_err(|e| format!("codenames vectors_path '{path}': {e}")),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -167,6 +197,7 @@ mod tests {
             retry: RetryPolicy::default(),
             temperature: 0.5,
             max_tokens: 256,
+            vectors: None,
         }
     }
 
@@ -187,13 +218,40 @@ mod tests {
         assert_eq!(agent.model_id(), "bot:codenames-random");
     }
 
-    /// The embedding anchor is a later build-order step: the boundary says so
-    /// clearly instead of substituting a different agent.
+    /// Without a configured vector table the embedding anchor is rejected by
+    /// name instead of quietly becoming a different agent; with one it builds
+    /// and shares the table.
     #[test]
-    fn the_embedding_anchor_is_rejected_with_a_clear_message() {
-        let err = build_err(&AgentSpec::bot(CodenamesAgentKind::Embedding));
-        assert!(err.contains("not available at this game boundary"), "{err}");
+    fn the_embedding_anchor_needs_a_configured_vector_table() {
+        let spec = AgentSpec::bot(CodenamesAgentKind::Embedding);
+        let err = build_err(&spec);
+        assert!(
+            err.contains("no codenames.vectors_path is configured"),
+            "{err}"
+        );
         assert!(err.contains("codenames-random"), "{err}");
+
+        let table = VectorTable::parse("alfa 1 0 0\nbravo 0 1 0\n").expect("tiny table parses");
+        let f = AgentFactory {
+            vectors: Some(Arc::new(table)),
+            ..factory()
+        };
+        let agent = f.build(&spec, 1).expect("embedding anchor builds");
+        assert_eq!(agent.model_id(), "bot:codenames-embedding");
+    }
+
+    /// A configured-but-broken path is a load error, not a silent `None`.
+    #[test]
+    fn a_broken_vectors_path_fails_loudly() {
+        let cfg = app_config::CodenamesConfig {
+            vectors_path: Some("/nonexistent/codenames_vectors.txt".into()),
+            ..app_config::CodenamesConfig::default()
+        };
+        let err = vectors_from_config(&cfg).expect_err("missing file");
+        assert!(err.contains("vectors_path"), "{err}");
+        assert!(vectors_from_config(&app_config::CodenamesConfig::default())
+            .expect("no path configured")
+            .is_none());
     }
 
     #[test]

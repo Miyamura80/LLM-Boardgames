@@ -1,15 +1,17 @@
-//! Game orchestration for Codenames.
-//!
-//! The match layer (mirrored-board schedules, `codenames_run_match`, ratings)
-//! is build-order step 4 and lands in its own phase; this module stops at one
-//! game.
+//! Game and match orchestration for Codenames.
 
 mod game_loop;
+mod match_runner;
 mod pools;
-mod record;
+pub(crate) mod record;
+pub mod schedule;
 
 pub use game_loop::{run_game, GameConfig};
-pub use pools::{rules_from_config, wordlist_from_config, AgentFactory, AgentSpec};
+pub use match_runner::{advance_match, finalize_match, play_plan, MatchProgress, MatchSpec};
+pub use pools::{
+    rules_from_config, vectors_from_config, wordlist_from_config, AgentFactory, AgentSpec,
+};
 pub use record::{GameRecord, SeatRecord, RULES_VERSION};
+pub use schedule::{arena_schedule, controlled_schedule, planned_distribution, GamePlan};
 
 pub use crate::codenames::agents::CodenamesAgentKind;

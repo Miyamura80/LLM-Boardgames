@@ -85,8 +85,11 @@ impl Team {
     }
 }
 
-/// The two roles within a team.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// The two roles within a team. Ordered so `(model_id, role)` can key the
+/// rating table's `BTreeMap` (PRD-codenames-evals US-CN09).
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum Role {
     Spymaster,
@@ -174,6 +177,16 @@ pub enum EndReason {
     AgentsFound,
     /// The losing team revealed the assassin.
     Assassin,
+}
+
+impl EndReason {
+    /// The stored/serialized spelling (kebab-case, matching `serde`).
+    pub fn as_str(self) -> &'static str {
+        match self {
+            EndReason::AgentsFound => "agents-found",
+            EndReason::Assassin => "assassin",
+        }
+    }
 }
 
 /// Per-game rules knobs (config-driven; the defaults keep tests hermetic).
