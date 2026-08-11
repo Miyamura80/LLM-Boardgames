@@ -54,6 +54,10 @@ h2{font-family:var(--serif);font-size:clamp(1rem,2.4vw,1.2rem);font-weight:600;m
 .ev.private{color:var(--muted);font-style:italic}
 .ev.sys{color:var(--muted)}
 .ev.trade{background:var(--trade);border-radius:4px;padding:.12rem .4rem}
+.tradegrp{background:var(--trade);border:1px solid var(--line);border-left:3px solid #b3802d;border-radius:6px;padding:.25rem .5rem;display:grid;gap:.15rem;margin:.15rem 0}
+.tradegrp .ev.trade{background:transparent;padding:.08rem .15rem}
+.tradegrp .ev.tradex{background:var(--tradex)}
+.tradegrp .ev.sys{padding:.02rem .15rem}
 .ev.say{background:var(--say);border-radius:4px;padding:.12rem .4rem}
 .who{display:inline-block;font-size:10.5px;font-weight:700;font-family:var(--mono);padding:.05rem .38rem;border-radius:4px;color:#fff;margin-right:.3rem}
 details.turn{border:1px solid var(--line);border-radius:6px;padding:.2rem .55rem .3rem;margin:.25rem 0;background:var(--panel)}
@@ -533,22 +537,37 @@ function renderEvent(rec) {
 }
 
 const out = [];
-let turnBuf = [], turnNo = null, turnEnd = 0, turnSeat = null;
+const TRADE_KINDS = ["TradeProposed","TradeResponded","TradeExecuted","TradeWindowClosed"];
+let turnBuf = [], turnNo = null, turnEnd = 0, turnSeat = null, tradeBuf = null, turnCount = 0;
+const closeTradeGrp = () => {
+  if (tradeBuf) { turnBuf.push(`<div class="tradegrp">${tradeBuf.join("")}</div>`); tradeBuf = null; }
+};
 const flush = () => {
+  closeTradeGrp();
   if (turnNo === null) return;
   const last = turnNo === GAME.events[GAME.events.length-1].round;
   const strip = runVp.map((v, s2) =>
     `<span class="who" style="background:${PC[s2]};color:${chipFg(s2)}">P${s2} ${v}</span>`).join("");
-  out.push(`<details class="turn" data-upto="${turnEnd}"${last ? " open" : ""}><summary>${turnNo === 0 ? "Setup" : `Turn ${turnNo}`}${turnSeat !== null ? ` ${chip(turnSeat)}` : ""}<span class="n">(${turnBuf.length} events)</span><span class="vpstrip">${strip}</span></summary><div class="turnbody"><div class="evs">${turnBuf.join("")}</div><div class="mini"></div></div></details>`);
+  out.push(`<details class="turn" data-upto="${turnEnd}"${last ? " open" : ""}><summary>${turnNo === 0 ? "Setup" : `Turn ${turnNo}`}${turnSeat !== null ? ` ${chip(turnSeat)}` : ""}<span class="n">(${turnCount} events)</span><span class="vpstrip">${strip}</span></summary><div class="turnbody"><div class="evs">${turnBuf.join("")}</div><div class="mini"></div></div></details>`);
   turnBuf = [];
   turnSeat = null;
+  turnCount = 0;
 };
 for (const rec of GAME.events) {
   if (rec.round !== turnNo) { flush(); turnNo = rec.round; }
   if (rec.event.type === "TurnStarted") turnSeat = rec.event.seat;
-  turnBuf.push(renderThoughts(rec.idx) + renderEvent(rec));
+  const html = renderThoughts(rec.idx) + renderEvent(rec);
+  if (TRADE_KINDS.includes(rec.event.type)) {
+    if (!tradeBuf) tradeBuf = [];
+    tradeBuf.push(html);
+    if (rec.event.type === "TradeWindowClosed") closeTradeGrp();
+  } else {
+    closeTradeGrp();
+    turnBuf.push(html);
+  }
   applyEvent(rec.event);
   turnEnd = rec.idx + 1;
+  turnCount++;
 }
 turnBuf.push(renderThoughts(GAME.events.length));
 flush();
