@@ -78,10 +78,8 @@ impl LlmSeatAgent {
             | Action::AcceptTrade { message }
             | Action::RejectTrade { message }
             | Action::CounterTrade { message, .. } => trim(message),
-            Action::Say { message } => {
-                if message.chars().count() > cap {
-                    *message = message.chars().take(cap).collect();
-                }
+            Action::Say { message } if message.chars().count() > cap => {
+                *message = message.chars().take(cap).collect();
             }
             _ => {}
         }
