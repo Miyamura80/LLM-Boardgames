@@ -82,11 +82,16 @@ pub enum Action {
     UsePower { target: Seat },
 }
 
-/// A structurally valid but rule-breaking move. The message is fed back to the
-/// agent verbatim on the rethink re-prompt.
-#[derive(Debug, Clone, thiserror::Error, PartialEq)]
-#[error("illegal move: {0}")]
-pub struct IllegalMove(pub String);
+pub use crate::game_core::IllegalMove;
+
+impl crate::game_core::DecisionOps for DecisionPoint {
+    fn seat(&self) -> Seat {
+        DecisionPoint::seat(self)
+    }
+    fn kind(&self) -> &'static str {
+        DecisionPoint::kind(self)
+    }
+}
 
 impl GameState {
     /// Every decision the engine is currently waiting on. Multiple entries

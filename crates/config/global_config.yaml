@@ -36,6 +36,30 @@ llm_config:
 ########################################################
 # Secret Hitler eval harness (see docs/rating-design.md)
 ########################################################
+catan:
+  retry_budget: 3
+  action_cap: 12
+  trade_windows_cap: 3
+  say_cap: 2
+  max_turns: 200
+  utterance_char_cap: 240
+  agent_max_tokens: 8192
+  agent_temperature: 0.5
+  rating_k: 2.0
+  # Controlled mode seats 1 candidate + exactly 3 frozen anchors.
+  pools:
+    pool-a:
+      - { name: random, kind: random-legal }
+      - { name: greedy, kind: greedy }
+      - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.1 }
+  # Arena model sets: exactly 4 seat specs per set.
+  model_sets:
+    cheap:
+      - openrouter/mistralai/mistral-small-3.1
+      - gemini/gemini-3-flash-preview
+      - openrouter/deepseek/deepseek-v4-pro
+      - openrouter/qwen/qwen3-32b
+
 secret_hitler:
   discussion_rounds: 3
   retry_budget: 3

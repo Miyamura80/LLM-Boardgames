@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catan Evals — Game Report</title>
+<style>
+:root{
+  --paper:#f4e9cf; --panel:#fdf6e4; --ink:#3b3325; --muted:#8a7c5f; --line:#d9c9a3;
+  --accent:#b3502d; --chip:#efe4c8; --trade:#f6ecd2; --tradex:#f0e0ae; --say:#eef2df;
+  --p0:#c0392b; --p1:#2c5f8a; --p2:#e07b1f; --p3:#8f8a7a;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --serif:Georgia,'Times New Roman',serif;
+  --sans:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#181410; --panel:#221c14; --ink:#e9e0c8; --muted:#a3947a; --line:#3d3526;
+  --accent:#d97a52; --chip:#2e2718; --trade:#2c2415; --tradex:#3a2f14; --say:#242a18;
+}}
+:root[data-theme="dark"]{
+  --paper:#181410; --panel:#221c14; --ink:#e9e0c8; --muted:#a3947a; --line:#3d3526;
+  --accent:#d97a52; --chip:#2e2718; --trade:#2c2415; --tradex:#3a2f14; --say:#242a18;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:clamp(13.5px,1.1vw + 9px,15px);line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding:clamp(.8rem,3vw,2.2rem) clamp(.6rem,2.5vw,1.2rem) 4rem;display:grid;gap:1.3rem}
+.wrap>*, .panel, .tablewrap, .log, .ev{min-width:0}
+.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--serif);font-size:clamp(1.15rem,3.4vw,1.9rem);font-weight:600;text-wrap:balance;line-height:1.25}
+h2{font-family:var(--serif);font-size:clamp(1rem,2.4vw,1.2rem);font-weight:600;margin-bottom:.55rem}
+.statrow{display:flex;flex-wrap:wrap;gap:.4rem}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.35rem .65rem;font-size:12.5px}
+.stat b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+.stat span{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:clamp(.7rem,2vw,1.1rem)}
+.seats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.5rem}
+.seat{border:1px solid var(--line);border-left:5px solid var(--muted);border-radius:6px;padding:.45rem .55rem;font-size:12px;background:var(--panel);min-width:0}
+.seat .nm{font-weight:700}
+.seat .tok{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--muted);font-size:11px;overflow-wrap:anywhere}
+.chipbdg{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#fff;background:var(--accent);padding:.04rem .34rem;border-radius:3px;font-weight:700;vertical-align:middle}
+.boardgrid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(230px,1fr);gap:1rem;align-items:start}
+@media (max-width:760px){.boardgrid{grid-template-columns:1fr}}
+.boardsvg{width:100%;height:auto;display:block;border-radius:14px;box-shadow:0 10px 30px rgba(43,31,12,.35)}
+.scrub{display:flex;gap:.7rem;align-items:center;margin-top:.5rem}
+.scrub input[type="range"]{flex:1;accent-color:var(--accent)}
+.note{font-size:12px;color:var(--muted)}
+.vprow{display:flex;justify-content:space-between;gap:.5rem;font-size:12.5px;padding:.22rem 0;border-bottom:1px dashed var(--line)}
+.vprow:last-child{border-bottom:none}
+.vprow b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.pn{font-weight:700}
+.log{display:grid;gap:.18rem;max-height:72vh;overflow-y:auto;border:1px solid var(--line);border-radius:6px;padding:.7rem .75rem;background:var(--paper)}
+.ev{font-size:13px;overflow-wrap:anywhere}
+.ev .r{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-right:.3rem}
+.ev.private{color:var(--muted);font-style:italic}
+.ev.sys{color:var(--muted)}
+.ev.trade{background:var(--trade);border-radius:4px;padding:.12rem .4rem}
+.tradegrp{background:var(--trade);border:1px solid var(--line);border-left:3px solid #b3802d;border-radius:6px;padding:.25rem .5rem;display:grid;gap:.15rem;margin:.15rem 0}
+.tradegrp .ev.trade{background:transparent;padding:.08rem .15rem}
+.tradegrp .ev.tradex{background:var(--tradex)}
+.tradegrp .ev.sys{padding:.02rem .15rem}
+.ev.say{background:var(--say);border-radius:4px;padding:.12rem .4rem}
+.who{display:inline-block;font-size:10.5px;font-weight:700;font-family:var(--mono);padding:.05rem .38rem;border-radius:4px;color:#fff;margin-right:.3rem}
+details.turn{border:1px solid var(--line);border-radius:6px;padding:.2rem .55rem .3rem;margin:.25rem 0;background:var(--panel)}
+details.turn>summary{cursor:pointer;font-family:var(--serif);font-weight:600;padding:.2rem 0;list-style:none;display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+.vpstrip{margin-left:auto;display:inline-flex;gap:.25rem}
+.vpstrip .who{margin-right:0;font-weight:600}
+.ev.buy{background:var(--chip);border-radius:4px;padding:.12rem .4rem}
+.handviz{opacity:.75;margin-left:.4rem}
+.vppill{font-family:var(--mono);font-size:10.5px;font-weight:700;border-radius:999px;padding:.05rem .45rem;margin-left:.35rem}
+.cards .xn{font-family:var(--mono);font-size:10px;font-weight:700;opacity:.7;margin:0 3px 0 1px;align-self:center}
+.newcard{position:relative;display:inline-flex;margin-right:2px}
+.newcard::after{content:"+";position:absolute;top:-5px;right:-5px;width:11px;height:11px;line-height:11px;border-radius:50%;background:#4e7d3a;color:#fff;font-size:9.5px;font-weight:700;text-align:center}
+details.turn>summary::-webkit-details-marker{display:none}
+details.turn>summary::before{content:"▾ ";color:var(--muted)}
+details.turn:not([open])>summary::before{content:"▸ "}
+details.turn>summary:focus-visible{outline:2px solid var(--accent)}
+details.turn>summary .n{color:var(--muted);font-weight:400;font-size:12px;font-family:var(--sans)}
+details.thought{margin:.1rem 0 .1rem .2rem;border-left:2px dotted var(--line);padding-left:.55rem}
+details.thought summary{cursor:pointer;color:var(--muted);font-size:12px;list-style-position:inside}
+details.thought summary:focus-visible{outline:2px solid var(--accent)}
+details.thought p{color:var(--muted);font-size:12.5px;margin:.25rem 0 .35rem .4rem;white-space:pre-wrap;overflow-wrap:anywhere}
+table{border-collapse:collapse;font-size:12.5px;width:100%}
+th,td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:600;font-size:11.5px}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto;max-width:100%}
+.tm{border-collapse:separate;border-spacing:2px}
+.tm td{border:none;min-width:2.4rem;height:1.8rem;text-align:center;border-radius:4px;font-family:var(--mono)}
+.tm th{border:none}
+.ev.tradex{background:var(--tradex)}
+.cards{display:inline-flex;gap:1px;vertical-align:middle}
+.res,.arr,.badge{vertical-align:middle;flex:none}
+.tviz{display:inline-flex;align-items:center;gap:.3rem;flex-wrap:wrap;vertical-align:middle}
+.tmsg{display:block;font-style:italic;color:var(--muted);margin:.1rem 0 0 .2rem;font-size:12.5px}
+.turnbody{display:flex;gap:.8rem;align-items:flex-start}
+.turnbody .evs{flex:1;min-width:0;display:grid;gap:.18rem}
+.turnbody .mini{width:212px;flex:none;position:sticky;top:.5rem}
+.turnbody .mini svg{width:100%;height:auto;display:block;border-radius:8px;box-shadow:0 3px 10px rgba(43,31,12,.3)}
+@media (max-width:640px){.turnbody{flex-direction:column-reverse}.turnbody .mini{width:100%;max-width:250px;position:static}}
+.ledger{display:grid;gap:.25rem;max-height:280px;overflow-y:auto;margin-top:.3rem}
+.lrow{display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="eyebrow">Catan Evals · game report</div>
+    <h1 id="headline">Game report</h1>
+    <div class="statrow" id="stats"></div>
+  </header>
+
+  <section>
+    <h2>The table</h2>
+    <div class="seats" id="seats"></div>
+  </section>
+
+  <section class="panel">
+    <h2>The board</h2>
+    <p class="note" style="margin-bottom:.6rem">Drag the slider to replay the game event by event — the board, the victory-point tallies, and the trade-flow matrix all follow it. Number-token dots are roll probability; the dark figure is the robber.</p>
+    <div class="boardgrid">
+      <div>
+        <div id="board"></div>
+        <div class="scrub">
+          <input id="step" type="range" min="0" value="0">
+          <span class="note" id="stepinfo"></span>
+        </div>
+      </div>
+      <div>
+        <div id="vps" style="margin-bottom:1rem"></div>
+        <h2>Trade flow</h2>
+        <p class="note" id="tmnote"></p>
+        <p class="note">Each executed trade, in order: proposer, cards handed over ⇄ cards received, partner.</p>
+        <div class="tablewrap" id="tm"></div>
+        <div class="ledger" id="ledger"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Full transcript — every event, public and private</h2>
+    <p class="note" style="margin-bottom:.6rem">Grouped by turn (click to fold) — each summary row shows whose turn it is and every seat's board-visible score at that turn's end (the round road tile marks Longest Road, the shield Largest Army), and each opened turn shows the board as it stood then. Purchases are drawn: buyer chip, cost cards → the piece bought, then the buyer's hand before → after — hands show one card per resource with a ×n count. Gained resources (production, setup, year of plenty, monopoly) appear next to the player's current holdings as new cards wearing a green +. <em>Italic grey lines</em> are private knowledge (visible to one seat only); 💭 entries are the model's private reasoning per decision (collapsible; never fed back into play). Trades, bank exchanges and production are drawn in cards: seat chip, cards given ⇄ cards received, partner chip — green ✓ accepted, red ✕ rejected, amber ⇄ countered (hover any row for the words). A stored replay is omniscient.</p>
+    <div class="log" id="log"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Reliability &amp; cost per seat</h2>
+    <div class="tablewrap"><table id="rel"></table></div>
+  </section>
+</div>
+<script>
+const GAME = __GAME_DATA__;
+const RENDERED = __RENDERED__; // canonical omniscient lines from CatanEvent::render, index-aligned with GAME.events
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const PC = ["#c0392b","#2c5f8a","#e07b1f","#f2ede1"];   // classic red/blue/orange/white
+const PS = ["#7d241a","#1b3c58","#94500f","#8f8a7a"];
+// Text-safe player colors: P3's white pieces are illegible as text on parchment.
+const PT = [PC[0], PC[1], PC[2], PS[3]];
+const chipFg = (s) => s === 3 ? "#3b3325" : "#fff";     // white pieces need dark text
+const chip = (s) => `<span class="who" style="background:${PC[s]};color:${chipFg(s)}">P${s}</span>`;
+
+// Resource cards, arrows and verdict badges: the pictographic trade language.
+const RES = {
+  brick:{bg:"#c96f42", fg:"#7d3416", glyph:'<rect x="3" y="5.5" width="8" height="3" rx=".8"/><rect x="3" y="10" width="8" height="3" rx=".8"/>'},
+  lumber:{bg:"#3f7d3c", fg:"#153617", glyph:'<path d="M7 3.5 l3 4.6 h-6 Z M7 6.5 l3.5 5.2 h-7 Z"/><rect x="6.3" y="12" width="1.4" height="2.6"/>'},
+  wool:{bg:"#d9e6b2", fg:"#5c7a35", glyph:'<ellipse cx="8" cy="10" rx="3.7" ry="2.7"/><circle cx="4.4" cy="8.8" r="1.6"/>'},
+  grain:{bg:"#e8c95a", fg:"#8f6a0e", glyph:'<ellipse cx="7" cy="5.3" rx="1.4" ry="2.1"/><ellipse cx="4.8" cy="8.3" rx="1.4" ry="2.1" transform="rotate(-32 4.8 8.3)"/><ellipse cx="9.2" cy="8.3" rx="1.4" ry="2.1" transform="rotate(32 9.2 8.3)"/><rect x="6.5" y="9" width="1" height="5.5"/>'},
+  ore:{bg:"#9aa1ab", fg:"#39404b", glyph:'<path d="M7 4.5 l3.2 4.3 -3.2 4.3 -3.2 -4.3 Z"/>'},
+};
+const resIcon = (k) => `<svg class="res" viewBox="0 0 14 18" width="14" height="18" role="img" aria-label="${k}"><title>${k}</title><rect x=".5" y=".5" width="13" height="17" rx="2.5" fill="${RES[k].bg}" stroke="${RES[k].fg}"/><g fill="${RES[k].fg}">${RES[k].glyph}</g></svg>`;
+const resIcons = (set) => Object.keys(RES).map(k => resIcon(k).repeat(Math.max(0, set[k] || 0))).join("");
+// Hand state, compact: one card per resource type with a ×n count.
+const handIcons = (set) => Object.keys(RES)
+  .filter(k => (set[k] || 0) > 0)
+  .map(k => resIcon(k) + (set[k] > 1 ? `<span class="xn">×${set[k]}</span>` : ""))
+  .join("");
+// Newly gained cards: one card each, wearing a green "+" badge.
+const plusIcons = (set) => Object.keys(RES)
+  .map(k => `<span class="newcard">${resIcon(k)}</span>`.repeat(Math.max(0, set[k] || 0)))
+  .join("");
+const SWAP = `<svg class="arr" viewBox="0 0 24 14" width="24" height="14" role="img" aria-label="for" style="color:var(--muted)"><g stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.2 H20 M20 4.2 l-3 -2.4 M20 4.2 l-3 2.4"/><path d="M20 9.8 H4 M4 9.8 l3 -2.4 M4 9.8 l3 2.4"/></g></svg>`;
+const OK = `<svg class="badge" viewBox="0 0 16 16" width="15" height="15" role="img" aria-label="accepted"><circle cx="8" cy="8" r="7.2" fill="#4e7d3a"/><path d="M4.6 8.2 l2.3 2.4 4.4 -4.8" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const NO = `<svg class="badge" viewBox="0 0 16 16" width="15" height="15" role="img" aria-label="rejected"><circle cx="8" cy="8" r="7.2" fill="#a4321f"/><path d="M5.3 5.3 l5.4 5.4 M10.7 5.3 l-5.4 5.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+const CTR = `<svg class="badge" viewBox="0 0 16 16" width="15" height="15" role="img" aria-label="counter-offer"><circle cx="8" cy="8" r="7.2" fill="#b3802d"/><g stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.3 H11.5 M11.5 6.3 l-2 -1.7 M11.5 6.3 l-2 1.7"/><path d="M11.5 9.7 H4.5 M4.5 9.7 l2 -1.7 M4.5 9.7 l2 1.7"/></g></svg>`;
+// Longest Road / Largest Army: round bonus tokens (road tile, knight shield).
+const LROAD = `<svg class="badge" viewBox="0 0 14 14" width="13" height="13" role="img" aria-label="longest road"><title>longest road</title><circle cx="7" cy="7" r="6.4" fill="#f7f0dc" stroke="#8a7448" stroke-width="1"/><line x1="3.6" y1="10.4" x2="10.4" y2="3.6" stroke="#4a3a20" stroke-width="3.6" stroke-linecap="round"/><line x1="3.6" y1="10.4" x2="10.4" y2="3.6" stroke="#f7f0dc" stroke-width=".9" stroke-dasharray="1.5 1.6"/></svg>`;
+const LARMY = `<svg class="badge" viewBox="0 0 14 14" width="13" height="13" role="img" aria-label="largest army"><title>largest army</title><circle cx="7" cy="7" r="6.4" fill="#f7f0dc" stroke="#8a7448" stroke-width="1"/><path d="M7 2.6 l3.4 1.2 v2.8 c0 2.2 -1.5 3.5 -3.4 4.2 c-1.9 -.7 -3.4 -2 -3.4 -4.2 v-2.8 Z" fill="#7a1f16" stroke="#4a1009" stroke-width=".8"/><path d="M7 4.4 v4.4 M5.4 5.8 h3.2" stroke="#f2d9b0" stroke-width="1" stroke-linecap="round"/></svg>`;
+const BANK = `<svg class="badge" viewBox="0 0 16 16" width="15" height="15" role="img" aria-label="bank"><title>bank</title><g fill="#8a7448"><path d="M1.5 6 L8 1.8 L14.5 6 Z"/><rect x="2.8" y="7" width="1.8" height="5"/><rect x="7.1" y="7" width="1.8" height="5"/><rect x="11.4" y="7" width="1.8" height="5"/><rect x="1.5" y="12.8" width="13" height="1.8"/></g></svg>`;
+const offerViz = (offer) => `<span class="cards">${resIcons(offer.give)}</span>${SWAP}<span class="cards">${resIcons(offer.receive)}</span>`;
+const ARR1 = `<svg class="arr" viewBox="0 0 20 12" width="20" height="12" role="img" aria-label="buys" style="color:var(--muted)"><path d="M3 6 H16 M16 6 l-3 -2.6 M16 6 l-3 2.6" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+// A fan of card backs: marks the "hand before → after" segment.
+const FAN = `<svg class="badge" viewBox="0 0 18 18" width="16" height="16" role="img" aria-label="hand"><g fill="#efe4c8" stroke="#8a7c5f" stroke-width="1"><rect x="1.5" y="4" width="8" height="11" rx="1.5" transform="rotate(-14 5.5 9.5)"/><rect x="5" y="3" width="8" height="11" rx="1.5"/><rect x="8.5" y="4" width="8" height="11" rx="1.5" transform="rotate(14 12.5 9.5)"/></g></svg>`;
+const EMPTYHAND = `<svg class="res" viewBox="0 0 14 18" width="14" height="18" role="img" aria-label="no cards"><rect x=".5" y=".5" width="13" height="17" rx="2.5" fill="none" stroke="var(--muted)" stroke-dasharray="2.5 2" stroke-width="1"/></svg>`;
+// The piece bought, in the buyer's colors.
+function itemIcon(kind, s2) {
+  const fill = PC[s2], line = PS[s2];
+  if (kind === "road") return `<svg class="badge" viewBox="0 0 18 18" width="17" height="17" role="img" aria-label="road"><title>road</title><line x1="4" y1="14" x2="14" y2="4" stroke="${line}" stroke-width="7" stroke-linecap="round"/><line x1="4" y1="14" x2="14" y2="4" stroke="${fill}" stroke-width="4.2" stroke-linecap="round"/></svg>`;
+  if (kind === "settlement") return `<svg class="badge" viewBox="0 0 18 18" width="17" height="17" role="img" aria-label="settlement"><title>settlement</title><path d="M3.5 15 v-6.5 l5.5 -5 l5.5 5 v6.5 Z" fill="${fill}" stroke="${line}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+  if (kind === "city") return `<svg class="badge" viewBox="0 0 20 18" width="19" height="17" role="img" aria-label="city"><title>city</title><path d="M2 16 v-8 l4.5 -4.5 l4.5 4.5 v2.5 h7 v5.5 Z" fill="${fill}" stroke="${line}" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+  return `<svg class="res" viewBox="0 0 14 18" width="14" height="18" role="img" aria-label="development card"><title>development card</title><rect x=".5" y=".5" width="13" height="17" rx="2.5" fill="#7a5ba6" stroke="#4a3468"/><path d="M7 4 l1.1 3 3 .4 -2.2 2 .6 3 -2.5 -1.6 -2.5 1.6 .6 -3 -2.2 -2 3 -.4 Z" fill="#f2eadf"/></svg>`;
+}
+
+// ---- header ---------------------------------------------------------------
+const mins = Math.round(GAME.duration_ms/60000);
+const tokIn = GAME.seats.reduce((a,s)=>a+s.usage.prompt_tokens,0);
+const tokOut = GAME.seats.reduce((a,s)=>a+s.usage.completion_tokens,0);
+const rel = GAME.seats.reduce((a,s)=>({m:a.m+s.reliability.malformed_outputs,i:a.i+s.reliability.illegal_moves,f:a.f+s.reliability.forced_defaults}),{m:0,i:0,f:0});
+const winSeat = GAME.seats[GAME.winner];
+$("eyebrow").textContent = `Catan Evals · game ${GAME.game_id} · ${GAME.schedule_label}`;
+$("headline").textContent = `P${GAME.winner} (${winSeat.model_id.split("/").pop()}) wins with ${winSeat.final_vp} VP in ${GAME.turns} turns`;
+$("stats").innerHTML = [
+  ["seed", GAME.seed], ["events", GAME.events.length], ["duration", `${mins} min`],
+  ["prompt tok", tokIn.toLocaleString()], ["completion tok (incl. reasoning)", tokOut.toLocaleString()],
+  ["malformed", rel.m], ["illegal", rel.i], ["forced", rel.f],
+].map(([k,v]) => `<div class="stat"><b>${v}</b> <span>${k}</span></div>`).join("");
+
+// ---- seats ----------------------------------------------------------------
+$("seats").innerHTML = GAME.seats.map(s => `
+  <div class="seat" style="border-left-color:${PC[s.seat]}">
+    <div class="nm">P${s.seat}${s.won ? ' <span class="chipbdg">winner</span>' : ""}${s.is_anchor ? ' <span class="chipbdg" style="background:var(--muted)">anchor</span>' : ""}</div>
+    <div class="tok">${esc(s.model_id.split("/").pop())}</div>
+    <div class="tok">${s.final_vp} VP · place ${s.placement} · ${s.knights_played} knights</div>
+    <div class="tok">${(s.usage.prompt_tokens/1000).toFixed(0)}k in · ${(s.usage.completion_tokens/1000).toFixed(0)}k out</div>
+  </div>`).join("");
+
+// ---- board geometry (mirrors frontend/src/components/catan/board.ts) ------
+const HEX = 46, SQRT3 = Math.sqrt(3);
+const CORNERS = [[0,-1],[SQRT3/2,-.5],[SQRT3/2,.5],[0,1],[-SQRT3/2,.5],[-SQRT3/2,-.5]];
+const BOARD = GAME.events.find(r => r.event.type === "BoardLaid").event;
+const G = (() => {
+  const hexes = BOARD.hexes;
+  const raw = hexes.map(h => ({x: HEX*SQRT3*(h.q + h.r/2), y: HEX*1.5*h.r}));
+  const vertexPos = new Map(), edgeEnds = new Map(), edgeKeys = new Map();
+  hexes.forEach((h,i) => {
+    for (let c = 0; c < 6; c++) {
+      const v = h.vertices[c];
+      if (!vertexPos.has(v)) vertexPos.set(v, {x: raw[i].x + HEX*CORNERS[c][0], y: raw[i].y + HEX*CORNERS[c][1]});
+      const a = h.vertices[c], b = h.vertices[(c+1)%6];
+      const key = `${Math.min(a,b)}-${Math.max(a,b)}`;
+      if (!edgeKeys.has(key)) { edgeKeys.set(key, edgeKeys.size); edgeEnds.set(edgeKeys.size-1, [Math.min(a,b), Math.max(a,b)]); }
+    }
+  });
+  const xs = [...vertexPos.values()].map(p=>p.x), ys = [...vertexPos.values()].map(p=>p.y);
+  const pad = HEX*1.35, minX = Math.min(...xs)-pad, minY = Math.min(...ys)-pad;
+  for (const p of vertexPos.values()) { p.x -= minX; p.y -= minY; }
+  const hexCenter = raw.map(p => ({x: p.x-minX, y: p.y-minY}));
+  return {hexes, hexCenter, vertexPos, edgeEnds, width: Math.max(...xs)-Math.min(...xs)+2*pad, height: Math.max(...ys)-Math.min(...ys)+2*pad};
+})();
+
+// ---- fold the event log up to a step --------------------------------------
+function fold(step) {
+  const f = {buildings: new Map(), roads: new Map(), robber: BOARD.desert, publicVp: [0,0,0,0],
+             lastDice: null, longestRoad: null, largestArmy: null, turn: 0};
+  for (const {event: e} of GAME.events.slice(0, step)) {
+    switch (e.type) {
+      case "TurnStarted": f.turn = e.turn; break;
+      case "SetupSettlementPlaced": case "SettlementBuilt":
+        f.buildings.set(e.vertex, {owner: e.seat, city: false}); f.publicVp[e.seat] += 1; break;
+      case "CityBuilt":
+        f.buildings.set(e.vertex, {owner: e.seat, city: true}); f.publicVp[e.seat] += 1; break;
+      case "SetupRoadPlaced": case "RoadBuilt": f.roads.set(e.edge, e.seat); break;
+      case "RobberMoved": f.robber = e.hex; break;
+      case "DiceRolled": f.lastDice = [e.d1, e.d2]; break;
+      case "LongestRoadClaimed":
+        if (f.longestRoad !== null) f.publicVp[f.longestRoad] -= 2;
+        f.longestRoad = e.seat ?? null;
+        if (f.longestRoad !== null) f.publicVp[f.longestRoad] += 2;
+        break;
+      case "LargestArmyClaimed":
+        if (f.largestArmy !== null) f.publicVp[f.largestArmy] -= 2;
+        f.largestArmy = e.seat; f.publicVp[e.seat] += 2;
+        break;
+    }
+  }
+  return f;
+}
+
+// ---- terrain art (mirrors frontend HexBoard.tsx — original artwork) -------
+const TERRAIN_FILL = {fields:["#e8c95a","#d4a92f"], forest:["#3f7d3c","#2a5c28"], pasture:["#a3c86a","#7ea94b"],
+                      hills:["#c96f42","#a9542d"], mountains:["#9aa1ab","#767e8b"], desert:["#e3d3a2","#d0bc82"]};
+const pips = (n) => 6 - Math.abs(7 - n);
+function decor(t, c) {
+  const s = HEX;
+  if (t === "forest") return `<g fill="#1d4520" opacity=".85">${[[-0.42,0.1],[0.28,-0.3],[0.05,0.42]].map(([dx,dy]) =>
+    `<path d="M ${c.x+dx*s} ${c.y+dy*s} l ${s*.14} ${s*.3} h ${-s*.28} Z M ${c.x+dx*s} ${c.y+(dy-.16)*s} l ${s*.11} ${s*.24} h ${-s*.22} Z"/>`).join("")}</g>`;
+  if (t === "hills") return `<g fill="#8a3f1d" opacity=".75">${[[-0.45,0.05],[-0.12,0.05],[0.21,0.05],[-0.28,0.24],[0.05,0.24]].map(([dx,dy]) =>
+    `<rect x="${c.x+dx*s}" y="${c.y+dy*s}" width="${s*.28}" height="${s*.14}" rx="${s*.03}"/>`).join("")}</g>`;
+  if (t === "mountains") return `<g>
+    <path d="M ${c.x-.5*s} ${c.y+.35*s} l ${.3*s} ${-.6*s} l ${.25*s} ${.6*s} Z" fill="#5d6570"/>
+    <path d="M ${c.x-.05*s} ${c.y+.35*s} l ${.28*s} ${-.75*s} l ${.3*s} ${.75*s} Z" fill="#6f7885"/>
+    <path d="M ${c.x+.16*s} ${c.y-.18*s} l ${.07*s} ${-.22*s} l ${.12*s} ${.3*s} Z" fill="#e8ecf2"/></g>`;
+  if (t === "fields") return `<g>${[[-0.4,-0.12,-1],[0.36,-0.05,1],[-0.06,0.28,-1],[0.18,0.34,1]].map(([dx,dy,lean]) => {
+    const bx = c.x+dx*s, by = c.y+(dy+.42)*s, tx = bx+lean*.08*s, ty = c.y+dy*s;
+    const heads = [0,.13,.26].map(t2 => ({x: tx+(bx-tx)*t2, y: ty+(by-ty)*t2}));
+    const kernel = (x,y,rot) => `<ellipse cx="${x}" cy="${y}" rx="${.055*s}" ry="${.026*s}" fill="#f2da7a" stroke="#a87f14" stroke-width=".7" transform="rotate(${rot} ${x} ${y})"/>`;
+    return `<path d="M ${bx} ${by} Q ${bx} ${by-.24*s} ${tx} ${ty}" fill="none" stroke="#9c7a1c" stroke-width="1.5"/>`
+      + heads.map((h,i) => kernel(h.x-.05*s, h.y, -38*lean-12) + kernel(h.x+.05*s, h.y, 38*lean+12)
+        + (i === 0 ? `<ellipse cx="${h.x}" cy="${h.y-.05*s}" rx="${.026*s}" ry="${.055*s}" fill="#f2da7a" stroke="#a87f14" stroke-width=".7"/>
+           <path d="M ${h.x} ${h.y-.08*s} l ${lean*.05*s} ${-.14*s} M ${h.x} ${h.y-.08*s} l ${lean*.12*s} ${-.1*s}" stroke="#c9a33b" stroke-width=".8" fill="none"/>` : "")).join("");
+  }).join("")}</g>`;
+  if (t === "pasture") return `<g fill="#f5f2e6" stroke="#c6c0a8" stroke-width=".8">${[[-0.3,-0.05],[0.22,0.18],[-0.05,0.36]].map(([dx,dy]) =>
+    `<ellipse cx="${c.x+dx*s}" cy="${c.y+dy*s}" rx="${s*.13}" ry="${s*.09}"/><circle cx="${c.x+(dx-.11)*s}" cy="${c.y+(dy-.03)*s}" r="${s*.05}" fill="#d8d2bd"/>`).join("")}</g>`;
+  return `<g stroke="#bfa86a" stroke-width="1.4" opacity=".7" fill="none">${[-0.15,0.1,0.32].map(dy =>
+    `<path d="M ${c.x-.4*s} ${c.y+dy*s} q ${.2*s} ${-.1*s} ${.4*s} 0 t ${.4*s} 0"/>`).join("")}</g>`;
+}
+function numberToken(n, c) {
+  const hot = n === 6 || n === 8, r = HEX*.31, col = hot ? "#c0392b" : "#3b3325";
+  return `<circle cx="${c.x}" cy="${c.y}" r="${r}" fill="#f7f0dc" stroke="#b3a684" stroke-width="1.5"/>
+    <text x="${c.x}" y="${c.y+r*.18}" text-anchor="middle" font-size="${r*(hot?1.15:1)}" font-weight="${hot?800:600}" fill="${col}" font-family="Georgia,serif">${n}</text>
+    <g fill="${hot?"#c0392b":"#6b604a"}">${Array.from({length: pips(n)}, (_,i) =>
+      `<circle cx="${c.x+(i-(pips(n)-1)/2)*(r*.3)}" cy="${c.y+r*.55}" r="${r*.07}"/>`).join("")}</g>`;
+}
+function robberAt(c) {
+  const s = HEX*.36;
+  return `<g transform="translate(${c.x+HEX*.42}, ${c.y-HEX*.1})">
+    <ellipse cx="0" cy="${s*.75}" rx="${s*.55}" ry="${s*.18}" fill="#00000055"/>
+    <path d="M ${-s*.45} ${s*.7} q 0 ${-s*.7} ${s*.2} ${-s*.9} a ${s*.28} ${s*.28} 0 1 1 ${s*.5} 0 q ${s*.2} ${s*.2} ${s*.2} ${s*.9} Z"
+      fill="#2b2b33" stroke="#101014" stroke-width="1.2"/></g>`;
+}
+const hexPts = (c) => CORNERS.map(k => `${c.x+HEX*k[0]},${c.y+HEX*k[1]}`).join(" ");
+
+function drawBoard(f, mini = false) {
+  const cx = G.width/2, cy = G.height/2;
+  let h = `<svg viewBox="0 0 ${G.width} ${G.height}" class="boardsvg" role="img" aria-label="Catan board">`;
+  if (!mini) {
+    h += `<defs>`;
+    for (const [t,[l,d]] of Object.entries(TERRAIN_FILL))
+      h += `<radialGradient id="terrain-${t}" cx="50%" cy="42%" r="75%"><stop offset="0%" stop-color="${l}"/><stop offset="100%" stop-color="${d}"/></radialGradient>`;
+    h += `<radialGradient id="ocean" cx="50%" cy="50%" r="72%"><stop offset="0%" stop-color="#2e7396"/><stop offset="100%" stop-color="#1d4d68"/></radialGradient></defs>`;
+  }
+  h += `<rect width="${G.width}" height="${G.height}" fill="${mini ? "#25607f" : "url(#ocean)"}" rx="14"/>`;
+  if (!mini) for (const k of [1.12, 1.24])
+    h += `<ellipse cx="${cx}" cy="${cy}" rx="${(G.width/2.4)*k}" ry="${(G.height/2.55)*k}" fill="none" stroke="#ffffff18" stroke-width="2"/>`;
+  G.hexes.forEach((hx,i) => {
+    const c = G.hexCenter[i];
+    h += `<polygon points="${hexPts(c)}" fill="${mini ? TERRAIN_FILL[hx.terrain][0] : `url(#terrain-${hx.terrain})`}" stroke="#e8dcbd" stroke-width="2.6" stroke-linejoin="round"/>`;
+    if (!mini) h += decor(hx.terrain, c);
+    if (hx.number !== null) h += numberToken(hx.number, c);
+  });
+  for (const p of mini ? [] : BOARD.ports) {
+    const a = G.vertexPos.get(p.vertices[0]), b = G.vertexPos.get(p.vertices[1]);
+    const mid = {x:(a.x+b.x)/2, y:(a.y+b.y)/2};
+    const dx = mid.x-cx, dy = mid.y-cy, len = Math.hypot(dx,dy)||1;
+    const at = {x: mid.x+dx/len*HEX*.62, y: mid.y+dy/len*HEX*.62};
+    const label = p.port.kind === "generic" ? "3:1" : `2:1 ${p.port.resource}`;
+    h += `<line x1="${a.x}" y1="${a.y}" x2="${at.x}" y2="${at.y}" stroke="#c9a86255" stroke-width="3"/>
+      <line x1="${b.x}" y1="${b.y}" x2="${at.x}" y2="${at.y}" stroke="#c9a86255" stroke-width="3"/>
+      <path d="M ${at.x-10} ${at.y} q 10 9 20 0 l -3 -4 h -14 Z M ${at.x} ${at.y-2} v -9 l 8 7 Z" fill="#e8dcbd" stroke="#8a7448" stroke-width="1"/>
+      <text x="${at.x}" y="${at.y+16}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#f3ead2" font-family="Georgia,serif">${label}</text>`;
+  }
+  for (const [edge, owner] of f.roads) {
+    const ends = G.edgeEnds.get(edge);
+    if (!ends) continue;
+    const a = G.vertexPos.get(ends[0]), b = G.vertexPos.get(ends[1]), t = .18;
+    const ax = a.x+(b.x-a.x)*t, ay = a.y+(b.y-a.y)*t, bx = b.x-(b.x-a.x)*t, by = b.y-(b.y-a.y)*t;
+    h += `<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="${PS[owner]}" stroke-width="9" stroke-linecap="round"/>
+      <line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="${PC[owner]}" stroke-width="5.5" stroke-linecap="round"/>`;
+  }
+  for (const [vertex, b] of f.buildings) {
+    const p = G.vertexPos.get(vertex);
+    if (!p) continue;
+    const s = HEX*(b.city ? .3 : .24);
+    const d = b.city
+      ? `M ${p.x-s} ${p.y+s*.8} v ${-s*1.1} l ${s*.5} ${-s*.55} l ${s*.5} ${s*.55} v ${s*.35} h ${s} v ${s*.75} Z`
+      : `M ${p.x-s} ${p.y+s*.85} v ${-s} l ${s} ${-s*.8} l ${s} ${s*.8} v ${s} Z`;
+    h += `<path d="${d}" fill="${PC[b.owner]}" stroke="${PS[b.owner]}" stroke-width="2" stroke-linejoin="round"/>`;
+  }
+  h += robberAt(G.hexCenter[f.robber] ?? {x:cx,y:cy});
+  return `${h}</svg>`;
+}
+
+// ---- trade flow up to a step ----------------------------------------------
+function drawTrades(step) {
+  const flow = Array.from({length:4}, () => [0,0,0,0]);
+  const rows = [];
+  let executed = 0;
+  for (const {event: e} of GAME.events.slice(0, step)) {
+    if (e.type !== "TradeExecuted") continue;
+    const give = Object.values(e.offer.give).reduce((s,n)=>s+n,0);
+    const receive = Object.values(e.offer.receive).reduce((s,n)=>s+n,0);
+    flow[e.proposer][e.with] += give;
+    flow[e.with][e.proposer] += receive;
+    rows.push(`<div class="lrow">${chip(e.proposer)}${offerViz(e.offer)}${chip(e.with)}</div>`);
+    executed++;
+  }
+  $("ledger").innerHTML = rows.join("");
+  const max = Math.max(1, ...flow.flat());
+  $("tmnote").textContent = executed === 0 ? "No player trades executed yet." : `${executed} executed trade(s) — cards row → column.`;
+  let h = `<table class="tm"><tr><th></th>${[0,1,2,3].map(s=>`<th style="color:${PT[s]}">P${s}</th>`).join("")}</tr>`;
+  for (let a = 0; a < 4; a++) {
+    h += `<tr><th style="color:${PT[a]}">P${a}</th>`;
+    for (let b = 0; b < 4; b++) {
+      const bg = a === b ? "transparent" : `rgba(179,80,45,${flow[a][b]/max*.55})`;
+      h += `<td style="background:${bg}">${a === b ? "—" : flow[a][b] || ""}</td>`;
+    }
+    h += "</tr>";
+  }
+  $("tm").innerHTML = `${h}</table>`;
+}
+
+// ---- slider ---------------------------------------------------------------
+const slider = $("step");
+slider.max = GAME.events.length;
+slider.value = GAME.events.length;
+function refresh() {
+  const step = Number(slider.value);
+  const f = fold(step);
+  $("board").innerHTML = drawBoard(f);
+  $("stepinfo").textContent = `event ${step}/${GAME.events.length}${f.lastDice ? ` — last roll ${f.lastDice[0]}+${f.lastDice[1]}` : ""}`;
+  $("vps").innerHTML = GAME.seats.map(s => {
+    const done = step >= GAME.events.length;
+    const badges = [f.longestRoad === s.seat ? LROAD : "", f.largestArmy === s.seat ? LARMY : ""].join("");
+    return `<div class="vprow"><span class="pn" style="color:${PT[s.seat]}">P${s.seat} ${badges}</span><b>${done ? `${s.final_vp} VP final` : `${f.publicVp[s.seat]} VP shown`}</b></div>`;
+  }).join("");
+  drawTrades(step);
+}
+slider.addEventListener("input", refresh);
+refresh();
+
+// ---- transcript -----------------------------------------------------------
+const thoughtsAt = new Map();
+for (const s of GAME.seats) for (const t of (s.thoughts || [])) {
+  const list = thoughtsAt.get(t.at_event) || [];
+  list.push({seat: s.seat, decision: t.decision, text: t.text});
+  thoughtsAt.set(t.at_event, list);
+}
+const renderThoughts = (idx) => (thoughtsAt.get(idx) || []).map(t =>
+  `<details class="thought"><summary>💭 P${t.seat} thinking before ${esc(t.decision)}</summary><p>${esc(t.text)}</p></details>`).join("");
+
+// Running omniscient table state, advanced event by event as the transcript
+// is built: hands come from the resource ledger (production, discards, robber
+// steals, dev-card plays, trades, build costs), VP is the board-visible tally.
+const COST = {road:{brick:1,lumber:1}, settlement:{brick:1,lumber:1,wool:1,grain:1}, city:{grain:2,ore:3}, dev:{wool:1,grain:1,ore:1}};
+const hands = [0,1,2,3].map(() => ({brick:0,lumber:0,wool:0,grain:0,ore:0}));
+const runVp = [0,0,0,0];
+let runLongest = null, runLargest = null;
+const addSet = (h, set, sign) => { for (const k of Object.keys(RES)) h[k] += sign * (set[k] || 0); };
+function applyEvent(e) {
+  switch (e.type) {
+    case "SetupResourcesGranted": addSet(hands[e.seat], e.gained, 1); break;
+    case "ResourcesProduced": for (const [s2, set] of e.gains) addSet(hands[s2], set, 1); break;
+    case "DiscardedContents": addSet(hands[e.seat], e.resources, -1); break;
+    case "CardStolenContents": hands[e.from][e.resource]--; hands[e.to][e.resource]++; break;
+    case "YearOfPlentyTaken": hands[e.seat][e.first]++; hands[e.seat][e.second]++; break;
+    case "MonopolyResolved": for (const [v, n] of e.taken) { hands[v][e.resource] -= n; hands[e.seat][e.resource] += n; } break;
+    case "BankTraded": addSet(hands[e.seat], e.gave, -1); addSet(hands[e.seat], e.got, 1); break;
+    case "TradeExecuted":
+      addSet(hands[e.proposer], e.offer.give, -1); addSet(hands[e.proposer], e.offer.receive, 1);
+      addSet(hands[e.with], e.offer.give, 1); addSet(hands[e.with], e.offer.receive, -1);
+      break;
+    case "RoadBuilt": if (!e.free) addSet(hands[e.seat], COST.road, -1); break;
+    case "SettlementBuilt": addSet(hands[e.seat], COST.settlement, -1); runVp[e.seat]++; break;
+    case "CityBuilt": addSet(hands[e.seat], COST.city, -1); runVp[e.seat]++; break;
+    case "DevCardBought": addSet(hands[e.seat], COST.dev, -1); break;
+    case "SetupSettlementPlaced": runVp[e.seat]++; break;
+    case "LongestRoadClaimed":
+      if (runLongest !== null) runVp[runLongest] -= 2;
+      runLongest = e.seat ?? null;
+      if (runLongest !== null) runVp[runLongest] += 2;
+      break;
+    case "LargestArmyClaimed":
+      if (runLargest !== null) runVp[runLargest] -= 2;
+      runLargest = e.seat; runVp[e.seat] += 2;
+      break;
+  }
+}
+// A purchase, drawn: buyer chip, cost cards → the piece; then the buyer's hand
+// before → after; then a VP pill when the build changed the score.
+function buyViz(e) {
+  const kind = e.type === "RoadBuilt" ? (e.free ? null : "road")
+    : e.type === "SettlementBuilt" ? "settlement"
+    : e.type === "CityBuilt" ? "city"
+    : e.type === "DevCardBought" ? "dev" : null;
+  if (!kind) return null;
+  const s2 = e.seat;
+  const before = {...hands[s2]};
+  const after = {...before}; addSet(after, COST[kind], -1);
+  const vp = (kind === "settlement" || kind === "city")
+    ? `<span class="vppill" style="background:${PC[s2]};color:${chipFg(s2)}">★ ${runVp[s2]}→${runVp[s2] + 1}</span>` : "";
+  return `<span class="tviz">${chip(s2)}<span class="cards">${resIcons(COST[kind])}</span>${ARR1}${itemIcon(kind, s2)}</span>`
+    + `<span class="tviz handviz">${FAN}<span class="cards">${handIcons(before) || EMPTYHAND}</span>${ARR1}<span class="cards">${handIcons(after) || EMPTYHAND}</span></span>${vp}`;
+}
+
+// Wording comes from the engine's canonical renderer (RENDERED); trade,
+// bank and production events swap the sentence for the pictographic trade
+// language (chips + resource cards + arrows) — the prose stays as a hover
+// title. Negotiation messages are model speech, so they stay verbatim.
+const quoteMsg = (m) => m ? `<span class="tmsg">“${esc(m)}”</span>` : "";
+const fadedChips = (except) => [0,1,2,3].filter(x => x !== except)
+  .map(x => `<span style="opacity:.45">${chip(x)}</span>`).join("");
+function tradeViz(e) {
+  switch (e.type) {
+    case "TradeProposed":
+      return `<span class="tviz">${chip(e.seat)}${offerViz(e.offer)}${e.to != null ? chip(e.to) : fadedChips(e.seat)}</span>${quoteMsg(e.message)}`;
+    case "TradeResponded": {
+      const r = e.response;
+      const badge = r.kind === "accept" ? OK : r.kind === "reject" ? NO : CTR;
+      return `<span class="tviz">${chip(e.seat)}${badge}${r.kind === "counter" ? offerViz(r.offer) : ""}</span>${quoteMsg(e.message)}`;
+    }
+    case "TradeExecuted":
+      return `<span class="tviz">${chip(e.proposer)}${offerViz(e.offer)}${chip(e.with)}${OK}</span>`;
+    case "BankTraded":
+      return `<span class="tviz">${chip(e.seat)}<span class="cards">${resIcons(e.gave)}</span>${SWAP}<span class="cards">${resIcons(e.got)}</span>${BANK}</span>`;
+    case "ResourcesProduced":
+      return `<span class="tviz">${e.gains.map(([s2, set]) => gainViz(s2, set)).join(" ")}</span>`;
+    case "SetupResourcesGranted":
+      return `<span class="tviz">${gainViz(e.seat, e.gained)}</span>`;
+    case "YearOfPlentyTaken": {
+      const set = {};
+      set[e.first] = 1 + (e.first === e.second ? 1 : 0);
+      if (e.first !== e.second) set[e.second] = 1;
+      return `<span class="tviz">${gainViz(e.seat, set)}</span>`;
+    }
+    case "MonopolyResolved": {
+      const total = e.taken.reduce((a, [, n]) => a + n, 0);
+      return `<span class="tviz">${gainViz(e.seat, {[e.resource]: total})}</span>`;
+    }
+  }
+  return null;
+}
+// A resource gain: the seat's holdings as they stand, then the new cards.
+// Called before applyEvent, so hands[] is the pre-gain state.
+const gainViz = (s2, gained) =>
+  `${chip(s2)}<span class="cards">${handIcons(hands[s2]) || EMPTYHAND}</span><span class="cards">${plusIcons(gained)}</span>`;
+function renderEvent(rec) {
+  const e = rec.event, line = esc(RENDERED[rec.idx] ?? e.type);
+  const priv = rec.visibility !== "Public";
+  const tag = priv ? `<span class="r">[private P${rec.visibility.Private}]</span>` : "";
+  const seat = e.seat ?? e.proposer;
+  const viz = buyViz(e) ?? tradeViz(e);
+  const cls = e.type === "Said" ? "say"
+    : e.type === "TradeExecuted" ? "trade tradex"
+    : ["TradeProposed","TradeResponded","BankTraded"].includes(e.type) ? "trade"
+    : viz && ["RoadBuilt","SettlementBuilt","CityBuilt","DevCardBought"].includes(e.type) ? "buy"
+    : ["GameStarted","BoardLaid","TurnStarted","TradeWindowClosed"].includes(e.type) ? "sys" : "";
+  const pre = seat !== undefined && cls === "say" ? chip(seat) : "";
+  const body = viz ?? (e.type === "GameEnded" ? `<b>${line}</b>` : line);
+  const title = viz ? ` title="${line.replace(/"/g, "&quot;")}"` : "";
+  return `<div class="ev ${priv ? "private" : cls}"${title}>${tag}${pre}${body}</div>`;
+}
+
+const out = [];
+const TRADE_KINDS = ["TradeProposed","TradeResponded","TradeExecuted","TradeWindowClosed"];
+let turnBuf = [], turnNo = null, turnEnd = 0, turnSeat = null, tradeBuf = null, turnCount = 0;
+const closeTradeGrp = () => {
+  if (tradeBuf) { turnBuf.push(`<div class="tradegrp">${tradeBuf.join("")}</div>`); tradeBuf = null; }
+};
+const flush = () => {
+  closeTradeGrp();
+  if (turnNo === null) return;
+  const last = turnNo === GAME.events[GAME.events.length-1].round;
+  const strip = runVp.map((v, s2) =>
+    `<span class="who" style="background:${PC[s2]};color:${chipFg(s2)}">P${s2} ${v}</span>`
+    + (runLongest === s2 ? LROAD : "") + (runLargest === s2 ? LARMY : "")).join("");
+  out.push(`<details class="turn" data-upto="${turnEnd}"${last ? " open" : ""}><summary>${turnNo === 0 ? "Setup" : `Turn ${turnNo}`}${turnSeat !== null ? ` ${chip(turnSeat)}` : ""}<span class="n">(${turnCount} events)</span><span class="vpstrip">${strip}</span></summary><div class="turnbody"><div class="evs">${turnBuf.join("")}</div><div class="mini"></div></div></details>`);
+  turnBuf = [];
+  turnSeat = null;
+  turnCount = 0;
+};
+for (const rec of GAME.events) {
+  if (rec.round !== turnNo) { flush(); turnNo = rec.round; }
+  if (rec.event.type === "TurnStarted") turnSeat = rec.event.seat;
+  const html = renderThoughts(rec.idx) + renderEvent(rec);
+  if (TRADE_KINDS.includes(rec.event.type)) {
+    if (!tradeBuf) tradeBuf = [];
+    tradeBuf.push(html);
+    if (rec.event.type === "TradeWindowClosed") closeTradeGrp();
+  } else {
+    closeTradeGrp();
+    turnBuf.push(html);
+  }
+  applyEvent(rec.event);
+  turnEnd = rec.idx + 1;
+  turnCount++;
+}
+turnBuf.push(renderThoughts(GAME.events.length));
+flush();
+$("log").innerHTML = out.join("");
+
+// Each turn shows the board as it stood at the turn's end — rendered lazily
+// on first expand so a 600-event game doesn't draw 70 boards up front.
+const renderMini = (d) => {
+  const m = d.querySelector(".mini");
+  if (!m || m.dataset.done) return;
+  m.dataset.done = "1";
+  m.innerHTML = drawBoard(fold(Number(d.dataset.upto)), true);
+};
+for (const d of document.querySelectorAll("details.turn")) {
+  d.addEventListener("toggle", () => { if (d.open) renderMini(d); });
+  if (d.open) renderMini(d);
+}
+
+// ---- reliability ----------------------------------------------------------
+$("rel").innerHTML = `<tr><th>Seat</th><th>Model</th><th>VP</th><th>Place</th><th>Malformed</th><th>Illegal</th><th>Forced</th><th>Transport</th><th>Tokens in</th><th>Tokens out (incl. reasoning)</th></tr>` +
+  GAME.seats.map(s=>`<tr><td style="color:${PT[s.seat]};font-weight:700">P${s.seat}</td><td>${esc(s.model_id)}</td><td class="num">${s.final_vp}</td><td class="num">${s.placement}</td><td class="num">${s.reliability.malformed_outputs}</td><td class="num">${s.reliability.illegal_moves}</td><td class="num">${s.reliability.forced_defaults}</td><td class="num">${s.reliability.transport_failures}</td><td class="num">${s.usage.prompt_tokens.toLocaleString()}</td><td class="num">${s.usage.completion_tokens.toLocaleString()}</td></tr>`).join("");
+</script>
+</body>
+</html>

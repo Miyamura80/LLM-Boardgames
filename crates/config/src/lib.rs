@@ -31,6 +31,8 @@ pub struct AppConfig {
     pub features: HashMap<String, bool>,
     #[serde(default)]
     pub secret_hitler: SecretHitlerConfig,
+    #[serde(default)]
+    pub catan: CatanConfig,
 
     // Secret credentials — never serialized (`skip_serializing` = the security
     // boundary; see the sanitization test). Read via the accessors below.
@@ -425,6 +427,9 @@ fn load_config() -> Result<AppConfig, ConfigError> {
 
     builder.build()?.try_deserialize()
 }
+
+mod catan;
+pub use catan::{CatanAnchorSpec, CatanConfig};
 
 #[cfg(test)]
 mod tests;

@@ -1,0 +1,192 @@
+/* Catan theme: warm tabletop parchment + deep ocean, distinct from the SH
+ * propaganda brand (per-game theming, PRD-catan-evals US-C13). */
+
+.catan-root {
+	--catan-parchment: #f4e9cf;
+	--catan-panel: #fdf6e4;
+	--catan-ink: #3b3325;
+	--catan-dim: #8a7c5f;
+	--catan-accent: #b3502d;
+	--catan-border: #d9c9a3;
+	background: var(--catan-parchment);
+	color: var(--catan-ink);
+	padding: 1rem 1.25rem 3rem;
+	font-family: Georgia, "Times New Roman", serif;
+	min-height: 100vh;
+}
+
+.catan-root select {
+	background: var(--catan-panel);
+	color: var(--catan-ink);
+	border: 1px solid var(--catan-border);
+	border-radius: 6px;
+	padding: 0.3rem 0.5rem;
+	font-family: inherit;
+}
+
+.catan-toolbar {
+	display: flex;
+	gap: 1.5rem;
+	align-items: center;
+	margin-bottom: 1rem;
+	flex-wrap: wrap;
+}
+
+.catan-stage {
+	display: grid;
+	grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+	gap: 1rem;
+	align-items: start;
+}
+
+@media (max-width: 900px) {
+	.catan-stage {
+		grid-template-columns: 1fr;
+	}
+}
+
+.catan-board {
+	width: 100%;
+	height: auto;
+	display: block;
+	border-radius: 14px;
+	box-shadow: 0 10px 30px rgba(43, 31, 12, 0.35);
+}
+
+.catan-scrub {
+	display: flex;
+	gap: 0.75rem;
+	align-items: center;
+	margin-top: 0.5rem;
+}
+
+.catan-scrub input[type="range"] {
+	flex: 1;
+	accent-color: var(--catan-accent);
+}
+
+.catan-panel {
+	background: var(--catan-panel);
+	border: 1px solid var(--catan-border);
+	border-radius: 10px;
+	padding: 0.75rem 1rem;
+	margin-bottom: 1rem;
+}
+
+.catan-panel h3 {
+	margin: 0 0 0.5rem;
+	font-variant: small-caps;
+	letter-spacing: 0.05em;
+	color: var(--catan-accent);
+}
+
+.catan-seat {
+	display: flex;
+	gap: 0.6rem;
+	align-items: flex-start;
+	padding: 0.35rem 0;
+	border-bottom: 1px dashed var(--catan-border);
+}
+
+.catan-seat:last-of-type {
+	border-bottom: none;
+}
+
+.catan-seat-name {
+	font-weight: 700;
+}
+
+.catan-swatch {
+	width: 14px;
+	height: 14px;
+	border-radius: 4px;
+	border: 1px solid rgba(0, 0, 0, 0.35);
+	margin-top: 0.25rem;
+	flex-shrink: 0;
+}
+
+.catan-chip {
+	display: inline-block;
+	margin-left: 0.4rem;
+	padding: 0 0.4rem;
+	border-radius: 999px;
+	background: var(--catan-accent);
+	color: #fdf6e4;
+	font-size: 0.7rem;
+	vertical-align: middle;
+}
+
+.catan-dim {
+	color: var(--catan-dim);
+	font-size: 0.85rem;
+}
+
+.catan-error {
+	color: #a4321f;
+	font-weight: 700;
+}
+
+.catan-table,
+.catan-matrix {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.9rem;
+}
+
+.catan-table th,
+.catan-table td,
+.catan-matrix th,
+.catan-matrix td {
+	border-bottom: 1px solid var(--catan-border);
+	padding: 0.35rem 0.5rem;
+	text-align: left;
+}
+
+.catan-matrix td {
+	text-align: center;
+	width: 3rem;
+}
+
+.catan-transcript ul {
+	list-style: none;
+	margin: 0.25rem 0 0.5rem;
+	padding-left: 0.75rem;
+}
+
+.catan-transcript li {
+	padding: 0.15rem 0;
+	border-left: 2px solid var(--catan-border);
+	padding-left: 0.6rem;
+	margin-bottom: 0.1rem;
+}
+
+.catan-transcript summary {
+	cursor: pointer;
+	font-weight: 700;
+	padding: 0.3rem 0;
+}
+
+.catan-thought {
+	margin: 0.2rem 0 0.2rem 1rem;
+	font-size: 0.85rem;
+}
+
+.catan-thought p {
+	margin: 0.2rem 0 0.3rem;
+	color: var(--catan-dim);
+	font-style: italic;
+}
+
+.catan-flash {
+	animation: catan-pulse 1.2s ease-in-out 2;
+}
+
+@keyframes catan-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.45;
+	}
+}

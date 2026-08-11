@@ -6,10 +6,12 @@
 //! HTTP types), so the same commands run over the CLI, the HTTP API, and (later)
 //! MCP.
 
+pub mod catan;
 pub mod commands;
 pub mod context;
 pub mod doctor;
 mod env;
+pub mod game_core;
 pub mod llm;
 pub mod platform;
 pub mod probes;

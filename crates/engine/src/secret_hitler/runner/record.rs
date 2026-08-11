@@ -31,28 +31,9 @@ pub struct ExecutionChoice {
     pub forced: bool,
 }
 
-/// The model's private reasoning for one decision, captured verbatim from the
-/// `thought_process` field of its reply. Observability only — never fed back
-/// into any observation, so it cannot influence play.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct ThoughtRecord {
-    pub round: u32,
-    /// Transcript position when the decision was made, for interleaving
-    /// thoughts into a replay timeline.
-    pub at_event: u32,
-    /// Decision kind (`nominate`, `vote`, `discard`, …).
-    pub decision: String,
-    pub text: String,
-}
+pub use crate::game_core::ThoughtRecord;
 
-/// Reliability counters, kept strictly separate from play-quality metrics.
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, JsonSchema)]
-pub struct Reliability {
-    pub malformed_outputs: u32,
-    pub illegal_moves: u32,
-    pub forced_defaults: u32,
-    pub transport_failures: u32,
-}
+pub use crate::game_core::Reliability;
 
 /// One seat of one game.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

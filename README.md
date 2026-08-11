@@ -127,6 +127,47 @@ See [`docs/PRD-secret-hitler-evals.md`](docs/PRD-secret-hitler-evals.md) for the
 spec and [`docs/rating-design.md`](docs/rating-design.md) for the rating system
 (model × role Weng-Lin, anchor pools, schedules, metric definitions).
 
+### Settlers of Catan
+
+The harness also runs **Settlers of Catan** (4-player base game) on the same
+`game_core` machinery — free-form trade negotiation with engine-validated
+commitments, atomic act-until-pass turns, and seat-conditioned free-for-all
+Weng-Lin ratings over final placements. Spec:
+[`docs/PRD-catan-evals.md`](docs/PRD-catan-evals.md).
+
+```bash
+# Deterministic 4-bot smoke game (no LLM, no DB, <1s)
+cargo run -p shbench -- call catan_play_game --args '{"models":["bot:greedy","bot:random-legal"],"seed":7}' --json
+
+# One LLM seat vs three bots, stored + rated (arena mode, resumable run_id)
+cargo run -p shbench -- call catan_run_match --args '{"run_id":"my-run","mode":"arena","models":["gemini/gemini-3-flash-preview","bot:greedy","bot:random-legal","bot:greedy"],"games":1}' --json
+
+# Controlled rating run: candidate vs the frozen 3-anchor pool over
+# boards × 4 seats × K reps with mirrored boards/dice/dev decks
+cargo run -p shbench -- call catan_run_match --args '{"mode":"controlled","candidate":"gemini/gemini-3-flash-preview","pool":"pool-a","boards":3,"k":1,"run_id":"catan-match"}' --json
+
+# Results: seat-conditioned FFA leaderboard + objective metrics
+cargo run -p shbench -- call catan_leaderboard --args '{"run_id":"catan-match"}' --json
+```
+
+The frontend's game switcher adds a Catan replay console — an illustrated
+tabletop board with a step slider, the omniscient transcript with each agent's
+private reasoning, and a who-traded-with-whom card-flow matrix.
+
+Like the Secret Hitler report, any Catan game exports to a **single
+self-contained HTML report** (replayable board with step slider, turn-grouped
+transcript with collapsible reasoning, trade-flow matrix, reliability + cost):
+
+```bash
+make catan-game-report GAME=<game_id>       # stored game (needs Postgres)
+make catan-game-report REC=<record.json>    # from a GameRecord JSON, no DB
+```
+
+Two real Gemini Flash games ship as fixtures, reproducible with no DB or API:
+`crates/engine/fixtures/catan_llm_vs_bots.json` (one LLM seat beats three
+bots) and `catan_llm_vs_llm.json` (two LLM seats negotiate, trade, and take
+1st/2nd, winning on a Longest Road steal).
+
 Scaffold a new command with `make new name=fetch_url` (or `shbench new
 fetch_url`) — it self-registers, so it's immediately callable over the CLI and
 the API.

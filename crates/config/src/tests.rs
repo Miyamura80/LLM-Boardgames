@@ -173,6 +173,7 @@ fn test_frontend_config_sanitization() {
         server: ServerConfig::default(),
         features: HashMap::new(),
         secret_hitler: SecretHitlerConfig::default(),
+        catan: CatanConfig::default(),
         database_url: Some("postgres://user:secret-db-pass@localhost/db".to_string()),
         openai_api_key: Some("secret-key".to_string()),
         anthropic_api_key: None,

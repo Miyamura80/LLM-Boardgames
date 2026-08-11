@@ -9,32 +9,10 @@ use super::types::{Party, Power, Role, Seat, WinCondition};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// Who may see an event.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-pub enum Visibility {
-    Public,
-    /// Visible only to one seat (e.g. a President's investigation result).
-    Private(Seat),
-}
+pub use crate::game_core::Visibility;
 
-impl Visibility {
-    pub fn visible_to(&self, seat: Seat) -> bool {
-        match self {
-            Visibility::Public => true,
-            Visibility::Private(s) => *s == seat,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct EventRecord {
-    /// Position in the log (stable across replays).
-    pub idx: u32,
-    /// Government round the event belongs to (0 = setup).
-    pub round: u32,
-    pub visibility: Visibility,
-    pub event: GameEvent,
-}
+/// One transcript entry (the shared envelope carrying an SH event payload).
+pub type EventRecord = crate::game_core::EventRecord<GameEvent>;
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "type")]
