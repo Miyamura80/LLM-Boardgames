@@ -60,6 +60,32 @@ catan:
       - openrouter/deepseek/deepseek-v4-pro
       - openrouter/qwen/qwen3-32b
 
+########################################################
+# Codenames eval harness (see docs/PRD-codenames-evals.md)
+########################################################
+codenames:
+  retry_budget: 3
+  agent_max_tokens: 8192
+  agent_temperature: 0.5
+  rating_k: 2.0
+  # Omit (or null) to use the vendored wordlist; set a path to override it.
+  wordlist_path: null
+  clue_word_max_len: 20
+  # Controlled mode seats 1 candidate + exactly 3 frozen anchors across the
+  # four fixed seats (spymaster + operative per team).
+  pools:
+    pool-a:
+      - { name: random, kind: random-legal }
+      - { name: embed, kind: embedding-greedy }
+      - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.1 }
+  # Arena model sets: exactly 4 seat specs per set.
+  model_sets:
+    cheap:
+      - openrouter/mistralai/mistral-small-3.1
+      - gemini/gemini-3-flash-preview
+      - openrouter/deepseek/deepseek-v4-pro
+      - openrouter/qwen/qwen3-32b
+
 secret_hitler:
   discussion_rounds: 3
   retry_budget: 3
