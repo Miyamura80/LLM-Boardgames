@@ -29,3 +29,7 @@ opencode.json
 
 # Agent session files
 .claude/scheduled_tasks.lock
+
+# Generated offline game reports (make game-report / catan-game-report / codenames-game-report)
+media/*-game-report.html
+media/game-report.html
