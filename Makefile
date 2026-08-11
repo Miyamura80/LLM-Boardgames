@@ -59,7 +59,7 @@ docs: ## Run docs with bun
 ########################################################
 
 ### Game Reports
-.PHONY: game-report game-report-json game-report-stored
+.PHONY: game-report game-report-json game-report-stored catan-game-report
 
 game-report-json: ## Render a fixed sample GameRecord JSON to a self-contained HTML report (reproducible, no DB). Vars: REC=, OUT=.
 	@echo "$(YELLOW)🎲 Rendering report from $(or $(REC),crates/engine/fixtures/sample_game.json)...$(RESET)"
@@ -79,6 +79,14 @@ game-report-stored: ## Export a STORED game (real LLM discussion) to HTML. Requi
 	@echo "$(YELLOW)🎲 Exporting stored game $(GAME)...$(RESET)"
 	@cargo run -q -p shbench -- call sh_export_game_report --args '{"game_id":"$(GAME)","output_path":"$(or $(OUT),media/game-report.html)"}'
 	@echo "$(GREEN)✅ Report written to $(or $(OUT),media/game-report.html)$(RESET)"
+
+catan-game-report: ## Export a stored (GAME=<id>, needs Postgres) or JSON (REC=<record.json>) Catan game to HTML. Var: OUT=.
+	@if [ -z "$(GAME)" ] && [ -z "$(REC)" ]; then \
+		echo "$(RED)Error: GAME=<game_id> or REC=<record.json> required$(RESET)"; exit 1; \
+	fi
+	@echo "$(YELLOW)🎲 Exporting Catan game $(or $(GAME),$(REC))...$(RESET)"
+	@cargo run -q -p shbench -- call catan_export_game_report --args '{$(if $(GAME),"game_id":"$(GAME)","record_path":"$(REC)"),"output_path":"$(or $(OUT),media/catan-game-report.html)"}'
+	@echo "$(GREEN)✅ Report written to $(or $(OUT),media/catan-game-report.html)$(RESET)"
 
 
 ########################################################

@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catan Evals — Game Report</title>
+<style>
+:root{
+  --paper:#f4e9cf; --panel:#fdf6e4; --ink:#3b3325; --muted:#8a7c5f; --line:#d9c9a3;
+  --accent:#b3502d; --chip:#efe4c8; --trade:#f6ecd2; --say:#eef2df;
+  --p0:#c0392b; --p1:#2c5f8a; --p2:#e07b1f; --p3:#8f8a7a;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --serif:Georgia,'Times New Roman',serif;
+  --sans:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#181410; --panel:#221c14; --ink:#e9e0c8; --muted:#a3947a; --line:#3d3526;
+  --accent:#d97a52; --chip:#2e2718; --trade:#2c2415; --say:#242a18;
+}}
+:root[data-theme="dark"]{
+  --paper:#181410; --panel:#221c14; --ink:#e9e0c8; --muted:#a3947a; --line:#3d3526;
+  --accent:#d97a52; --chip:#2e2718; --trade:#2c2415; --say:#242a18;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:clamp(13.5px,1.1vw + 9px,15px);line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding:clamp(.8rem,3vw,2.2rem) clamp(.6rem,2.5vw,1.2rem) 4rem;display:grid;gap:1.3rem}
+.wrap>*, .panel, .tablewrap, .log, .ev{min-width:0}
+.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--serif);font-size:clamp(1.15rem,3.4vw,1.9rem);font-weight:600;text-wrap:balance;line-height:1.25}
+h2{font-family:var(--serif);font-size:clamp(1rem,2.4vw,1.2rem);font-weight:600;margin-bottom:.55rem}
+.statrow{display:flex;flex-wrap:wrap;gap:.4rem}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.35rem .65rem;font-size:12.5px}
+.stat b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+.stat span{color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:clamp(.7rem,2vw,1.1rem)}
+.seats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.5rem}
+.seat{border:1px solid var(--line);border-left:5px solid var(--muted);border-radius:6px;padding:.45rem .55rem;font-size:12px;background:var(--panel);min-width:0}
+.seat .nm{font-weight:700}
+.seat .tok{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--muted);font-size:11px;overflow-wrap:anywhere}
+.chipbdg{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#fff;background:var(--accent);padding:.04rem .34rem;border-radius:3px;font-weight:700;vertical-align:middle}
+.boardgrid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(230px,1fr);gap:1rem;align-items:start}
+@media (max-width:760px){.boardgrid{grid-template-columns:1fr}}
+.boardsvg{width:100%;height:auto;display:block;border-radius:14px;box-shadow:0 10px 30px rgba(43,31,12,.35)}
+.scrub{display:flex;gap:.7rem;align-items:center;margin-top:.5rem}
+.scrub input[type="range"]{flex:1;accent-color:var(--accent)}
+.note{font-size:12px;color:var(--muted)}
+.vprow{display:flex;justify-content:space-between;gap:.5rem;font-size:12.5px;padding:.22rem 0;border-bottom:1px dashed var(--line)}
+.vprow:last-child{border-bottom:none}
+.vprow b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.pn{font-weight:700}
+.log{display:grid;gap:.18rem;max-height:72vh;overflow-y:auto;border:1px solid var(--line);border-radius:6px;padding:.7rem .75rem;background:var(--paper)}
+.ev{font-size:13px;overflow-wrap:anywhere}
+.ev .r{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-right:.3rem}
+.ev.private{color:var(--muted);font-style:italic}
+.ev.sys{color:var(--muted)}
+.ev.trade{background:var(--trade);border-radius:4px;padding:.12rem .4rem}
+.ev.say{background:var(--say);border-radius:4px;padding:.12rem .4rem}
+.who{display:inline-block;font-size:10.5px;font-weight:700;font-family:var(--mono);padding:.05rem .38rem;border-radius:4px;color:#fff;margin-right:.3rem}
+details.turn{border:1px solid var(--line);border-radius:6px;padding:.2rem .55rem .3rem;margin:.25rem 0;background:var(--panel)}
+details.turn>summary{cursor:pointer;font-family:var(--serif);font-weight:600;padding:.2rem 0;list-style:none}
+details.turn>summary::-webkit-details-marker{display:none}
+details.turn>summary::before{content:"▾ ";color:var(--muted)}
+details.turn:not([open])>summary::before{content:"▸ "}
+details.turn>summary:focus-visible{outline:2px solid var(--accent)}
+details.turn>summary .n{color:var(--muted);font-weight:400;font-size:12px;font-family:var(--sans)}
+details.thought{margin:.1rem 0 .1rem .2rem;border-left:2px dotted var(--line);padding-left:.55rem}
+details.thought summary{cursor:pointer;color:var(--muted);font-size:12px;list-style-position:inside}
+details.thought summary:focus-visible{outline:2px solid var(--accent)}
+details.thought p{color:var(--muted);font-size:12.5px;margin:.25rem 0 .35rem .4rem;white-space:pre-wrap;overflow-wrap:anywhere}
+table{border-collapse:collapse;font-size:12.5px;width:100%}
+th,td{text-align:left;padding:.35rem .5rem;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:600;font-size:11.5px}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto;max-width:100%}
+.tm{border-collapse:separate;border-spacing:2px}
+.tm td{border:none;min-width:2.4rem;height:1.8rem;text-align:center;border-radius:4px;font-family:var(--mono)}
+.tm th{border:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="eyebrow">Catan Evals · game report</div>
+    <h1 id="headline">Game report</h1>
+    <div class="statrow" id="stats"></div>
+  </header>
+
+  <section>
+    <h2>The table</h2>
+    <div class="seats" id="seats"></div>
+  </section>
+
+  <section class="panel">
+    <h2>The board</h2>
+    <p class="note" style="margin-bottom:.6rem">Drag the slider to replay the game event by event — the board, the victory-point tallies, and the trade-flow matrix all follow it. Number-token dots are roll probability; the dark figure is the robber.</p>
+    <div class="boardgrid">
+      <div>
+        <div id="board"></div>
+        <div class="scrub">
+          <input id="step" type="range" min="0" value="0">
+          <span class="note" id="stepinfo"></span>
+        </div>
+      </div>
+      <div>
+        <div id="vps" style="margin-bottom:1rem"></div>
+        <h2>Trade flow</h2>
+        <p class="note" id="tmnote"></p>
+        <div class="tablewrap" id="tm"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Full transcript — every event, public and private</h2>
+    <p class="note" style="margin-bottom:.6rem">Grouped by turn (click to fold). <em>Italic grey lines</em> are private knowledge (visible to one seat only); 💭 entries are the model's private reasoning per decision (collapsible; never fed back into play). Tinted rows are table talk and trade negotiation. A stored replay is omniscient.</p>
+    <div class="log" id="log"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Reliability &amp; cost per seat</h2>
+    <div class="tablewrap"><table id="rel"></table></div>
+  </section>
+</div>
+<script>
+const GAME = __GAME_DATA__;
+const RENDERED = __RENDERED__; // canonical omniscient lines from CatanEvent::render, index-aligned with GAME.events
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const PC = ["#c0392b","#2c5f8a","#e07b1f","#f2ede1"];   // classic red/blue/orange/white
+const PS = ["#7d241a","#1b3c58","#94500f","#8f8a7a"];
+// Text-safe player colors: P3's white pieces are illegible as text on parchment.
+const PT = [PC[0], PC[1], PC[2], PS[3]];
+const chipFg = (s) => s === 3 ? "#3b3325" : "#fff";     // white pieces need dark text
+const chip = (s) => `<span class="who" style="background:${PC[s]};color:${chipFg(s)}">P${s}</span>`;
+
+// ---- header ---------------------------------------------------------------
+const mins = Math.round(GAME.duration_ms/60000);
+const tokIn = GAME.seats.reduce((a,s)=>a+s.usage.prompt_tokens,0);
+const tokOut = GAME.seats.reduce((a,s)=>a+s.usage.completion_tokens,0);
+const rel = GAME.seats.reduce((a,s)=>({m:a.m+s.reliability.malformed_outputs,i:a.i+s.reliability.illegal_moves,f:a.f+s.reliability.forced_defaults}),{m:0,i:0,f:0});
+const winSeat = GAME.seats[GAME.winner];
+$("eyebrow").textContent = `Catan Evals · game ${GAME.game_id} · ${GAME.schedule_label}`;
+$("headline").textContent = `P${GAME.winner} (${winSeat.model_id.split("/").pop()}) wins with ${winSeat.final_vp} VP in ${GAME.turns} turns`;
+$("stats").innerHTML = [
+  ["seed", GAME.seed], ["events", GAME.events.length], ["duration", `${mins} min`],
+  ["prompt tok", tokIn.toLocaleString()], ["completion tok (incl. reasoning)", tokOut.toLocaleString()],
+  ["malformed", rel.m], ["illegal", rel.i], ["forced", rel.f],
+].map(([k,v]) => `<div class="stat"><b>${v}</b> <span>${k}</span></div>`).join("");
+
+// ---- seats ----------------------------------------------------------------
+$("seats").innerHTML = GAME.seats.map(s => `
+  <div class="seat" style="border-left-color:${PC[s.seat]}">
+    <div class="nm">P${s.seat}${s.won ? ' <span class="chipbdg">winner</span>' : ""}${s.is_anchor ? ' <span class="chipbdg" style="background:var(--muted)">anchor</span>' : ""}</div>
+    <div class="tok">${esc(s.model_id.split("/").pop())}</div>
+    <div class="tok">${s.final_vp} VP · place ${s.placement} · ${s.knights_played} knights</div>
+    <div class="tok">${(s.usage.prompt_tokens/1000).toFixed(0)}k in · ${(s.usage.completion_tokens/1000).toFixed(0)}k out</div>
+  </div>`).join("");
+
+// ---- board geometry (mirrors frontend/src/components/catan/board.ts) ------
+const HEX = 46, SQRT3 = Math.sqrt(3);
+const CORNERS = [[0,-1],[SQRT3/2,-.5],[SQRT3/2,.5],[0,1],[-SQRT3/2,.5],[-SQRT3/2,-.5]];
+const BOARD = GAME.events.find(r => r.event.type === "BoardLaid").event;
+const G = (() => {
+  const hexes = BOARD.hexes;
+  const raw = hexes.map(h => ({x: HEX*SQRT3*(h.q + h.r/2), y: HEX*1.5*h.r}));
+  const vertexPos = new Map(), edgeEnds = new Map(), edgeKeys = new Map();
+  hexes.forEach((h,i) => {
+    for (let c = 0; c < 6; c++) {
+      const v = h.vertices[c];
+      if (!vertexPos.has(v)) vertexPos.set(v, {x: raw[i].x + HEX*CORNERS[c][0], y: raw[i].y + HEX*CORNERS[c][1]});
+      const a = h.vertices[c], b = h.vertices[(c+1)%6];
+      const key = `${Math.min(a,b)}-${Math.max(a,b)}`;
+      if (!edgeKeys.has(key)) { edgeKeys.set(key, edgeKeys.size); edgeEnds.set(edgeKeys.size-1, [Math.min(a,b), Math.max(a,b)]); }
+    }
+  });
+  const xs = [...vertexPos.values()].map(p=>p.x), ys = [...vertexPos.values()].map(p=>p.y);
+  const pad = HEX*1.35, minX = Math.min(...xs)-pad, minY = Math.min(...ys)-pad;
+  for (const p of vertexPos.values()) { p.x -= minX; p.y -= minY; }
+  const hexCenter = raw.map(p => ({x: p.x-minX, y: p.y-minY}));
+  return {hexes, hexCenter, vertexPos, edgeEnds, width: Math.max(...xs)-Math.min(...xs)+2*pad, height: Math.max(...ys)-Math.min(...ys)+2*pad};
+})();
+
+// ---- fold the event log up to a step --------------------------------------
+function fold(step) {
+  const f = {buildings: new Map(), roads: new Map(), robber: BOARD.desert, publicVp: [0,0,0,0],
+             lastDice: null, longestRoad: null, largestArmy: null, turn: 0};
+  for (const {event: e} of GAME.events.slice(0, step)) {
+    switch (e.type) {
+      case "TurnStarted": f.turn = e.turn; break;
+      case "SetupSettlementPlaced": case "SettlementBuilt":
+        f.buildings.set(e.vertex, {owner: e.seat, city: false}); f.publicVp[e.seat] += 1; break;
+      case "CityBuilt":
+        f.buildings.set(e.vertex, {owner: e.seat, city: true}); f.publicVp[e.seat] += 1; break;
+      case "SetupRoadPlaced": case "RoadBuilt": f.roads.set(e.edge, e.seat); break;
+      case "RobberMoved": f.robber = e.hex; break;
+      case "DiceRolled": f.lastDice = [e.d1, e.d2]; break;
+      case "LongestRoadClaimed":
+        if (f.longestRoad !== null) f.publicVp[f.longestRoad] -= 2;
+        f.longestRoad = e.seat ?? null;
+        if (f.longestRoad !== null) f.publicVp[f.longestRoad] += 2;
+        break;
+      case "LargestArmyClaimed":
+        if (f.largestArmy !== null) f.publicVp[f.largestArmy] -= 2;
+        f.largestArmy = e.seat; f.publicVp[e.seat] += 2;
+        break;
+    }
+  }
+  return f;
+}
+
+// ---- terrain art (mirrors frontend HexBoard.tsx — original artwork) -------
+const TERRAIN_FILL = {fields:["#e8c95a","#d4a92f"], forest:["#3f7d3c","#2a5c28"], pasture:["#a3c86a","#7ea94b"],
+                      hills:["#c96f42","#a9542d"], mountains:["#9aa1ab","#767e8b"], desert:["#e3d3a2","#d0bc82"]};
+const pips = (n) => 6 - Math.abs(7 - n);
+function decor(t, c) {
+  const s = HEX;
+  if (t === "forest") return `<g fill="#1d4520" opacity=".85">${[[-0.42,0.1],[0.28,-0.3],[0.05,0.42]].map(([dx,dy]) =>
+    `<path d="M ${c.x+dx*s} ${c.y+dy*s} l ${s*.14} ${s*.3} h ${-s*.28} Z M ${c.x+dx*s} ${c.y+(dy-.16)*s} l ${s*.11} ${s*.24} h ${-s*.22} Z"/>`).join("")}</g>`;
+  if (t === "hills") return `<g fill="#8a3f1d" opacity=".75">${[[-0.45,0.05],[-0.12,0.05],[0.21,0.05],[-0.28,0.24],[0.05,0.24]].map(([dx,dy]) =>
+    `<rect x="${c.x+dx*s}" y="${c.y+dy*s}" width="${s*.28}" height="${s*.14}" rx="${s*.03}"/>`).join("")}</g>`;
+  if (t === "mountains") return `<g>
+    <path d="M ${c.x-.5*s} ${c.y+.35*s} l ${.3*s} ${-.6*s} l ${.25*s} ${.6*s} Z" fill="#5d6570"/>
+    <path d="M ${c.x-.05*s} ${c.y+.35*s} l ${.28*s} ${-.75*s} l ${.3*s} ${.75*s} Z" fill="#6f7885"/>
+    <path d="M ${c.x+.16*s} ${c.y-.18*s} l ${.07*s} ${-.22*s} l ${.12*s} ${.3*s} Z" fill="#e8ecf2"/></g>`;
+  if (t === "fields") return `<g>${[[-0.4,-0.12,-1],[0.36,-0.05,1],[-0.06,0.28,-1],[0.18,0.34,1]].map(([dx,dy,lean]) => {
+    const bx = c.x+dx*s, by = c.y+(dy+.42)*s, tx = bx+lean*.08*s, ty = c.y+dy*s;
+    const heads = [0,.13,.26].map(t2 => ({x: tx+(bx-tx)*t2, y: ty+(by-ty)*t2}));
+    const kernel = (x,y,rot) => `<ellipse cx="${x}" cy="${y}" rx="${.055*s}" ry="${.026*s}" fill="#f2da7a" stroke="#a87f14" stroke-width=".7" transform="rotate(${rot} ${x} ${y})"/>`;
+    return `<path d="M ${bx} ${by} Q ${bx} ${by-.24*s} ${tx} ${ty}" fill="none" stroke="#9c7a1c" stroke-width="1.5"/>`
+      + heads.map((h,i) => kernel(h.x-.05*s, h.y, -38*lean-12) + kernel(h.x+.05*s, h.y, 38*lean+12)
+        + (i === 0 ? `<ellipse cx="${h.x}" cy="${h.y-.05*s}" rx="${.026*s}" ry="${.055*s}" fill="#f2da7a" stroke="#a87f14" stroke-width=".7"/>
+           <path d="M ${h.x} ${h.y-.08*s} l ${lean*.05*s} ${-.14*s} M ${h.x} ${h.y-.08*s} l ${lean*.12*s} ${-.1*s}" stroke="#c9a33b" stroke-width=".8" fill="none"/>` : "")).join("");
+  }).join("")}</g>`;
+  if (t === "pasture") return `<g fill="#f5f2e6" stroke="#c6c0a8" stroke-width=".8">${[[-0.3,-0.05],[0.22,0.18],[-0.05,0.36]].map(([dx,dy]) =>
+    `<ellipse cx="${c.x+dx*s}" cy="${c.y+dy*s}" rx="${s*.13}" ry="${s*.09}"/><circle cx="${c.x+(dx-.11)*s}" cy="${c.y+(dy-.03)*s}" r="${s*.05}" fill="#d8d2bd"/>`).join("")}</g>`;
+  return `<g stroke="#bfa86a" stroke-width="1.4" opacity=".7" fill="none">${[-0.15,0.1,0.32].map(dy =>
+    `<path d="M ${c.x-.4*s} ${c.y+dy*s} q ${.2*s} ${-.1*s} ${.4*s} 0 t ${.4*s} 0"/>`).join("")}</g>`;
+}
+function numberToken(n, c) {
+  const hot = n === 6 || n === 8, r = HEX*.31, col = hot ? "#c0392b" : "#3b3325";
+  return `<circle cx="${c.x}" cy="${c.y}" r="${r}" fill="#f7f0dc" stroke="#b3a684" stroke-width="1.5"/>
+    <text x="${c.x}" y="${c.y+r*.18}" text-anchor="middle" font-size="${r*(hot?1.15:1)}" font-weight="${hot?800:600}" fill="${col}" font-family="Georgia,serif">${n}</text>
+    <g fill="${hot?"#c0392b":"#6b604a"}">${Array.from({length: pips(n)}, (_,i) =>
+      `<circle cx="${c.x+(i-(pips(n)-1)/2)*(r*.3)}" cy="${c.y+r*.55}" r="${r*.07}"/>`).join("")}</g>`;
+}
+function robberAt(c) {
+  const s = HEX*.36;
+  return `<g transform="translate(${c.x+HEX*.42}, ${c.y-HEX*.1})">
+    <ellipse cx="0" cy="${s*.75}" rx="${s*.55}" ry="${s*.18}" fill="#00000055"/>
+    <path d="M ${-s*.45} ${s*.7} q 0 ${-s*.7} ${s*.2} ${-s*.9} a ${s*.28} ${s*.28} 0 1 1 ${s*.5} 0 q ${s*.2} ${s*.2} ${s*.2} ${s*.9} Z"
+      fill="#2b2b33" stroke="#101014" stroke-width="1.2"/></g>`;
+}
+const hexPts = (c) => CORNERS.map(k => `${c.x+HEX*k[0]},${c.y+HEX*k[1]}`).join(" ");
+
+function drawBoard(f) {
+  const cx = G.width/2, cy = G.height/2;
+  let h = `<svg viewBox="0 0 ${G.width} ${G.height}" class="boardsvg" role="img" aria-label="Catan board"><defs>`;
+  for (const [t,[l,d]] of Object.entries(TERRAIN_FILL))
+    h += `<radialGradient id="terrain-${t}" cx="50%" cy="42%" r="75%"><stop offset="0%" stop-color="${l}"/><stop offset="100%" stop-color="${d}"/></radialGradient>`;
+  h += `<radialGradient id="ocean" cx="50%" cy="50%" r="72%"><stop offset="0%" stop-color="#2e7396"/><stop offset="100%" stop-color="#1d4d68"/></radialGradient></defs>`;
+  h += `<rect width="${G.width}" height="${G.height}" fill="url(#ocean)" rx="14"/>`;
+  for (const k of [1.12, 1.24])
+    h += `<ellipse cx="${cx}" cy="${cy}" rx="${(G.width/2.4)*k}" ry="${(G.height/2.55)*k}" fill="none" stroke="#ffffff18" stroke-width="2"/>`;
+  G.hexes.forEach((hx,i) => {
+    const c = G.hexCenter[i];
+    h += `<polygon points="${hexPts(c)}" fill="url(#terrain-${hx.terrain})" stroke="#e8dcbd" stroke-width="2.6" stroke-linejoin="round"/>`;
+    h += decor(hx.terrain, c);
+    if (hx.number !== null) h += numberToken(hx.number, c);
+  });
+  for (const p of BOARD.ports) {
+    const a = G.vertexPos.get(p.vertices[0]), b = G.vertexPos.get(p.vertices[1]);
+    const mid = {x:(a.x+b.x)/2, y:(a.y+b.y)/2};
+    const dx = mid.x-cx, dy = mid.y-cy, len = Math.hypot(dx,dy)||1;
+    const at = {x: mid.x+dx/len*HEX*.62, y: mid.y+dy/len*HEX*.62};
+    const label = p.port.kind === "generic" ? "3:1" : `2:1 ${p.port.resource}`;
+    h += `<line x1="${a.x}" y1="${a.y}" x2="${at.x}" y2="${at.y}" stroke="#c9a86255" stroke-width="3"/>
+      <line x1="${b.x}" y1="${b.y}" x2="${at.x}" y2="${at.y}" stroke="#c9a86255" stroke-width="3"/>
+      <path d="M ${at.x-10} ${at.y} q 10 9 20 0 l -3 -4 h -14 Z M ${at.x} ${at.y-2} v -9 l 8 7 Z" fill="#e8dcbd" stroke="#8a7448" stroke-width="1"/>
+      <text x="${at.x}" y="${at.y+16}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#f3ead2" font-family="Georgia,serif">${label}</text>`;
+  }
+  for (const [edge, owner] of f.roads) {
+    const ends = G.edgeEnds.get(edge);
+    if (!ends) continue;
+    const a = G.vertexPos.get(ends[0]), b = G.vertexPos.get(ends[1]), t = .18;
+    const ax = a.x+(b.x-a.x)*t, ay = a.y+(b.y-a.y)*t, bx = b.x-(b.x-a.x)*t, by = b.y-(b.y-a.y)*t;
+    h += `<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="${PS[owner]}" stroke-width="9" stroke-linecap="round"/>
+      <line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="${PC[owner]}" stroke-width="5.5" stroke-linecap="round"/>`;
+  }
+  for (const [vertex, b] of f.buildings) {
+    const p = G.vertexPos.get(vertex);
+    if (!p) continue;
+    const s = HEX*(b.city ? .3 : .24);
+    const d = b.city
+      ? `M ${p.x-s} ${p.y+s*.8} v ${-s*1.1} l ${s*.5} ${-s*.55} l ${s*.5} ${s*.55} v ${s*.35} h ${s} v ${s*.75} Z`
+      : `M ${p.x-s} ${p.y+s*.85} v ${-s} l ${s} ${-s*.8} l ${s} ${s*.8} v ${s} Z`;
+    h += `<path d="${d}" fill="${PC[b.owner]}" stroke="${PS[b.owner]}" stroke-width="2" stroke-linejoin="round"/>`;
+  }
+  h += robberAt(G.hexCenter[f.robber] ?? {x:cx,y:cy});
+  return `${h}</svg>`;
+}
+
+// ---- trade flow up to a step ----------------------------------------------
+function drawTrades(step) {
+  const flow = Array.from({length:4}, () => [0,0,0,0]);
+  let executed = 0;
+  for (const {event: e} of GAME.events.slice(0, step)) {
+    if (e.type !== "TradeExecuted") continue;
+    const give = Object.values(e.offer.give).reduce((s,n)=>s+n,0);
+    const receive = Object.values(e.offer.receive).reduce((s,n)=>s+n,0);
+    flow[e.proposer][e.with] += give;
+    flow[e.with][e.proposer] += receive;
+    executed++;
+  }
+  const max = Math.max(1, ...flow.flat());
+  $("tmnote").textContent = executed === 0 ? "No player trades executed yet." : `${executed} executed trade(s) — cards row → column.`;
+  let h = `<table class="tm"><tr><th></th>${[0,1,2,3].map(s=>`<th style="color:${PT[s]}">P${s}</th>`).join("")}</tr>`;
+  for (let a = 0; a < 4; a++) {
+    h += `<tr><th style="color:${PT[a]}">P${a}</th>`;
+    for (let b = 0; b < 4; b++) {
+      const bg = a === b ? "transparent" : `rgba(179,80,45,${flow[a][b]/max*.55})`;
+      h += `<td style="background:${bg}">${a === b ? "—" : flow[a][b] || ""}</td>`;
+    }
+    h += "</tr>";
+  }
+  $("tm").innerHTML = `${h}</table>`;
+}
+
+// ---- slider ---------------------------------------------------------------
+const slider = $("step");
+slider.max = GAME.events.length;
+slider.value = GAME.events.length;
+function refresh() {
+  const step = Number(slider.value);
+  const f = fold(step);
+  $("board").innerHTML = drawBoard(f);
+  $("stepinfo").textContent = `event ${step}/${GAME.events.length}${f.lastDice ? ` — last roll ${f.lastDice[0]}+${f.lastDice[1]}` : ""}`;
+  $("vps").innerHTML = GAME.seats.map(s => {
+    const done = step >= GAME.events.length;
+    const badges = [f.longestRoad === s.seat ? "🛣" : "", f.largestArmy === s.seat ? "⚔" : ""].join("");
+    return `<div class="vprow"><span class="pn" style="color:${PT[s.seat]}">P${s.seat} ${badges}</span><b>${done ? `${s.final_vp} VP final` : `${f.publicVp[s.seat]} VP shown`}</b></div>`;
+  }).join("");
+  drawTrades(step);
+}
+slider.addEventListener("input", refresh);
+refresh();
+
+// ---- transcript -----------------------------------------------------------
+const thoughtsAt = new Map();
+for (const s of GAME.seats) for (const t of (s.thoughts || [])) {
+  const list = thoughtsAt.get(t.at_event) || [];
+  list.push({seat: s.seat, decision: t.decision, text: t.text});
+  thoughtsAt.set(t.at_event, list);
+}
+const renderThoughts = (idx) => (thoughtsAt.get(idx) || []).map(t =>
+  `<details class="thought"><summary>💭 P${t.seat} thinking before ${esc(t.decision)}</summary><p>${esc(t.text)}</p></details>`).join("");
+
+// Wording comes from the engine's canonical renderer (RENDERED); this switch
+// only adds a speaker chip and a tinted row for a handful of event kinds.
+function renderEvent(rec) {
+  const e = rec.event, line = esc(RENDERED[rec.idx] ?? e.type);
+  const priv = rec.visibility !== "Public";
+  const tag = priv ? `<span class="r">[private P${rec.visibility.Private}]</span>` : "";
+  const seat = e.seat ?? e.proposer;
+  const cls = e.type === "Said" ? "say"
+    : ["TradeProposed","TradeResponded","TradeExecuted"].includes(e.type) ? "trade"
+    : ["GameStarted","BoardLaid","TurnStarted","TradeWindowClosed"].includes(e.type) ? "sys" : "";
+  const pre = seat !== undefined && (cls === "say" || cls === "trade") ? chip(seat) : "";
+  const body = e.type === "GameEnded" ? `<b>${line}</b>` : line;
+  return `<div class="ev ${priv ? "private" : cls}">${tag}${pre}${body}</div>`;
+}
+
+const out = [];
+let turnBuf = [], turnNo = null;
+const flush = () => {
+  if (turnNo === null) return;
+  const last = turnNo === GAME.events[GAME.events.length-1].round;
+  out.push(`<details class="turn"${last ? " open" : ""}><summary>${turnNo === 0 ? "Setup" : `Turn ${turnNo}`} <span class="n">(${turnBuf.length} events)</span></summary>${turnBuf.join("")}</details>`);
+  turnBuf = [];
+};
+for (const rec of GAME.events) {
+  if (rec.round !== turnNo) { flush(); turnNo = rec.round; }
+  turnBuf.push(renderThoughts(rec.idx) + renderEvent(rec));
+}
+turnBuf.push(renderThoughts(GAME.events.length));
+flush();
+$("log").innerHTML = out.join("");
+
+// ---- reliability ----------------------------------------------------------
+$("rel").innerHTML = `<tr><th>Seat</th><th>Model</th><th>VP</th><th>Place</th><th>Malformed</th><th>Illegal</th><th>Forced</th><th>Transport</th><th>Tokens in</th><th>Tokens out (incl. reasoning)</th></tr>` +
+  GAME.seats.map(s=>`<tr><td style="color:${PT[s.seat]};font-weight:700">P${s.seat}</td><td>${esc(s.model_id)}</td><td class="num">${s.final_vp}</td><td class="num">${s.placement}</td><td class="num">${s.reliability.malformed_outputs}</td><td class="num">${s.reliability.illegal_moves}</td><td class="num">${s.reliability.forced_defaults}</td><td class="num">${s.reliability.transport_failures}</td><td class="num">${s.usage.prompt_tokens.toLocaleString()}</td><td class="num">${s.usage.completion_tokens.toLocaleString()}</td></tr>`).join("");
+</script>
+</body>
+</html>

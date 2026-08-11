@@ -341,7 +341,7 @@ the physical tabletop game — nice enough to *watch*, not just inspect.
   the robber's move, resources produced on a roll); dice shown as pip faces.
 - [ ] All artwork is **original SVG evoking the tabletop game** — no CATAN
   trademark, logo, or copied assets (see §6 legal note).
-- [ ] Standalone offline HTML report (`catan_export_game_report`) from a
+- [x] Standalone offline HTML report (`catan_export_game_report`) from a
   Catan-specific template, driven like `make game-report`.
 - [ ] Catan gets its own visual theme; SH's propaganda-poster brand is not
   reused.

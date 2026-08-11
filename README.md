@@ -154,6 +154,15 @@ The frontend's game switcher adds a Catan replay console — an illustrated
 tabletop board with a step slider, the omniscient transcript with each agent's
 private reasoning, and a who-traded-with-whom card-flow matrix.
 
+Like the Secret Hitler report, any Catan game exports to a **single
+self-contained HTML report** (replayable board with step slider, turn-grouped
+transcript with collapsible reasoning, trade-flow matrix, reliability + cost):
+
+```bash
+make catan-game-report GAME=<game_id>       # stored game (needs Postgres)
+make catan-game-report REC=<record.json>    # from a GameRecord JSON, no DB
+```
+
 Scaffold a new command with `make new name=fetch_url` (or `shbench new
 fetch_url`) — it self-registers, so it's immediately callable over the CLI and
 the API.
