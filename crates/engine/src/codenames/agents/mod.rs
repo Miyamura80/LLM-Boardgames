@@ -7,9 +7,18 @@
 //! table talk), so `decide` is the whole interface — the Catan shape, not the
 //! Secret Hitler one.
 
+mod embedding_bot;
+mod golden;
+mod llm_agent;
+pub mod prompts;
 mod random_bot;
+mod vectors;
 
+pub use embedding_bot::{EmbeddingGreedyBot, EmbeddingTuning};
+pub use golden::scaffold_version;
+pub use llm_agent::LlmSeatAgent;
 pub use random_bot::RandomLegalBot;
+pub use vectors::{cosine, VectorTable, VectorTableError};
 
 use super::actions::{Action, DecisionPoint};
 use super::observation::Observation;

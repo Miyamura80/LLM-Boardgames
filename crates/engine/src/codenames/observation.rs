@@ -63,6 +63,10 @@ pub struct Observation {
     pub phase: &'static str,
     pub winner: Option<Team>,
     pub end_reason: Option<EndReason>,
+    /// The effective clue-word length cap for this game (config-driven, so an
+    /// agent cannot assume the default). The engine stays the sole legality
+    /// authority; this is the same number `apply()` enforces.
+    pub clue_word_max_len: usize,
     /// The full key card — `Some` for spymaster seats only.
     pub key: Option<KeyCard>,
     /// Everything this seat legitimately witnessed, in order (in Codenames,
@@ -134,6 +138,7 @@ impl GameState {
             phase: self.phase.name(),
             winner: self.winner,
             end_reason: self.end_reason,
+            clue_word_max_len: self.config.clue_word_max_len,
             key: (role == Role::Spymaster).then(|| self.board.key_card()),
             history: self
                 .events
@@ -198,6 +203,23 @@ mod tests {
         assert_eq!(a.team, Team::A);
         assert_eq!(b.team, Team::B);
         assert_eq!(a.grid, b.grid, "the grid itself is symmetric");
+    }
+
+    /// Agents must be able to read the configured clue cap off their own
+    /// observation — assuming the default would make them give illegal clues
+    /// on a game configured tighter.
+    #[test]
+    fn every_seat_sees_the_effective_clue_word_cap() {
+        let mut state = testkit::scripted_game(31);
+        state.config.clue_word_max_len = 6;
+        for seat in [SEAT_A_SPYMASTER, SEAT_A_OPERATIVE, SEAT_B_OPERATIVE] {
+            assert_eq!(state.observe(seat).clue_word_max_len, 6);
+        }
+        let default = testkit::scripted_game(31);
+        assert_eq!(
+            default.observe(SEAT_A_SPYMASTER).clue_word_max_len,
+            GameConfig::default().clue_word_max_len
+        );
     }
 
     #[test]

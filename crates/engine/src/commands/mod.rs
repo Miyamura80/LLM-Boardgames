@@ -44,6 +44,7 @@ use std::time::Instant;
 mod catan_game;
 mod catan_match;
 mod catan_report;
+mod codenames_game;
 mod http_request;
 mod list_dir;
 mod ping;

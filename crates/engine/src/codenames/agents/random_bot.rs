@@ -10,7 +10,6 @@
 use super::{AgentError, AgentReply, SeatAgent};
 use crate::codenames::actions::{Action, DecisionPoint};
 use crate::codenames::observation::Observation;
-use crate::codenames::types::GameConfig;
 use crate::codenames::wordlist::Wordlist;
 use async_trait::async_trait;
 use rand::{Rng, SeedableRng};
@@ -22,11 +21,6 @@ pub struct RandomLegalBot {
     rng: ChaCha8Rng,
     /// Clue candidates. Parsed once: the pool never changes mid-game.
     wordlist: Wordlist,
-    /// The engine's cap is config-driven and absent from observations, so the
-    /// bot assumes the default. A game configured *below* the default would
-    /// only narrow this bot's candidate set, never make its clue illegal —
-    /// candidates are re-filtered against the cap it knows.
-    clue_word_max_len: usize,
 }
 
 impl RandomLegalBot {
@@ -34,15 +28,15 @@ impl RandomLegalBot {
         Self {
             rng: ChaCha8Rng::seed_from_u64(seed),
             wordlist: Wordlist::default_embedded(),
-            clue_word_max_len: GameConfig::default().clue_word_max_len,
         }
     }
 
     /// A seeded-random pool word that is legal on the current board, with the
     /// engine's synthetic fallback for the (practically unreachable) case
-    /// where every pool word collides with a face-down card.
+    /// where every pool word collides with a face-down card. The length cap is
+    /// config-driven, so it is read off the observation rather than assumed.
     fn clue_word(&mut self, obs: &Observation) -> String {
-        let max_len = self.clue_word_max_len;
+        let max_len = obs.clue_word_max_len;
         let candidates: Vec<&String> = self
             .wordlist
             .words()

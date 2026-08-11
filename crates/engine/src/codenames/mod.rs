@@ -6,6 +6,8 @@
 //! ```text
 //! types / wordlist / board / events / state / transitions  – rules engine
 //! actions / observation                                    – agent contract
+//! agents                                                   – bots + LLM seats
+//! runner                                                   – one full game
 //! testkit                                                  – scripted games
 //! ```
 //!
@@ -18,6 +20,7 @@ pub mod agents;
 pub mod board;
 pub mod events;
 pub mod observation;
+pub mod runner;
 pub mod state;
 pub mod testkit;
 mod transitions;
