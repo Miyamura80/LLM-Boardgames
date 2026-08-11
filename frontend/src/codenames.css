@@ -1,36 +1,103 @@
-/* Codenames theme — "briefing table": a dark slate felt tabletop with linen
- * word cards and letterpress type. Deliberately distinct from the Secret Hitler
- * propaganda parchment/red-orange and from Catan's warm terrain tones, and
- * entirely original — no Codenames (CGE) artwork, logo, or trade dress.
+/* Codenames theme — "the table": a clean, cool light desk with ivory word
+ * cards carrying bold dark uppercase type. Deliberately distinct from the
+ * Secret Hitler propaganda parchment/red-orange and from Catan's warm terrain
+ * tones, and entirely original — no Codenames (CGE) artwork, logo, or trade
+ * dress; only the generic information design of a word-grid game.
  *
- * Team colors are ink-stamp hues that appear nowhere else in the repo:
- *   Team A = indigo  #4a53d6      Team B = rose    #c53f7c
- *   Bystander = manila #cdbb99     Assassin = obsidian #0c0e12
+ * Identity palette, shared 1:1 with the offline game report template:
+ *   Team A = vivid red  #cc372c     Team B = vivid blue #2270b8
+ *   Bystander = tan     #cdb182     Assassin = near-black #15171b
  * Color is never the only signal: every identity also carries a letter tag. */
 
 .cn-root {
-	--cn-felt: #222a33;
-	--cn-felt-deep: #1a2027;
-	--cn-rule: #38424e;
-	--cn-card: #f3ede0;
-	--cn-card-edge: #d3c8b2;
-	--cn-ink: #1d232b;
-	--cn-paper-ink: #e8eef5;
-	--cn-dim: #93a1b0;
-	--cn-brass: #c2a15c;
-	--cn-a: #4a53d6;
-	--cn-a-soft: #c9cbf3;
-	--cn-b: #c53f7c;
-	--cn-b-soft: #f0cadd;
-	--cn-bystander: #cdbb99;
-	--cn-assassin: #0c0e12;
-	--cn-bone: #edeae2;
+	--cn-felt: #e8ebee; /* the desk the grid sits on */
+	--cn-felt-deep: #f7f8fa; /* raised panels read lighter than the desk */
+	--cn-rule: #d5dae0;
+	--cn-card: #faf5e8;
+	--cn-card-edge: #ddd2b9;
+	--cn-ink: #17191d;
+	--cn-paper-ink: #191d22;
+	--cn-dim: #64707c;
+	--cn-brass: #33404c; /* neutral graphite accent — the teams carry the color */
+	--cn-a: #cc372c;
+	--cn-a-soft: #f8dcd7;
+	--cn-a-deep: #96261c;
+	--cn-a-ink: #96261c; /* team red legible as text on the light desk */
+	--cn-b: #2270b8;
+	--cn-b-soft: #d7e6f4;
+	--cn-b-deep: #16507f;
+	--cn-b-ink: #16507f;
+	--cn-card-hi: #fffcf3; /* the lit top edge of a face-down word card */
+	--cn-bystander: #cdb182;
+	--cn-bystander-edge: #b3945f;
+	--cn-bystander-ink: #33291a; /* dark type ON a tan card */
+	--cn-bystander-text: #87703f; /* tan as running text on the page */
+	--cn-assassin: #15171b;
+	--cn-bone: #f2efe6;
+	--cn-alarm: #b4241a;
 
 	background: var(--cn-felt);
 	color: var(--cn-paper-ink);
 	padding: 1rem 1.25rem 3rem;
 	min-height: 100vh;
 	font-family: var(--font-sans);
+}
+
+/* Same identity on a dark neutral desk: the teams stay vivid, the word cards
+ * only deepen to a warmer ivory. Mirrors the report's token triple. */
+:root.dark .cn-root,
+:root[data-theme="dark"] .cn-root {
+	--cn-felt: #131619;
+	--cn-felt-deep: #1c2026;
+	--cn-rule: #333a43;
+	--cn-card: #ece5d2;
+	--cn-card-edge: #b9ac90;
+	--cn-ink: #16181c;
+	--cn-paper-ink: #e6eaee;
+	--cn-dim: #96a2ae;
+	--cn-brass: #93a3b2;
+	--cn-a: #d33a2f;
+	--cn-a-soft: #3d1a14;
+	--cn-a-deep: #93251b;
+	--cn-a-ink: #ef7a68;
+	--cn-b: #2c6fd6;
+	--cn-b-soft: #132c48;
+	--cn-b-deep: #1a4a9c;
+	--cn-b-ink: #6ea8ea;
+	--cn-card-hi: #f4eeda;
+	--cn-bystander: #cdb182;
+	--cn-bystander-edge: #ac8e59;
+	--cn-bystander-text: #cdb182;
+	--cn-assassin: #0d0f12;
+	--cn-alarm: #f0836f;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not(.light):not([data-theme="light"]) .cn-root {
+		--cn-felt: #131619;
+		--cn-felt-deep: #1c2026;
+		--cn-rule: #333a43;
+		--cn-card: #ece5d2;
+		--cn-card-edge: #b9ac90;
+		--cn-ink: #16181c;
+		--cn-paper-ink: #e6eaee;
+		--cn-dim: #96a2ae;
+		--cn-brass: #93a3b2;
+		--cn-a: #d33a2f;
+		--cn-a-soft: #3d1a14;
+		--cn-a-deep: #93251b;
+		--cn-a-ink: #ef7a68;
+		--cn-b: #2c6fd6;
+		--cn-b-soft: #132c48;
+		--cn-b-deep: #1a4a9c;
+		--cn-b-ink: #6ea8ea;
+		--cn-card-hi: #f4eeda;
+		--cn-bystander: #cdb182;
+		--cn-bystander-edge: #ac8e59;
+		--cn-bystander-text: #cdb182;
+		--cn-assassin: #0d0f12;
+		--cn-alarm: #f0836f;
+	}
 }
 
 /* ─── Controls ──────────────────────────────────────────────────────────── */
@@ -101,7 +168,7 @@
 
 .cn-scrub input[type="range"] {
 	flex: 1;
-	accent-color: var(--cn-brass);
+	accent-color: var(--cn-a);
 }
 
 /* ─── Stage ─────────────────────────────────────────────────────────────── */
@@ -131,16 +198,31 @@
 	font-size: 0.85rem;
 }
 
+/* Each side's agent count sits on a soft tint of its own team color, so the
+ * score reads at a glance the way the board does. */
+.cn-score {
+	border-radius: 3px;
+	padding: 0.1rem 0.45rem;
+}
+
+.cn-score.cn-side-a {
+	background: var(--cn-a-soft);
+}
+
+.cn-score.cn-side-b {
+	background: var(--cn-b-soft);
+}
+
 .cn-score b {
 	font-size: 1.1rem;
 }
 
 .cn-side-a {
-	color: var(--cn-a-soft);
+	color: var(--cn-a-ink);
 }
 
 .cn-side-b {
-	color: var(--cn-b-soft);
+	color: var(--cn-b-ink);
 }
 
 .cn-now {
@@ -176,7 +258,9 @@
 	border: 1px solid var(--cn-card-edge);
 	background: var(--cn-card);
 	color: var(--cn-ink);
-	box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+	box-shadow:
+		0 1px 0 rgba(23, 33, 43, 0.12),
+		0 3px 8px rgba(23, 33, 43, 0.1);
 	text-align: center;
 	transition:
 		background 160ms ease,
@@ -196,7 +280,7 @@
 
 .cn-card-word {
 	font-family: var(--font-display);
-	font-weight: 600;
+	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
 	font-size: clamp(0.6rem, 1.15vw, 0.9rem);
@@ -204,10 +288,14 @@
 	word-break: break-word;
 }
 
-/* Face-down cards keep a linen face with a hairline base rule — the
+/* Face-down cards keep an ivory face with a hairline base rule — the
  * "word card on the table" look before anyone commits. */
 .cn-card-down {
-	background: linear-gradient(180deg, #f6f1e6 0%, var(--cn-card) 100%);
+	background: linear-gradient(
+		180deg,
+		var(--cn-card-hi) 0%,
+		var(--cn-card) 100%
+	);
 }
 
 .cn-card-down::after {
@@ -219,26 +307,27 @@
 	border-bottom: 1px solid var(--cn-card-edge);
 }
 
-/* Flipped identities. */
+/* Flipped identities: vivid red and blue take white type, the tan bystander
+ * takes dark type — the way the cards read across a real table. */
 .cn-id-agent-a {
 	background: var(--cn-a);
-	border-color: #333bb0;
-	color: #f2f3ff;
+	border-color: var(--cn-a-deep);
+	color: #fff;
 }
 
 .cn-id-agent-b {
 	background: var(--cn-b);
-	border-color: #9d2c60;
-	color: #fff3f8;
+	border-color: var(--cn-b-deep);
+	color: #fff;
 }
 
 .cn-id-bystander {
 	background: var(--cn-bystander);
-	border-color: #b6a483;
-	color: #3a3223;
+	border-color: var(--cn-bystander-edge);
+	color: var(--cn-bystander-ink);
 }
 
-/* The assassin is unmistakable: obsidian face, bone type, doubled edge. */
+/* The assassin is unmistakable: near-black face, bone type, doubled edge. */
 .cn-id-assassin {
 	background: var(--cn-assassin);
 	border: 2px solid var(--cn-bone);
@@ -268,23 +357,23 @@
 
 .cn-key-agent-a {
 	border-color: var(--cn-a);
-	background: linear-gradient(180deg, #e4e5fb 0%, var(--cn-card) 75%);
+	background: linear-gradient(180deg, #f9ddd8 0%, var(--cn-card) 75%);
 }
 
 .cn-key-agent-b {
 	border-color: var(--cn-b);
-	background: linear-gradient(180deg, #fadfeb 0%, var(--cn-card) 75%);
+	background: linear-gradient(180deg, #dbe9f6 0%, var(--cn-card) 75%);
 }
 
 .cn-key-bystander {
-	border-color: var(--cn-bystander);
+	border-color: var(--cn-bystander-edge);
 }
 
 .cn-key-assassin {
 	border-color: var(--cn-assassin);
 	background: repeating-linear-gradient(
 		135deg,
-		#dcd6c8 0 6px,
+		#d6d1c2 0 6px,
 		var(--cn-card) 6px 12px
 	);
 }
@@ -387,19 +476,19 @@
 }
 
 .cn-out-agent-a {
-	color: var(--cn-a-soft);
+	color: var(--cn-a-ink);
 }
 
 .cn-out-agent-b {
-	color: var(--cn-b-soft);
+	color: var(--cn-b-ink);
 }
 
 .cn-out-bystander {
-	color: var(--cn-bystander);
+	color: var(--cn-bystander-text);
 }
 
 .cn-out-assassin {
-	color: #ff8fb1;
+	color: var(--cn-alarm);
 }
 
 .cn-seek {
@@ -433,7 +522,7 @@
 
 .cn-thought p {
 	margin: 0.2rem 0 0.3rem;
-	color: var(--cn-bone);
+	color: var(--cn-paper-ink);
 	font-family: var(--sh-font-typewriter);
 	opacity: 0.85;
 }
@@ -527,6 +616,6 @@
 }
 
 .cn-error {
-	color: #ff8fb1;
+	color: var(--cn-alarm);
 	font-weight: 700;
 }

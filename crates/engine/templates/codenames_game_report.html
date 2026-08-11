@@ -5,45 +5,58 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Codenames Evals — Game Report</title>
 <style>
+/* Codenames table dressing — a clean light desk, ivory word cards with bold
+   dark uppercase type, vivid red vs vivid blue teams, tan bystanders and a
+   near-black assassin. Original execution; no third-party artwork or marks. */
 :root{
-  --paper:#efe6d1; --panel:#fbf6e9; --card:#fffaf0; --ink:#2b2620; --muted:#867a64; --line:#dccfb0;
-  --accent:#8a5a2b; --rule:#c9b990;
-  --a:#b0462c; --a-deep:#7d2d19; --a-soft:#f2d8cd;
-  --b:#2d6b88; --b-deep:#1b4a61; --b-soft:#d0e2ea;
-  --neut:#b09873; --neut-deep:#84704c; --neut-soft:#efe4cb;
-  --kill:#16130e; --bone:#efe6d0;
+  --paper:#e8ebee; --panel:#f7f8fa; --surface:#ffffff; --ink:#191d22; --muted:#64707c; --line:#d5dae0;
+  --accent:#33404c; --rule:#ddd2b9;
+  --card:#faf5e8; --card-ink:#17191d; --card-dim:#8b8371;
+  --a:#cc372c; --a-deep:#96261c; --a-soft:#f8dcd7;
+  --b:#2270b8; --b-deep:#16507f; --b-soft:#d7e6f4;
+  --neut:#cdb182; --neut-edge:#b3945f; --neut-deep:#87703f; --neut-ink:#33291a; --neut-soft:#f2e8d5;
+  --kill:#15171b; --kill-edge:#3d444d; --bone:#f2efe6;
+  --wash1:rgba(255,255,255,.85); --wash2:rgba(38,66,96,.07);
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  --serif:Georgia,'Iowan Old Style','Times New Roman',serif;
+  --display:ui-sans-serif,system-ui,-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif;
   --sans:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
-  --lift:0 2px 0 rgba(90,72,40,.16), 0 6px 16px rgba(60,45,20,.14);
+  --lift:0 1px 0 rgba(23,33,43,.10), 0 6px 16px rgba(23,33,43,.10);
 }
+/* Same identity on a dark neutral desk: teams stay vivid, cards deepen to a
+   warmer ivory rather than turning into dark chrome. */
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --paper:#14120e; --panel:#1e1a14; --card:#262019; --ink:#ece2cb; --muted:#a0937a; --line:#3a3226;
-  --accent:#d29a5c; --rule:#4a4030;
-  --a:#cd5b3d; --a-deep:#8c3520; --a-soft:#3a2018;
-  --b:#4d94b5; --b-deep:#1f5670; --b-soft:#16303c;
-  --neut:#a08a5f; --neut-deep:#6d5c3c; --neut-soft:#2c2517;
-  --lift:0 2px 0 rgba(0,0,0,.4), 0 6px 16px rgba(0,0,0,.45);
+  --paper:#131619; --panel:#1c2026; --surface:#242931; --ink:#e6eaee; --muted:#96a2ae; --line:#333a43;
+  --accent:#5d6c7a; --rule:#b9ac90;
+  --card:#ece5d2; --card-ink:#16181c; --card-dim:#7c7564;
+  --a:#d33a2f; --a-deep:#93251b; --a-soft:#3d1a14;
+  --b:#2c6fd6; --b-deep:#1a4a9c; --b-soft:#132c48;
+  --neut:#cdb182; --neut-edge:#ac8e59; --neut-deep:#7f6a3f; --neut-ink:#33291a; --neut-soft:#332b1c;
+  --kill:#0d0f12; --kill-edge:#efeadd; --bone:#f2efe6;
+  --wash1:rgba(255,255,255,.05); --wash2:rgba(0,0,0,.35);
+  --lift:0 1px 0 rgba(0,0,0,.45), 0 8px 18px rgba(0,0,0,.5);
 }}
 :root[data-theme="dark"]{
-  --paper:#14120e; --panel:#1e1a14; --card:#262019; --ink:#ece2cb; --muted:#a0937a; --line:#3a3226;
-  --accent:#d29a5c; --rule:#4a4030;
-  --a:#cd5b3d; --a-deep:#8c3520; --a-soft:#3a2018;
-  --b:#4d94b5; --b-deep:#1f5670; --b-soft:#16303c;
-  --neut:#a08a5f; --neut-deep:#6d5c3c; --neut-soft:#2c2517;
-  --lift:0 2px 0 rgba(0,0,0,.4), 0 6px 16px rgba(0,0,0,.45);
+  --paper:#131619; --panel:#1c2026; --surface:#242931; --ink:#e6eaee; --muted:#96a2ae; --line:#333a43;
+  --accent:#5d6c7a; --rule:#b9ac90;
+  --card:#ece5d2; --card-ink:#16181c; --card-dim:#7c7564;
+  --a:#d33a2f; --a-deep:#93251b; --a-soft:#3d1a14;
+  --b:#2c6fd6; --b-deep:#1a4a9c; --b-soft:#132c48;
+  --neut:#cdb182; --neut-edge:#ac8e59; --neut-deep:#7f6a3f; --neut-ink:#33291a; --neut-soft:#332b1c;
+  --kill:#0d0f12; --kill-edge:#efeadd; --bone:#f2efe6;
+  --wash1:rgba(255,255,255,.05); --wash2:rgba(0,0,0,.35);
+  --lift:0 1px 0 rgba(0,0,0,.45), 0 8px 18px rgba(0,0,0,.5);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--paper);color:var(--ink);font-family:var(--sans);
   font-size:clamp(13.5px,1.1vw + 9px,15px);line-height:1.55;
-  background-image:radial-gradient(circle at 18% 12%,rgba(255,255,255,.35),transparent 55%),
-                   radial-gradient(circle at 84% 78%,rgba(140,110,60,.10),transparent 60%)}
+  background-image:radial-gradient(circle at 18% 12%,var(--wash1),transparent 55%),
+                   radial-gradient(circle at 84% 78%,var(--wash2),transparent 60%)}
 .wrap{max-width:1120px;margin:0 auto;padding:clamp(.8rem,3vw,2.2rem) clamp(.6rem,2.5vw,1.2rem) 4rem;display:grid;gap:1.3rem}
 .wrap>*,.panel,.tablewrap,.grid,.turncard{min-width:0}
 .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
-h1{font-family:var(--serif);font-size:clamp(1.15rem,3.4vw,1.9rem);font-weight:600;text-wrap:balance;line-height:1.25}
-h2{font-family:var(--serif);font-size:clamp(1rem,2.4vw,1.2rem);font-weight:600;margin-bottom:.5rem}
-h3{font-family:var(--serif);font-size:.95rem;font-weight:600;margin:.9rem 0 .35rem}
+h1{font-family:var(--display);font-size:clamp(1.15rem,3.4vw,1.9rem);font-weight:600;text-wrap:balance;line-height:1.25}
+h2{font-family:var(--display);font-size:clamp(1rem,2.4vw,1.2rem);font-weight:600;margin-bottom:.5rem}
+h3{font-family:var(--display);font-size:.95rem;font-weight:600;margin:.9rem 0 .35rem}
 .note{font-size:12px;color:var(--muted)}
 .statrow{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.55rem}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.35rem .65rem;font-size:12.5px}
@@ -53,10 +66,10 @@ h3{font-family:var(--serif);font-size:.95rem;font-weight:600;margin:.9rem 0 .35r
 
 /* ---- result banner ---- */
 .banner{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem .9rem;border-radius:10px;padding:.7rem 1rem;
-  color:#fff8ec;box-shadow:var(--lift);border:1px solid rgba(0,0,0,.25)}
+  color:#fff;box-shadow:var(--lift);border:1px solid rgba(0,0,0,.25)}
 .banner.a{background:linear-gradient(100deg,var(--a-deep),var(--a))}
 .banner.b{background:linear-gradient(100deg,var(--b-deep),var(--b))}
-.banner .big{font-family:var(--serif);font-size:clamp(1rem,2.6vw,1.35rem);font-weight:700;letter-spacing:.02em}
+.banner .big{font-family:var(--display);font-size:clamp(1rem,2.6vw,1.35rem);font-weight:700;letter-spacing:.02em}
 .banner .why{font-size:12.5px;opacity:.92}
 .banner .sep{opacity:.5}
 
@@ -67,7 +80,7 @@ h3{font-family:var(--serif);font-size:.95rem;font-weight:600;margin:.9rem 0 .35r
 .seat .mdl{font-family:var(--mono);font-size:11.5px;overflow-wrap:anywhere;margin:.15rem 0}
 .seat .sub{color:var(--muted);font-size:11px;overflow-wrap:anywhere}
 .tag{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--accent);padding:.05rem .34rem;border-radius:3px;font-weight:700}
-.tag.grey{background:var(--muted)}
+.tag.grey{background:var(--muted);color:var(--panel)}
 
 /* ---- board ---- */
 .boardgrid{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(220px,.9fr);gap:1.1rem;align-items:start}
@@ -77,22 +90,27 @@ h3{font-family:var(--serif);font-size:.95rem;font-weight:600;margin:.9rem 0 .35r
   display:flex;align-items:center;justify-content:center;padding:.2rem;overflow:hidden;
   box-shadow:var(--lift);transition:transform .12s ease}
 .cd:hover{transform:translateY(-2px)}
-.cd .w{font-family:var(--serif);font-weight:700;text-transform:uppercase;letter-spacing:.055em;
+.cd .w{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.055em;color:var(--card-ink);
   font-size:clamp(7.5px,1.32vw,13px);text-align:center;overflow-wrap:anywhere;line-height:1.15;z-index:2}
-.cd .n{position:absolute;top:2px;left:4px;font-family:var(--mono);font-size:8px;color:var(--muted);opacity:.65;z-index:2}
+.cd .n{position:absolute;top:2px;left:4px;font-family:var(--mono);font-size:8px;color:var(--card-dim);opacity:.8;z-index:2}
 .cd .t{position:absolute;top:2px;right:4px;font-family:var(--mono);font-size:8px;font-weight:700;opacity:.8;z-index:2}
 .cd::before{content:"";position:absolute;inset:3px;border:1px solid var(--rule);border-radius:4px;opacity:.55}
 .cd .gl{position:absolute;right:-6px;bottom:-8px;width:46%;opacity:.22;z-index:1}
 /* revealed covers */
 .cd.rv{border-color:transparent}
-.cd.rv .w{color:#fff8ec;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.cd.rv .w{color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.cd.rv .n{color:#fff;opacity:.6}
 .cd.rv::before{border-color:rgba(255,255,255,.35)}
 .cd.rv.agent-a{background:linear-gradient(150deg,var(--a),var(--a-deep))}
 .cd.rv.agent-b{background:linear-gradient(150deg,var(--b),var(--b-deep))}
-.cd.rv.bystander{background:linear-gradient(150deg,var(--neut),var(--neut-deep))}
-.cd.rv.assassin{background:repeating-linear-gradient(135deg,#16130e,#16130e 9px,#221d15 9px,#221d15 18px)}
+/* Bystanders are pale tan with dark type, exactly as they read on the table. */
+.cd.rv.bystander{background:linear-gradient(150deg,var(--neut),var(--neut-edge))}
+.cd.rv.bystander .w{color:var(--neut-ink);text-shadow:0 1px 0 rgba(255,255,255,.28)}
+.cd.rv.bystander .n{color:var(--neut-ink);opacity:.7}
+.cd.rv.assassin .n{color:var(--bone);opacity:.55}
+.cd.rv.assassin{background:repeating-linear-gradient(135deg,#101216,#101216 9px,#191c22 9px,#191c22 18px)}
 .cd.rv.assassin .w{color:var(--bone);letter-spacing:.09em}
-.cd.rv.assassin::before{border-color:#c9a04a;box-shadow:0 0 0 2px rgba(201,160,74,.25) inset}
+.cd.rv.assassin::before{border-color:var(--bone);box-shadow:0 0 0 2px rgba(242,239,230,.22) inset}
 .cd.rv .gl{opacity:.4}
 /* key peek on face-down cards */
 .cd .dot{position:absolute;left:0;top:0;bottom:0;width:0;transition:width .12s ease}
@@ -100,11 +118,11 @@ body.peek .cd:not(.rv) .dot{width:6px}
 body.peek .cd:not(.rv).k-agent-a .dot{background:var(--a)}
 body.peek .cd:not(.rv).k-agent-b .dot{background:var(--b)}
 body.peek .cd:not(.rv).k-bystander .dot{background:var(--neut)}
-body.peek .cd:not(.rv).k-assassin .dot{background:var(--kill);box-shadow:0 0 0 1px #c9a04a inset}
-body.peek .cd:not(.rv).k-assassin{border-color:#c9a04a}
+body.peek .cd:not(.rv).k-assassin .dot{background:var(--kill);box-shadow:0 0 0 1px var(--bone) inset}
+body.peek .cd:not(.rv).k-assassin{border-color:var(--kill)}
 .controls{display:flex;gap:.55rem;align-items:center;margin-top:.75rem;flex-wrap:wrap}
 .controls input[type="range"]{flex:1;min-width:140px;accent-color:var(--a)}
-button.btn{font:inherit;font-size:12px;background:var(--card);color:var(--ink);border:1px solid var(--line);
+button.btn{font:inherit;font-size:12px;background:var(--surface);color:var(--ink);border:1px solid var(--line);
   border-radius:5px;padding:.2rem .5rem;cursor:pointer}
 button.btn:hover{border-color:var(--accent)}
 label.sw{display:inline-flex;align-items:center;gap:.3rem;font-size:12px;color:var(--muted);cursor:pointer}
@@ -120,9 +138,9 @@ label.sw{display:inline-flex;align-items:center;gap:.3rem;font-size:12px;color:v
 .trow .ct{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-left:auto}
 .keygrid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;max-width:250px}
 .kc{aspect-ratio:1.42;border-radius:3px;border:1px solid var(--rule);position:relative;display:flex;
-  align-items:center;justify-content:center;font-size:8px;color:#fff8ec;font-weight:700}
+  align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:700}
 .kc.agent-a{background:var(--a)}.kc.agent-b{background:var(--b)}
-.kc.bystander{background:var(--neut)}.kc.assassin{background:var(--kill);border-color:#c9a04a}
+.kc.bystander{background:var(--neut)}.kc.assassin{background:var(--kill);border-color:var(--kill-edge)}
 .kc.unknown{background:transparent;color:var(--muted)}
 .kc.done::after{content:"✓";position:absolute;font-size:9px;opacity:.85}
 .kc.done{opacity:.55}
@@ -132,33 +150,34 @@ label.sw{display:inline-flex;align-items:center;gap:.3rem;font-size:12px;color:v
 
 /* ---- transcript ---- */
 .log{display:grid;gap:.55rem;max-height:76vh;overflow-y:auto;padding:.15rem .3rem .15rem 0}
-.turncard{border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:8px;background:var(--card)}
+.turncard{border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:8px;background:var(--surface)}
 .turncard.a{border-left-color:var(--a)}.turncard.b{border-left-color:var(--b)}
 .th{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;padding:.4rem .6rem;border-bottom:1px dashed var(--line)}
-.tno{font-family:var(--serif);font-weight:700;font-size:13.5px}
+.tno{font-family:var(--display);font-weight:700;font-size:13.5px}
 .chip{display:inline-block;font-size:10px;font-weight:700;font-family:var(--mono);letter-spacing:.04em;
-  padding:.08rem .4rem;border-radius:4px;color:#fff8ec}
-.chip.a{background:var(--a)}.chip.b{background:var(--b)}.chip.n{background:var(--muted)}
-.clue{display:inline-flex;align-items:center;gap:.4rem;background:var(--panel);border:1px solid var(--rule);
+  padding:.08rem .4rem;border-radius:4px;color:#fff}
+.chip.a{background:var(--a)}.chip.b{background:var(--b)}.chip.n{background:var(--muted);color:var(--panel)}
+/* The clue reads as its own little word card sitting on the turn header. */
+.clue{display:inline-flex;align-items:center;gap:.4rem;background:var(--card);border:1px solid var(--rule);
   border-radius:999px;padding:.1rem .3rem .1rem .6rem;box-shadow:var(--lift)}
-.clue b{font-family:var(--serif);text-transform:uppercase;letter-spacing:.08em;font-size:12.5px}
+.clue b{font-family:var(--display);text-transform:uppercase;letter-spacing:.08em;font-size:12.5px;color:var(--card-ink)}
 .clue em{font-style:normal;font-family:var(--mono);font-weight:700;font-size:11px;width:1.25rem;height:1.25rem;
-  display:inline-flex;align-items:center;justify-content:center;border-radius:50%;color:#fff8ec;background:var(--accent)}
+  display:inline-flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;background:var(--accent)}
 .th .jump{margin-left:auto}
 .body{padding:.35rem .6rem .5rem}
 .g{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;font-size:12.5px;padding:.18rem .3rem;border-radius:5px}
 .g+.g{margin-top:.15rem}
-.gw{font-family:var(--serif);font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:12.5px}
-.out{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:.05rem .38rem;border-radius:4px;color:#fff8ec}
+.gw{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:12.5px}
+.out{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:.05rem .38rem;border-radius:4px;color:#fff}
 .g.hit.a{background:var(--a-soft)}
 .g.hit.b{background:var(--b-soft)}
 .g.miss{background:var(--neut-soft)}
-.g.fatal{background:linear-gradient(90deg,rgba(22,19,14,.92),rgba(22,19,14,.75));color:var(--bone)}
+.g.fatal{background:linear-gradient(90deg,rgba(16,18,22,.94),rgba(16,18,22,.78));color:var(--bone)}
 .g.fatal .gw{color:var(--bone)}
 .out.agent-a{background:var(--a)}.out.agent-b{background:var(--b)}
-.out.bystander{background:var(--neut-deep)}.out.assassin{background:var(--kill);box-shadow:0 0 0 1px #c9a04a inset}
+.out.bystander{background:var(--neut-deep)}.out.assassin{background:var(--kill);box-shadow:0 0 0 1px var(--kill-edge) inset}
 .g .end{font-size:11px;color:var(--muted)}
-.g.fatal .end{color:#d7c79a}
+.g.fatal .end{color:#b6bec7}
 .sys{font-size:12px;color:var(--muted);font-style:italic;padding:.15rem .3rem}
 .sys.final{font-style:normal;font-weight:700;color:var(--ink)}
 details.thought{margin:.15rem 0 .15rem .25rem;border-left:2px dotted var(--line);padding-left:.55rem}
@@ -213,7 +232,7 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
           <div><span class="sq" style="background:var(--a)"></span> team A agent</div>
           <div><span class="sq" style="background:var(--b)"></span> team B agent</div>
           <div><span class="sq" style="background:var(--neut)"></span> bystander</div>
-          <div><span class="sq" style="background:var(--kill);border-color:#c9a04a"></span> assassin — touch it and the game is over</div>
+          <div><span class="sq" style="background:var(--kill);border-color:var(--kill-edge)"></span> assassin — touch it and the game is over</div>
           <div><span class="sq" style="background:transparent"></span> still face down / unknown · ✓ already revealed</div>
         </div>
       </div>
@@ -246,9 +265,11 @@ const AGENTS = {a:9, b:8};      // the starting team carries the extra agent
 const GLYPH = {
   "agent-a":'<svg class="gl" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="7.5" r="4"/><path d="M3.5 23c0-4.7 3.8-8.5 8.5-8.5s8.5 3.8 8.5 8.5z"/></svg>',
   "agent-b":'<svg class="gl" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="7.5" r="4"/><path d="M3.5 23c0-4.7 3.8-8.5 8.5-8.5s8.5 3.8 8.5 8.5z"/></svg>',
-  bystander:'<svg class="gl" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2.4"/><circle cx="12" cy="12" r="3"/></svg>',
-  assassin:'<svg class="gl" viewBox="0 0 24 24" fill="#efe6d0"><path d="M12 1.5c5 0 8.5 3.4 8.5 8 0 3-1.6 4.8-2.8 6.1v3.2c0 1-.8 1.7-1.8 1.7H8.1c-1 0-1.8-.8-1.8-1.7v-3.2C5.1 14.3 3.5 12.5 3.5 9.5c0-4.6 3.5-8 8.5-8zm-3.4 8a2.3 2.3 0 100 4.6 2.3 2.3 0 000-4.6zm6.8 0a2.3 2.3 0 100 4.6 2.3 2.3 0 000-4.6zM12 15l-1.2 2.4h2.4z"/></svg>',
+  bystander:'<svg class="gl" viewBox="0 0 24 24" fill="#4d3f22"><circle cx="12" cy="12" r="9" fill="none" stroke="#4d3f22" stroke-width="2.4"/><circle cx="12" cy="12" r="3"/></svg>',
+  assassin:'<svg class="gl" viewBox="0 0 24 24" fill="#f2efe6"><path d="M12 1.5c5 0 8.5 3.4 8.5 8 0 3-1.6 4.8-2.8 6.1v3.2c0 1-.8 1.7-1.8 1.7H8.1c-1 0-1.8-.8-1.8-1.7v-3.2C5.1 14.3 3.5 12.5 3.5 9.5c0-4.6 3.5-8 8.5-8zm-3.4 8a2.3 2.3 0 100 4.6 2.3 2.3 0 000-4.6zm6.8 0a2.3 2.3 0 100 4.6 2.3 2.3 0 000-4.6zM12 15l-1.2 2.4h2.4z"/></svg>',
 };
+// Turn tag ink per identity — tan bystander cards take dark type, the rest light.
+const TAGINK = {"agent-a":"#fff", "agent-b":"#fff", bystander:"#33291a", assassin:"#f2efe6", unknown:"#fff"};
 
 // ---- setup ---------------------------------------------------------------
 const WORDS = (GAME.events.find(r => r.event.type === "BoardLaid") || {event:{words:[]}}).event.words;
@@ -316,7 +337,7 @@ function drawGrid(f) {
     const cls = r ? `rv ${k}` : `k-${k}`;
     const title = r ? `${w} — ${idLabel[k]} (turn ${r.turn}, reveal #${r.order})` : `${w} — face down`;
     return `<div class="cd ${cls}" title="${esc(title)}"><span class="dot"></span>`
-      + `<span class="n">${i+1}</span>${r ? `<span class="t" style="color:${r.id.kind==="assassin"?"#c9a04a":"#fff8ec"}">T${r.turn}</span>` : ""}`
+      + `<span class="n">${i+1}</span>${r ? `<span class="t" style="color:${TAGINK[k] || "#fff"}">T${r.turn}</span>` : ""}`
       + `<span class="w">${esc(w)}</span>${r ? (GLYPH[k] || "") : ""}</div>`;
   }).join("");
 }
