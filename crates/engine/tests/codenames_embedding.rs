@@ -8,11 +8,12 @@
 //! below is a single unambiguous right answer rather than a plausible one.
 //! Every clue the bot emits is pushed through the real engine `apply()`, which
 //! is the only legality authority.
+//!
+//! The table the bot reads from is tested next door in `codenames_vectors.rs`:
+//! parsing strictness and cosine belong to `VectorTable`, not to the bot.
 
 use engine::codenames::actions::{Action, DecisionPoint};
-use engine::codenames::agents::{
-    cosine, EmbeddingGreedyBot, RandomLegalBot, SeatAgent, VectorTable, VectorTableError,
-};
+use engine::codenames::agents::{EmbeddingGreedyBot, RandomLegalBot, SeatAgent, VectorTable};
 use engine::codenames::board::Card;
 use engine::codenames::state::{GameState, Phase};
 use engine::codenames::types::*;
@@ -108,108 +109,6 @@ async fn play_one(bot: &mut EmbeddingGreedyBot, state: &mut GameState) -> Action
         .apply(decision.seat(), action.clone())
         .unwrap_or_else(|e| panic!("engine rejected {action:?}: {e}"));
     action
-}
-
-#[test]
-fn the_fixture_table_parses_and_malformed_lines_are_rejected() {
-    let table = table();
-    assert_eq!(table.dim(), 12);
-    assert_eq!(table.len(), 76, "8 clusters x 9 words + 4 distractors");
-    assert!(table.contains("music") && table.contains("guitar"));
-    assert!(!table.contains("nonesuch"));
-    // Lookups are case-insensitive, and words come back lexicographically.
-    assert_eq!(table.get("GUITAR"), table.get("guitar"));
-    let mut sorted: Vec<&str> = table.words().collect();
-    assert_eq!(sorted.first(), Some(&"airplane"));
-    sorted.sort_unstable();
-    assert_eq!(sorted, table.words().collect::<Vec<_>>());
-
-    let text = std::fs::read_to_string(FIXTURE).expect("fixture readable");
-    assert_eq!(VectorTable::parse(&text).as_ref(), Ok(&*table));
-
-    let good = "# comment\nalpha 1.0 0.0\n\nbravo 0.0 1.0\n";
-    assert_eq!(VectorTable::parse(good).expect("valid").len(), 2);
-    // A word2vec `<count> <dim>` header is tolerated; a 1-token line is not.
-    assert_eq!(
-        VectorTable::parse(&format!("2 2\n{good}"))
-            .expect("header skipped")
-            .len(),
-        2
-    );
-    assert!(matches!(
-        VectorTable::parse("alpha 1.0 0.0\nbravo\n"),
-        Err(VectorTableError::Malformed { line: 2, .. })
-    ));
-    assert!(matches!(
-        VectorTable::parse("alpha 1.0 0.0\nbravo 1.0 0.0 3.0\n"),
-        Err(VectorTableError::DimMismatch {
-            line: 2,
-            found: 3,
-            expected: 2,
-            ..
-        })
-    ));
-    assert!(matches!(
-        VectorTable::parse("alpha 1.0 x\n"),
-        Err(VectorTableError::BadComponent {
-            line: 1,
-            index: 1,
-            ..
-        })
-    ));
-    assert!(matches!(
-        VectorTable::parse("alpha 1.0 0.0\nALPHA 0.0 1.0\n"),
-        Err(VectorTableError::Duplicate { line: 2, .. })
-    ));
-    assert!(matches!(
-        VectorTable::parse("alpha 1.0 nan\n"),
-        Err(VectorTableError::BadComponent { .. })
-    ));
-    assert_eq!(
-        VectorTable::parse("# nothing\n"),
-        Err(VectorTableError::Empty)
-    );
-    assert!(matches!(
-        VectorTable::from_path("/nonexistent/vectors.txt"),
-        Err(VectorTableError::Io { .. })
-    ));
-}
-
-#[test]
-fn cosine_reproduces_the_fixture_geometry_exactly() {
-    let table = table();
-    let close = |a: f32, b: f32| (a - b).abs() < 1e-3;
-    let sim = |a: &str, b: &str| table.similarity(a, b).expect("both words are tabled");
-
-    // A centroid sits at 0.98 from its own cluster and 0.00 from every other.
-    for word in [
-        "bear", "cat", "dog", "horse", "lion", "monkey", "tiger", "wolf",
-    ] {
-        assert!(close(sim("animal", word), 0.98), "animal vs {word}");
-        assert!(close(sim("music", word), 0.0), "music vs {word}");
-    }
-    // Cluster members are closer to their centroid than to each other, which
-    // is what makes the centroid the strictly best clue for the cluster.
-    assert!(close(sim("dog", "cat"), 0.9604));
-    assert!(close(sim("dog", "tiger"), 0.9208), "opposed residuals");
-    assert!(sim("animal", "dog") > sim("dog", "cat"));
-    // Cross-cluster leakage is bounded by the shared residual axes.
-    assert!(sim("dog", "ocean").abs() < 0.05);
-
-    assert_eq!(cosine(&[1.0, 0.0], &[2.0, 0.0]), 1.0, "scale invariant");
-    assert_eq!(cosine(&[1.0, 0.0], &[0.0, 1.0]), 0.0);
-    assert_eq!(cosine(&[1.0, 0.0], &[-1.0, 0.0]), -1.0);
-    assert_eq!(
-        cosine(&[0.0, 0.0], &[1.0, 1.0]),
-        0.0,
-        "zero norm is not NaN"
-    );
-    assert_eq!(
-        cosine(&[1.0], &[1.0, 0.0]),
-        0.0,
-        "ragged pair is not a panic"
-    );
-    assert_eq!(table.similarity("dog", "nonesuch"), None);
 }
 
 #[tokio::test]

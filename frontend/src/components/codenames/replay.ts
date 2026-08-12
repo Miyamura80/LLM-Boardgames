@@ -232,17 +232,33 @@ export function justRevealed(record: GameRecord, step: number): string | null {
 	return r && r.event.type === "GuessRevealed" ? r.event.word : null;
 }
 
-/** The clue in force at the current step (the last one given). */
+/**
+ * The clue in force at the current step, or `null` when no clue is live.
+ *
+ * Scanning back stops at the first turn boundary as well as at `GameEnded`: a
+ * clue only governs its own turn, so between turns — after a `TurnPassed`, a
+ * turn-ending `GuessRevealed`, or the next `TurnStarted`, and before that turn's
+ * `ClueGiven` — the banner must show nothing rather than the finished turn's
+ * clue. The engine appends `TurnStarted` immediately after a turn-ending guess,
+ * so all three boundaries are checked to leave no step in between uncovered.
+ */
 export function activeClue(
 	record: GameRecord,
 	step: number,
 ): { clue: Clue; team: Team; fresh: boolean } | null {
 	for (let i = Math.min(step, record.events.length) - 1; i >= 0; i--) {
-		const r = record.events[i];
-		if (r.event.type === "ClueGiven") {
-			return { clue: r.event.clue, team: r.event.team, fresh: i === step - 1 };
+		const e = record.events[i].event;
+		if (e.type === "ClueGiven") {
+			return { clue: e.clue, team: e.team, fresh: i === step - 1 };
 		}
-		if (r.event.type === "GameEnded") return null;
+		if (
+			e.type === "GameEnded" ||
+			e.type === "TurnPassed" ||
+			e.type === "TurnStarted" ||
+			(e.type === "GuessRevealed" && e.ends_turn)
+		) {
+			return null;
+		}
 	}
 	return null;
 }

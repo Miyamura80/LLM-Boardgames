@@ -172,6 +172,10 @@ impl CodenamesStore {
         record: &GameRecord,
         metrics: &[SeatMetrics],
     ) -> StoreResult<bool> {
+        // A game commits with all four seat rows or not at all: zipping a short
+        // metrics slice would silently persist a game whose per-seat metrics
+        // are missing, and every aggregate over it would then be wrong.
+        check_metrics_len(record.seats.len(), metrics.len())?;
         let mut tx = self.pool.begin().await?;
         let inserted = sqlx::query(
             "INSERT INTO codenames_games
@@ -329,9 +333,10 @@ impl CodenamesStore {
         .await?;
         let mut table = RatingTable::default();
         for r in rows {
-            let Some(role) = role_from_str(r.get::<String, _>("role").as_str()) else {
-                continue;
-            };
+            // An unrecognized encoding means the schema or the data drifted;
+            // dropping the row would report that as "this model has no rating"
+            // and quietly shrink the leaderboard.
+            let role = decode_role(r.get::<String, _>("role").as_str())?;
             table.entities.insert(
                 (r.get("model_id"), role),
                 RatingState {
@@ -354,9 +359,7 @@ impl CodenamesStore {
         .fetch_all(&self.pool)
         .await?;
         for r in rows {
-            let Some(team) = team_from_side(r.get::<String, _>("side").as_str()) else {
-                continue;
-            };
+            let team = decode_side(r.get::<String, _>("side").as_str())?;
             table.sides.insert(
                 (r.get("model_id"), team),
                 SideStats {
@@ -480,6 +483,35 @@ fn team_from_side(s: &str) -> Option<Team> {
     }
 }
 
+/// A stored encoding that no longer maps onto the engine's enums is a decode
+/// failure, not an absent row.
+fn decode_error(column: &str, value: &str, expected: &str) -> sqlx::Error {
+    sqlx::Error::Decode(
+        format!("codenames {column} {value:?} is not a known encoding (expected {expected})")
+            .into(),
+    )
+}
+
+fn decode_role(s: &str) -> StoreResult<Role> {
+    role_from_str(s).ok_or_else(|| decode_error("role", s, "spymaster | operative"))
+}
+
+fn decode_side(s: &str) -> StoreResult<Team> {
+    team_from_side(s).ok_or_else(|| decode_error("side", s, "starting | second"))
+}
+
+/// Seat rows and their metrics are written in lockstep; a length mismatch is a
+/// caller bug that must not reach the database half-applied.
+fn check_metrics_len(seats: usize, metrics: usize) -> StoreResult<()> {
+    if seats != metrics {
+        return Err(sqlx::Error::Protocol(format!(
+            "codenames game has {seats} seat(s) but {metrics} metric row(s): refusing to persist \
+             a game with incomplete seat metrics"
+        )));
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -496,5 +528,38 @@ mod tests {
         }
         assert_eq!(role_from_str("liberal"), None);
         assert_eq!(team_from_side("a"), None);
+    }
+
+    /// Drift in a stored encoding surfaces as a decode error; silently skipping
+    /// the row would look like a model that simply has no rating.
+    #[test]
+    fn unknown_stored_encodings_fail_to_decode() {
+        assert_eq!(
+            decode_role("spymaster").expect("known role"),
+            Role::Spymaster
+        );
+        assert_eq!(decode_side("second").expect("known side"), Team::B);
+
+        let err = decode_role("liberal")
+            .expect_err("unknown role")
+            .to_string();
+        assert!(err.contains("role") && err.contains("liberal"), "{err}");
+        let err = decode_side("a").expect_err("unknown side").to_string();
+        assert!(
+            err.contains("side") && err.contains("starting | second"),
+            "{err}"
+        );
+    }
+
+    /// A game is persisted with metrics for every seat or not at all.
+    #[test]
+    fn metrics_must_cover_every_seat_before_a_game_is_persisted() {
+        assert!(check_metrics_len(4, 4).is_ok());
+        for (seats, metrics) in [(4, 3), (4, 0), (3, 4)] {
+            let err = check_metrics_len(seats, metrics)
+                .expect_err("length mismatch")
+                .to_string();
+            assert!(err.contains("incomplete seat metrics"), "{err}");
+        }
     }
 }

@@ -56,6 +56,28 @@ pub struct GamePlan {
 /// candidate occupies, and `side_role / 2` is the side (0 = starting team).
 pub const CANDIDATE_CELLS: [Seat; SEAT_COUNT as usize] = [0, 1, 2, 3];
 
+/// Hard ceiling on the games one match may schedule. A schedule is fully
+/// materialized in memory before the run row exists, so `boards × 4 × k` (or
+/// `games`) near `u32::MAX` would overflow the capacity arithmetic and exhaust
+/// memory before anything is persisted. Ten thousand games is orders of
+/// magnitude above any real eval batch.
+pub const MAX_SCHEDULED_GAMES: u32 = 10_000;
+
+/// The total games a schedule would materialize, rejected when it overflows or
+/// exceeds [`MAX_SCHEDULED_GAMES`].
+fn checked_total(total: Option<u32>, what: &str) -> Result<u32, String> {
+    match total {
+        Some(n) if n <= MAX_SCHEDULED_GAMES => Ok(n),
+        Some(n) => Err(format!(
+            "{what} schedules {n} games; the limit is {MAX_SCHEDULED_GAMES}"
+        )),
+        None => Err(format!(
+            "{what} schedules more than {} games; the limit is {MAX_SCHEDULED_GAMES}",
+            u32::MAX
+        )),
+    }
+}
+
 /// `starting` (the nine-agent team that moves first) or `second`.
 pub fn side_label(seat: Seat) -> &'static str {
     match seat_team(seat) {
@@ -83,8 +105,14 @@ pub fn controlled_schedule(
     if boards == 0 || k == 0 {
         return Err("boards and k must both be at least 1".into());
     }
+    let total = checked_total(
+        boards
+            .checked_mul(SEAT_COUNT as u32)
+            .and_then(|n| n.checked_mul(k)),
+        "a controlled codenames match",
+    )?;
 
-    let mut plans = Vec::with_capacity((boards * SEAT_COUNT as u32 * k) as usize);
+    let mut plans = Vec::with_capacity(total as usize);
     for board in 0..boards {
         for candidate_seat in CANDIDATE_CELLS {
             for rep in 0..k {
@@ -145,11 +173,30 @@ fn seat_candidate(
 /// Arena schedule: every game rotates the model list one seat, so each model
 /// visits each seat — and therefore each role and each side — evenly over
 /// `games`.
-pub fn arena_schedule(match_seed: u64, models: &[AgentSpec], games: u32) -> Vec<GamePlan> {
-    if models.is_empty() {
-        return Vec::new();
+///
+/// The rotation only balances if there is exactly one model per seat, and an
+/// empty schedule must not be able to finalize as a complete run, so both are
+/// rejected here rather than silently producing a confounded (or vacuous)
+/// rating. A `games` count that is not a whole number of rotations is allowed —
+/// it is a real, if lopsided, batch — and the imbalance it leaves is reported
+/// by [`rotation_imbalance_note`] beside the realized distribution.
+pub fn arena_schedule(
+    match_seed: u64,
+    models: &[AgentSpec],
+    games: u32,
+) -> Result<Vec<GamePlan>, String> {
+    if models.len() != SEAT_COUNT as usize {
+        return Err(format!(
+            "an arena codenames model set must hold exactly {SEAT_COUNT} models (one per seat), \
+             got {}",
+            models.len()
+        ));
     }
-    (0..games)
+    if games == 0 {
+        return Err("an arena codenames match must schedule at least 1 game".into());
+    }
+    checked_total(Some(games), "an arena codenames match")?;
+    Ok((0..games)
         .map(|g| {
             let seed = cell_seed(match_seed, "codenames-arena", g as u64, 0, 0);
             let seats: Vec<AgentSpec> = (0..SEAT_COUNT as usize)
@@ -166,7 +213,46 @@ pub fn arena_schedule(match_seed: u64, models: &[AgentSpec], games: u32) -> Vec<
                 seats,
             }
         })
-        .collect()
+        .collect())
+}
+
+/// The coverage a partial rotation leaves behind, as a human-facing note beside
+/// the realized distribution: with `games` not a multiple of the four-seat
+/// rotation, some models hold a seat (and therefore a role and a side) more
+/// often than others, so their ratings are not equally confounded. `None` when
+/// every model held every seat the same number of times.
+pub fn rotation_imbalance_note(plans: &[GamePlan]) -> Option<String> {
+    let dist = planned_distribution(plans);
+    let counts = |key: &str| -> (u32, u32) {
+        dist.values()
+            .map(|by| by.get(key).copied().unwrap_or(0))
+            .fold((u32::MAX, 0), |(lo, hi), n| (lo.min(n), hi.max(n)))
+    };
+    let uneven: Vec<String> = (0..SEAT_COUNT)
+        .map(|s| format!("seat{s}"))
+        .chain(
+            [
+                "role:spymaster",
+                "role:operative",
+                "side:starting",
+                "side:second",
+            ]
+            .map(String::from),
+        )
+        .filter(|key| {
+            let (lo, hi) = counts(key);
+            lo != hi
+        })
+        .collect();
+    if uneven.is_empty() {
+        return None;
+    }
+    Some(format!(
+        "{} games do not divide evenly into the {SEAT_COUNT}-seat rotation: coverage is uneven \
+         across {} — read side- and role-conditioned rows with that in mind",
+        plans.len(),
+        uneven.join(", ")
+    ))
 }
 
 /// **Planned** assignment distribution from the schedule (intent, before any
@@ -259,8 +345,12 @@ mod tests {
     #[test]
     fn arena_rotates_models_through_seats() {
         let models: Vec<AgentSpec> = ["m0", "m1", "m2", "m3"].map(AgentSpec::llm).into();
-        let plans = arena_schedule(3, &models, 8);
+        let plans = arena_schedule(3, &models, 8).expect("four models, eight games");
         assert_eq!(plans.len(), 8);
+        assert!(
+            rotation_imbalance_note(&plans).is_none(),
+            "two whole rotations are balanced"
+        );
         assert_eq!(plans[0].seats[0].name, "m0");
         assert_eq!(plans[1].seats[0].name, "m1");
         assert_eq!(plans[1].seats[3].name, "m0");
@@ -282,5 +372,56 @@ mod tests {
         p.pop();
         assert!(controlled_schedule(1, &AgentSpec::llm("m"), &p, 1, 1).is_err());
         assert!(controlled_schedule(1, &AgentSpec::llm("m"), &pool(), 0, 1).is_err());
+    }
+
+    /// A schedule is materialized in full before the run row exists, so an
+    /// absurd size is rejected by arithmetic rather than by the allocator.
+    #[test]
+    fn oversized_schedules_are_rejected_before_they_are_materialized() {
+        let cand = AgentSpec::llm("m");
+        for (boards, k) in [(u32::MAX, 1), (1, u32::MAX), (100_000, 3), (2501, 1)] {
+            let err = controlled_schedule(1, &cand, &pool(), boards, k)
+                .expect_err("boards × 4 × k exceeds the cap");
+            assert!(err.contains("the limit is"), "{err}");
+        }
+        // Exactly at the cap still builds.
+        assert_eq!(
+            controlled_schedule(1, &cand, &pool(), MAX_SCHEDULED_GAMES / 4, 1)
+                .expect("the cap itself is allowed")
+                .len(),
+            MAX_SCHEDULED_GAMES as usize
+        );
+
+        let models: Vec<AgentSpec> = ["m0", "m1", "m2", "m3"].map(AgentSpec::llm).into();
+        let err = arena_schedule(1, &models, u32::MAX).expect_err("over the cap");
+        assert!(err.contains("the limit is"), "{err}");
+    }
+
+    /// An arena run must have one model per seat and at least one game: an
+    /// empty schedule would otherwise finalize as a "complete" run with no
+    /// games, and a set of any other size confounds model with seat.
+    #[test]
+    fn arena_needs_four_models_and_a_non_empty_schedule() {
+        let four: Vec<AgentSpec> = ["m0", "m1", "m2", "m3"].map(AgentSpec::llm).into();
+        assert!(arena_schedule(1, &four[..3], 4)
+            .expect_err("three models")
+            .contains("exactly 4 models"));
+        assert!(arena_schedule(1, &[], 4)
+            .expect_err("no models")
+            .contains("exactly 4 models"));
+        assert!(arena_schedule(1, &four, 0)
+            .expect_err("zero games")
+            .contains("at least 1 game"));
+    }
+
+    /// A partial rotation is allowed, but the coverage gap it leaves is stated
+    /// rather than implied.
+    #[test]
+    fn a_partial_rotation_is_allowed_but_reported() {
+        let models: Vec<AgentSpec> = ["m0", "m1", "m2", "m3"].map(AgentSpec::llm).into();
+        let plans = arena_schedule(3, &models, 6).expect("six games");
+        let note = rotation_imbalance_note(&plans).expect("6 is not a multiple of 4");
+        assert!(note.contains("6 games"), "{note}");
+        assert!(note.contains("seat0"), "{note}");
     }
 }

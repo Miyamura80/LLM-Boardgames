@@ -96,6 +96,10 @@ pub(super) fn give_clue(
         )));
     }
 
+    // Normalization is lossy (case, surrounding whitespace); the transcript
+    // keeps the submitted spelling beside the normalized word so a stricter
+    // offline audit can still read what the spymaster actually wrote.
+    let raw_word = (word != normalized).then(|| word.to_string());
     let clue = Clue {
         word: normalized,
         number,
@@ -106,6 +110,7 @@ pub(super) fn give_clue(
             seat,
             team,
             clue: clue.clone(),
+            raw_word,
         },
     );
     state.clues.push(ClueRecord {

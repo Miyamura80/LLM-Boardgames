@@ -64,9 +64,13 @@ fn clue_words_are_trimmed_and_lowercased_before_they_are_recorded() {
 
     assert_eq!(state.clues[0].clue.word, word, "stored normalized");
     assert_eq!(state.clues[0].clue.number, 2);
+    // The transcript keeps the submitted spelling beside the normalized word,
+    // so an offline audit can still see exactly what was written.
+    let submitted = format!("  {}\n", word.to_uppercase());
     assert!(state.events.iter().any(|e| matches!(
         &e.event,
-        CodenamesEvent::ClueGiven { clue, team: Team::A, .. } if clue.word == word
+        CodenamesEvent::ClueGiven { clue, team: Team::A, raw_word, .. }
+            if clue.word == word && raw_word.as_deref() == Some(submitted.as_str())
     )));
     assert!(matches!(
         state.phase,
@@ -75,6 +79,54 @@ fn clue_words_are_trimmed_and_lowercased_before_they_are_recorded() {
             ..
         }
     ));
+}
+
+/// An already-normalized submission carries no redundant copy of itself.
+#[test]
+fn a_normalized_submission_records_no_raw_spelling() {
+    let mut state = testkit::scripted_game(4);
+    let word = testkit::legal_clue(&state);
+    state
+        .apply(SEAT_A_SPYMASTER, clue(&word, 1))
+        .expect("a normalized token is legal");
+    assert!(state
+        .events
+        .iter()
+        .any(|e| matches!(&e.event, CodenamesEvent::ClueGiven { raw_word: None, .. })));
+}
+
+/// A clue-word cap below the shortest pool word makes every candidate — and
+/// every forced default — illegal, which the shared resolver turns into a
+/// panic. It is rejected where a game is built, so the degenerate value can no
+/// longer reach the forced-default path at all.
+#[test]
+fn a_degenerate_clue_word_cap_is_rejected_before_a_game_exists() {
+    for cap in [0usize, 1, 2] {
+        let err = GameConfig::new(cap).expect_err("degenerate cap");
+        assert!(err.contains("clue_word_max_len"), "{err}");
+        assert!(err.contains("at least 3"), "{err}");
+    }
+
+    // At the minimum cap a game still plays out entirely on forced defaults —
+    // the fallback always has something legal to draw.
+    let rules = GameConfig::new(MIN_CLUE_WORD_MAX_LEN).expect("the minimum is allowed");
+    for seed in 0..4u64 {
+        let mut state = GameState::with_wordlist(
+            seed,
+            engine::codenames::wordlist::Wordlist::default_embedded(),
+            rules.clone(),
+        );
+        let mut steps = 0;
+        while !state.is_over() {
+            let decision = state.pending_decisions().remove(0);
+            let action = state.forced_default(&decision);
+            state
+                .apply(decision.seat(), action)
+                .expect("a forced default is legal at the minimum cap");
+            steps += 1;
+            assert!(steps < 500, "game failed to terminate");
+        }
+    }
 }
 
 #[test]

@@ -38,6 +38,16 @@ pub enum VectorTableError {
     },
     #[error("vector file line {line}: {word:?} is a duplicate (lookups are case-insensitive)")]
     Duplicate { line: usize, word: String },
+    #[error(
+        "vector file header declares {declared_count} vector(s) of {declared_dim} component(s), \
+         but the table holds {found_count} of {found_dim}"
+    )]
+    HeaderMismatch {
+        declared_count: usize,
+        declared_dim: usize,
+        found_count: usize,
+        found_dim: usize,
+    },
     #[error("vector file contains no vectors")]
     Empty,
     #[error("reading vector file {path}: {reason}")]
@@ -59,9 +69,13 @@ impl VectorTable {
     /// lowercased, and every vector must carry the same number of components.
     ///
     /// A leading word2vec `<count> <dim>` header line (two integers, `dim` ≥ 2)
-    /// is recognized and skipped, so both common text dialects load.
+    /// is recognized, and its declared shape is *checked* against the table
+    /// that follows: a truncated download whose header still promises the full
+    /// vocabulary is exactly the silent half-table this parser exists to
+    /// prevent, so a header that disagrees with its own body is an error.
     pub fn parse(text: &str) -> Result<Self, VectorTableError> {
         let mut dim: Option<usize> = None;
+        let mut header: Option<(usize, usize)> = None;
         let mut vectors: BTreeMap<String, Vec<f32>> = BTreeMap::new();
 
         for (i, raw) in text.lines().enumerate() {
@@ -77,8 +91,11 @@ impl VectorTable {
                 .to_ascii_lowercase();
             let components: Vec<&str> = tokens.collect();
 
-            if vectors.is_empty() && dim.is_none() && is_word2vec_header(&word, &components) {
-                continue;
+            if vectors.is_empty() && dim.is_none() {
+                if let Some(declared) = word2vec_header(&word, &components) {
+                    header = Some(declared);
+                    continue;
+                }
             }
             if components.is_empty() {
                 return Err(VectorTableError::Malformed {
@@ -115,10 +132,21 @@ impl VectorTable {
             }
         }
 
-        match dim {
-            Some(dim) if !vectors.is_empty() => Ok(Self { dim, vectors }),
-            _ => Err(VectorTableError::Empty),
+        let (dim, vectors) = match dim {
+            Some(dim) if !vectors.is_empty() => (dim, vectors),
+            _ => return Err(VectorTableError::Empty),
+        };
+        if let Some((declared_count, declared_dim)) = header {
+            if declared_count != vectors.len() || declared_dim != dim {
+                return Err(VectorTableError::HeaderMismatch {
+                    declared_count,
+                    declared_dim,
+                    found_count: vectors.len(),
+                    found_dim: dim,
+                });
+            }
         }
+        Ok(Self { dim, vectors })
     }
 
     /// Load a table from disk. The match layer calls this once per run and
@@ -182,30 +210,42 @@ impl std::str::FromStr for VectorTable {
 /// Cosine similarity, by hand over slices (no linear-algebra dependency).
 /// Returns `0.0` — "unrelated", never a `NaN` that would poison a max — for
 /// mismatched lengths or a zero-norm vector.
+///
+/// The accumulators are `f64`: squaring a component only needs to reach ~1e19
+/// to overflow an `f32` sum to infinity, and `inf / inf` is the `NaN` this
+/// function promises never to return. Every component is finite by
+/// construction ([`VectorTable::parse`] rejects the rest), but "finite" is not
+/// "small", so the widening is what makes the guarantee true rather than
+/// likely.
 pub fn cosine(a: &[f32], b: &[f32]) -> f32 {
     if a.len() != b.len() {
         return 0.0;
     }
-    let mut dot = 0.0f32;
-    let mut norm_a = 0.0f32;
-    let mut norm_b = 0.0f32;
+    let mut dot = 0.0f64;
+    let mut norm_a = 0.0f64;
+    let mut norm_b = 0.0f64;
     for (x, y) in a.iter().zip(b) {
+        let (x, y) = (f64::from(*x), f64::from(*y));
         dot += x * y;
         norm_a += x * x;
         norm_b += y * y;
     }
     let denom = norm_a.sqrt() * norm_b.sqrt();
-    if denom <= 0.0 {
+    if !denom.is_finite() || denom <= 0.0 {
         return 0.0;
     }
-    (dot / denom).clamp(-1.0, 1.0)
+    (dot / denom).clamp(-1.0, 1.0) as f32
 }
 
 /// A word2vec text header is `<vocab_count> <dim>`: two integers and nothing
-/// else. The `dim >= 2` guard keeps a genuine 1-dimensional vector whose word
-/// happens to be a number from being eaten.
-fn is_word2vec_header(word: &str, components: &[&str]) -> bool {
-    components.len() == 1
-        && word.parse::<usize>().is_ok()
-        && components[0].parse::<usize>().is_ok_and(|dim| dim >= 2)
+/// else. Returns the declared `(count, dim)` so the caller can hold the file to
+/// its own promise. The `dim >= 2` guard keeps a genuine 1-dimensional vector
+/// whose word happens to be a number from being eaten.
+fn word2vec_header(word: &str, components: &[&str]) -> Option<(usize, usize)> {
+    if components.len() != 1 {
+        return None;
+    }
+    let count = word.parse::<usize>().ok()?;
+    let dim = components[0].parse::<usize>().ok().filter(|d| *d >= 2)?;
+    Some((count, dim))
 }

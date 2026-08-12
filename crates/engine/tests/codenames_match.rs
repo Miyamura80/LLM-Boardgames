@@ -113,7 +113,7 @@ fn the_candidate_covers_every_role_and_side_exactly() {
 #[test]
 fn arena_rotation_is_even_and_planned_coverage_is_logged() {
     let models: Vec<AgentSpec> = ["m0", "m1", "m2", "m3"].map(AgentSpec::llm).into();
-    let plans = arena_schedule(5, &models, 12);
+    let plans = arena_schedule(5, &models, 12).expect("four models, three whole rotations");
     assert_eq!(plans.len(), 12);
     let planned = planned_distribution(&plans);
     for m in ["m0", "m1", "m2", "m3"] {

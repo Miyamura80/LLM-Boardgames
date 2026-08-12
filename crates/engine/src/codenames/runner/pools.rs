@@ -153,11 +153,11 @@ impl AgentFactory {
     }
 }
 
-/// The rules knobs a game runs under, from config.
-pub fn rules_from_config(cfg: &app_config::CodenamesConfig) -> RulesConfig {
-    RulesConfig {
-        clue_word_max_len: cfg.clue_word_max_len,
-    }
+/// The rules knobs a game runs under, from config. A degenerate clue-word cap
+/// is rejected here, before a game exists: see
+/// [`MIN_CLUE_WORD_MAX_LEN`](crate::codenames::types::MIN_CLUE_WORD_MAX_LEN).
+pub fn rules_from_config(cfg: &app_config::CodenamesConfig) -> Result<RulesConfig, String> {
+    RulesConfig::new(cfg.clue_word_max_len)
 }
 
 /// The configured pool: the `wordlist_path` override if set, else the vendored
@@ -308,7 +308,9 @@ mod tests {
     fn config_supplies_the_rules_knobs_and_the_default_pool() {
         let cfg = app_config::CodenamesConfig::default();
         assert_eq!(
-            rules_from_config(&cfg).clue_word_max_len,
+            rules_from_config(&cfg)
+                .expect("shipped cap is sane")
+                .clue_word_max_len,
             cfg.clue_word_max_len
         );
         let list = wordlist_from_config(&cfg).expect("vendored pool");
@@ -324,5 +326,25 @@ mod tests {
         assert!(wordlist_from_config(&missing)
             .expect_err("missing file")
             .contains("wordlist_path"));
+    }
+
+    /// A clue-word cap below the shortest pool word makes every clue illegal
+    /// (including the forced default), so it is rejected here rather than
+    /// reaching a game.
+    #[test]
+    fn a_degenerate_clue_word_cap_is_rejected_by_the_config_plumbing() {
+        for cap in [0usize, 1, 2] {
+            let cfg = app_config::CodenamesConfig {
+                clue_word_max_len: cap,
+                ..app_config::CodenamesConfig::default()
+            };
+            let err = rules_from_config(&cfg).expect_err("degenerate cap");
+            assert!(err.contains("clue_word_max_len"), "{err}");
+        }
+        assert!(rules_from_config(&app_config::CodenamesConfig {
+            clue_word_max_len: crate::codenames::types::MIN_CLUE_WORD_MAX_LEN,
+            ..app_config::CodenamesConfig::default()
+        })
+        .is_ok());
     }
 }

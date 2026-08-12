@@ -11,6 +11,7 @@ use crate::codenames::state::GameState;
 use crate::codenames::types::{seat_role, seat_team, GameConfig as RulesConfig, Seat, SEAT_COUNT};
 use crate::codenames::wordlist::Wordlist;
 use crate::game_core::{DecisionOps, Reliability, ThoughtRecord};
+use sha2::{Digest, Sha256};
 use std::time::Instant;
 
 /// Everything one game needs beyond its four agents.
@@ -37,6 +38,27 @@ impl Default for GameConfig {
             rules: RulesConfig::default(),
             wordlist: Wordlist::default_embedded(),
         }
+    }
+}
+
+impl GameConfig {
+    /// A fingerprint of everything about this config that makes two games
+    /// incomparable: the pool the grids are drawn from, the clue-word cap, and
+    /// the retry budget that decides when a forced default lands.
+    ///
+    /// A run stores this at init and refuses to resume under a different one —
+    /// live config is re-read on every call, so without the check a resume
+    /// after an edit would quietly mix games played under two rule sets into
+    /// one rating. Per-game fields (`game_id`, `seed`, `schedule_label`) are
+    /// deliberately excluded: they differ by design within a run.
+    pub fn fingerprint(&self) -> String {
+        let mut h = Sha256::new();
+        h.update(b"codenames-effective-config-v1\n");
+        h.update(self.wordlist.content_hash().as_bytes());
+        h.update(b"\n");
+        h.update(self.rules.clue_word_max_len.to_le_bytes());
+        h.update(self.retry_budget.to_le_bytes());
+        h.finalize().iter().map(|b| format!("{b:02x}")).collect()
     }
 }
 
@@ -67,6 +89,11 @@ pub async fn run_game(
 
         let decision = state.pending_decisions()[0].clone();
         let seat = DecisionOps::seat(&decision);
+        // The round the decision belongs to, captured *before* it resolves: a
+        // turn-ending guess runs `end_turn`, which increments `state.turn`, so
+        // reading the counter afterwards would file the thought under the next
+        // round and desynchronize it from its own transcript events.
+        let round = state.turn;
         let outcome = crate::game_core::resolve_decision(
             cfg.retry_budget,
             &mut state,
@@ -77,7 +104,7 @@ pub async fn run_game(
         .await;
         if let Some(text) = outcome.thought.filter(|t| !t.trim().is_empty()) {
             trackers[seat as usize].thoughts.push(ThoughtRecord {
-                round: state.turn,
+                round,
                 at_event: state.events.len() as u32,
                 decision: DecisionOps::kind(&decision).to_string(),
                 text,
@@ -117,5 +144,112 @@ pub async fn run_game(
             .collect(),
         events: state.events.clone(),
         duration_ms: started.elapsed().as_millis() as u64,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::codenames::actions::{Action, DecisionPoint};
+    use crate::codenames::agents::{AgentError, AgentReply, SeatAgent};
+    use crate::codenames::observation::Observation;
+    use crate::codenames::testkit;
+    use async_trait::async_trait;
+
+    /// Plays a legal move at every decision and says which turn it believed it
+    /// was acting in, so the loop's own round stamp can be checked against the
+    /// agent's view of the same moment.
+    struct ChattyBot;
+
+    #[async_trait]
+    impl SeatAgent for ChattyBot {
+        fn kind(&self) -> &'static str {
+            "bot:test-chatty"
+        }
+        fn model_id(&self) -> String {
+            "bot:test-chatty".into()
+        }
+        fn scaffold_version(&self) -> String {
+            "test-chatty-v1".into()
+        }
+        async fn decide(
+            &mut self,
+            obs: &Observation,
+            decision: &DecisionPoint,
+            _feedback: Option<&str>,
+        ) -> Result<AgentReply, AgentError> {
+            let action = match decision {
+                // `qqqqq` shares no substring with the scripted pool, so it is
+                // a legal clue on every board this test can draw.
+                DecisionPoint::GiveClue { .. } => Action::GiveClue {
+                    word: "qqqqq".into(),
+                    number: 1,
+                },
+                DecisionPoint::GuessOrPass { .. } => Action::Guess {
+                    word: obs
+                        .grid
+                        .iter()
+                        .find(|c| !c.revealed)
+                        .expect("a live game leaves a face-down card")
+                        .word
+                        .clone(),
+                },
+            };
+            Ok(AgentReply {
+                action,
+                thought: Some(format!("acting in turn {}", obs.turn)),
+            })
+        }
+    }
+
+    /// A thought belongs to the round its decision was made in. The bot never
+    /// passes, so turns end on a guess — the case where the engine has already
+    /// advanced `state.turn` by the time the loop records the thought.
+    #[tokio::test]
+    async fn thoughts_are_stamped_with_the_round_their_decision_belonged_to() {
+        let cfg = GameConfig {
+            wordlist: testkit::test_wordlist(),
+            ..GameConfig::default()
+        };
+        let mut agents: Vec<Box<dyn SeatAgent>> = (0..SEAT_COUNT)
+            .map(|_| Box::new(ChattyBot) as Box<dyn SeatAgent>)
+            .collect();
+        let record = run_game(&cfg, &mut agents, &[false; SEAT_COUNT as usize]).await;
+
+        let (mut seen, mut turn_ending) = (0usize, 0usize);
+        for seat in &record.seats {
+            for thought in &seat.thoughts {
+                assert_eq!(
+                    thought.text,
+                    format!("acting in turn {}", thought.round),
+                    "seat {} filed a thought under round {}",
+                    seat.seat,
+                    thought.round
+                );
+                // A decision pushes at most two events (its own, plus the
+                // `TurnStarted` of the next turn when it ends one), and its own
+                // event carries the round the thought claims.
+                let at = thought.at_event as usize;
+                assert!(
+                    record.events[..at]
+                        .iter()
+                        .rev()
+                        .take(2)
+                        .any(|e| e.round == thought.round),
+                    "no event of this decision carries round {}",
+                    thought.round
+                );
+                if record.events[at - 1].round != thought.round {
+                    turn_ending += 1;
+                }
+                seen += 1;
+            }
+        }
+        assert!(seen >= record.turns as usize, "every decision was recorded");
+        assert!(
+            turn_ending > 0,
+            "the regression case — a guess that ended the turn before the thought was filed — \
+             must actually occur in this game"
+        );
     }
 }

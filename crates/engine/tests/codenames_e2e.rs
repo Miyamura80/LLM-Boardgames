@@ -122,3 +122,33 @@ async fn a_batch_of_seeded_games_all_terminate() {
         assert!(record.turns as usize <= reveals + 1);
     }
 }
+
+/// The checked-in transcripts are historical records of real runs (one of them
+/// a paid LLM-vs-LLM game), so every additive change to the event schema has to
+/// keep loading them. `ClueGiven.raw_word` is the current such field: it
+/// defaults, so records written before it existed still parse.
+#[test]
+fn the_checked_in_fixtures_still_parse_as_game_records() {
+    for (name, json) in [
+        (
+            "codenames_bots.json",
+            include_str!("../fixtures/codenames_bots.json"),
+        ),
+        (
+            "codenames_llm_vs_llm.json",
+            include_str!("../fixtures/codenames_llm_vs_llm.json"),
+        ),
+    ] {
+        let record: engine::codenames::runner::GameRecord =
+            serde_json::from_str(json).unwrap_or_else(|e| panic!("{name} no longer parses: {e}"));
+        assert_eq!(record.seats.len(), SEAT_COUNT as usize, "{name}");
+        assert!(!record.events.is_empty(), "{name}");
+        assert!(
+            record.events.iter().any(|e| matches!(
+                e.event,
+                engine::codenames::events::CodenamesEvent::ClueGiven { .. }
+            )),
+            "{name} has no clue to re-read"
+        );
+    }
+}

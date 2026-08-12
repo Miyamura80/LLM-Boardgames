@@ -15,7 +15,9 @@
 use super::game_loop::{run_game, GameConfig};
 use super::pools::{AgentFactory, AgentSpec};
 use super::record::GameRecord;
-use super::schedule::{arena_schedule, controlled_schedule, planned_distribution, GamePlan};
+use super::schedule::{
+    arena_schedule, controlled_schedule, planned_distribution, rotation_imbalance_note, GamePlan,
+};
 use crate::codenames::metrics::{key_card_for, score_game};
 use crate::codenames::rating::{leaderboard, uncertainty_note, LeaderboardRow, RatingTable};
 use crate::codenames::store::CodenamesStore;
@@ -65,14 +67,26 @@ impl MatchSpec {
                 models,
                 games,
                 match_seed,
-            } => {
-                if models.is_empty() {
-                    return Err("arena mode needs at least one model".into());
-                }
-                Ok(arena_schedule(*match_seed, models, *games))
-            }
+            } => arena_schedule(*match_seed, models, *games),
         }
     }
+}
+
+/// A [`MatchSpec`] as it is stored on the run row, plus the fingerprint of the
+/// effective game config the run was created under.
+///
+/// `#[serde(flatten)]` keeps the stored JSON shape the schedule rebuilds from
+/// (`{"mode": "controlled", …}`) so a plain `MatchSpec` still parses out of it;
+/// the fingerprint rides alongside as one extra key, which is why persisting it
+/// needs no schema change (`spec` is JSONB).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StoredSpec {
+    #[serde(flatten)]
+    pub spec: MatchSpec,
+    /// Absent on rows written before fingerprinting; such a run resumes
+    /// without the check rather than becoming unresumable.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub config_fingerprint: Option<String>,
 }
 
 /// Progress snapshot returned by `continue`/status calls.
@@ -208,13 +222,13 @@ pub async fn finalize_match(
         .realized_distribution(run_id)
         .await
         .map_err(|e| e.to_string())?;
-    let planned = store
+    let plans = store
         .get_run_spec(run_id)
         .await
         .map_err(|e| e.to_string())?
         .and_then(|(_, s)| serde_json::from_value::<MatchSpec>(s).ok())
-        .and_then(|spec| spec.schedule().ok())
-        .map(|plans| planned_distribution(&plans));
+        .and_then(|spec| spec.schedule().ok());
+    let planned = plans.as_deref().map(planned_distribution);
 
     let summary = serde_json::json!({
         "leaderboard": rows,
@@ -222,6 +236,10 @@ pub async fn finalize_match(
         "uncertainty_note": uncertainty_note(&rows),
         "realized_distribution": realized,
         "planned_distribution": planned,
+        // A schedule that is not a whole number of rotations covers seats
+        // unevenly; say so beside the distribution rather than let the reader
+        // infer it from the counts.
+        "coverage_note": plans.as_deref().and_then(rotation_imbalance_note),
     });
     store
         .set_run_status(run_id, "complete", Some(&summary))
@@ -265,14 +283,46 @@ mod tests {
         }
     }
 
+    /// Every way an arena spec can fail to describe a schedule worth rating —
+    /// no models, the wrong number of them, no games, or absurdly many — is
+    /// rejected by `schedule()`, which every caller runs before a run row
+    /// exists.
     #[test]
-    fn an_empty_arena_is_rejected() {
-        let spec = MatchSpec::Arena {
-            models: vec![],
-            games: 4,
+    fn a_degenerate_arena_spec_is_rejected() {
+        let arena = |models: Vec<AgentSpec>, games: u32| MatchSpec::Arena {
+            models,
+            games,
             match_seed: 1,
         };
-        assert!(spec.schedule().is_err());
-        assert_eq!(spec.mode(), "arena");
+        let four: Vec<AgentSpec> = (0..4).map(|i| AgentSpec::llm(&format!("m{i}"))).collect();
+
+        assert_eq!(arena(vec![], 4).mode(), "arena");
+        assert!(arena(vec![], 4).schedule().is_err(), "no models");
+        assert!(
+            arena(four[..3].to_vec(), 4).schedule().is_err(),
+            "three models"
+        );
+        assert!(arena(four.clone(), 0).schedule().is_err(), "no games");
+        assert!(
+            arena(four.clone(), u32::MAX).schedule().is_err(),
+            "unbounded"
+        );
+        assert_eq!(arena(four, 8).schedule().expect("a real batch").len(), 8);
+    }
+
+    /// The controlled schedule is materialized in full before anything is
+    /// persisted, so its size is bounded at the same point.
+    #[test]
+    fn an_unbounded_controlled_spec_is_rejected() {
+        let spec = MatchSpec::Controlled {
+            candidate: AgentSpec::llm("cand"),
+            pool_name: "pool-a".into(),
+            pool: pool(),
+            boards: u32::MAX,
+            k: u32::MAX,
+            match_seed: 1,
+        };
+        let err = spec.schedule().expect_err("boards × 4 × k overflows");
+        assert!(err.contains("the limit is"), "{err}");
     }
 }

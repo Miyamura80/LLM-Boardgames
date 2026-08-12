@@ -37,19 +37,6 @@ impl LlmSeatAgent {
         }
     }
 
-    fn system_prompt(&self, obs: &Observation) -> String {
-        let mut s = format!(
-            "{}\n\n{}\n\n{}",
-            prompts::RULES_SUMMARY,
-            prompts::role_brief(obs),
-            prompts::OUTPUT_CONTRACT
-        );
-        if let Some(p) = &self.persona {
-            s.push_str(&format!("\n\nPlay style directive: {p}"));
-        }
-        s
-    }
-
     async fn ask(&self, system: String, user: String) -> Result<String, AgentError> {
         let messages = [ChatMessage::system(system), ChatMessage::user(user)];
         let outcome = self
@@ -82,18 +69,11 @@ impl SeatAgent for LlmSeatAgent {
         decision: &DecisionPoint,
         feedback: Option<&str>,
     ) -> Result<AgentReply, AgentError> {
-        let mut user = format!(
-            "{}\n== YOUR DECISION ==\n{}\nRespond with exactly this JSON shape:\n{}",
-            prompts::render_observation(obs),
-            prompts::decision_ask(obs, decision),
-            prompts::decision_schema(decision),
-        );
-        if let Some(f) = feedback {
-            user.push_str(&format!(
-                "\n\nYour previous reply was rejected: {f}\nCorrect the problem and answer again with valid JSON."
-            ));
-        }
-        let content = self.ask(self.system_prompt(obs), user).await?;
+        // Both messages are assembled in `prompts` so every model-visible
+        // literal, wrappers included, is covered by the scaffold hash.
+        let system = prompts::system_prompt(obs, self.persona.as_deref());
+        let user = prompts::user_prompt(obs, decision, feedback);
+        let content = self.ask(system, user).await?;
         let value = extract_json(&content)
             .ok_or_else(|| AgentError::Malformed("no JSON object found in reply".into()))?;
         parse_action(&value, decision)
@@ -144,6 +124,18 @@ fn extract_balanced(text: &str, start: usize) -> Option<Value> {
     None
 }
 
+/// The JSON type name, for a malformed-output message the model can act on.
+fn json_type_name(value: &Value) -> &'static str {
+    match value {
+        Value::Null => "null",
+        Value::Bool(_) => "a boolean",
+        Value::Number(_) => "a number",
+        Value::String(_) => "a string",
+        Value::Array(_) => "an array",
+        Value::Object(_) => "an object",
+    }
+}
+
 /// Strict validation: known keys only, and the action kind must answer the
 /// pending decision. Whether the clue or guess is *legal* is deliberately not
 /// checked here — the engine is the sole authority and its rejection text is
@@ -158,10 +150,20 @@ fn parse_action(value: &Value, decision: &DecisionPoint) -> Result<AgentReply, A
             "unknown field \"{unknown}\" (additionalProperties are rejected)"
         )));
     }
-    let thought = obj
-        .get("thought_process")
-        .and_then(Value::as_str)
-        .map(String::from);
+    // Strict about the *type*, not just the key: silently dropping a
+    // non-string `thought_process` would accept a reply the published schema
+    // rejects and lose the reasoning the replay is supposed to record. A seat
+    // with nothing to say omits the field.
+    let thought = match obj.get("thought_process") {
+        None => None,
+        Some(Value::String(s)) => Some(s.clone()),
+        Some(other) => {
+            return Err(AgentError::Malformed(format!(
+                "\"thought_process\" must be a string, got {} — omit the field instead",
+                json_type_name(other)
+            )))
+        }
+    };
     let mut clean = obj.clone();
     clean.remove("thought_process");
     let action: Action = serde_json::from_value(Value::Object(clean))
@@ -258,6 +260,39 @@ mod tests {
             Err(AgentError::Malformed(_)),
         ));
         assert!(parse_action(&Value::String("pass".into()), &clue_decision()).is_err());
+    }
+
+    /// A `thought_process` that is not a string is malformed output, not a
+    /// field to quietly drop: the reply would otherwise be accepted while the
+    /// reasoning never reaches the record.
+    #[test]
+    fn a_non_string_thought_process_is_malformed() {
+        for bad in [
+            r#"{"action":"pass","thought_process":{"reason":"safer"}}"#,
+            r#"{"action":"pass","thought_process":["safer"]}"#,
+            r#"{"action":"pass","thought_process":42}"#,
+            r#"{"action":"pass","thought_process":true}"#,
+            r#"{"action":"pass","thought_process":null}"#,
+        ] {
+            let v: Value = serde_json::from_str(bad).expect("canned reply is valid JSON");
+            assert!(
+                matches!(
+                    parse_action(&v, &guess_decision(1)),
+                    Err(AgentError::Malformed(m)) if m.contains("thought_process")
+                ),
+                "accepted {bad}"
+            );
+        }
+        // The string case still parses, and an absent field is still fine.
+        let v: Value =
+            serde_json::from_str(r#"{"action":"pass","thought_process":"safer"}"#).unwrap();
+        assert_eq!(
+            parse_action(&v, &guess_decision(1))
+                .expect("a string thought is accepted")
+                .thought
+                .as_deref(),
+            Some("safer")
+        );
     }
 
     /// A pass before the mandatory first guess parses fine: it is an *illegal

@@ -340,11 +340,18 @@ $("seats").innerHTML = GAME.seats.map(s => `
 function fold(step) {
   const revealed = new Map();   // word -> {id, team, turn, order}
   let turn = 0, order = 0, clue = null, ended = false;
+  // A clue is only live for its own turn: every turn boundary clears it, so
+  // stepping to a between-turns event never advertises the finished turn's
+  // clue as still in force (same rule as the console's `activeClue`).
   for (const {event: e} of GAME.events.slice(0, step)) {
     if (e.type === "TurnStarted") { turn = e.turn; clue = null; }
     else if (e.type === "ClueGiven") clue = {team: e.team, word: e.clue.word, number: e.clue.number};
-    else if (e.type === "GuessRevealed") revealed.set(e.word, {id: e.identity, team: e.team, turn, order: ++order});
-    else if (e.type === "GameEnded") ended = true;
+    else if (e.type === "GuessRevealed") {
+      revealed.set(e.word, {id: e.identity, team: e.team, turn, order: ++order});
+      if (e.ends_turn) clue = null;
+    }
+    else if (e.type === "TurnPassed") clue = null;
+    else if (e.type === "GameEnded") { ended = true; clue = null; }
   }
   const found = {a:0, b:0};
   for (const r of revealed.values()) if (r.id.kind === "agent") found[r.id.team]++;

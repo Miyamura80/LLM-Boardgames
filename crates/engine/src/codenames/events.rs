@@ -36,6 +36,14 @@ pub enum CodenamesEvent {
         seat: Seat,
         team: Team,
         clue: Clue,
+        /// The token exactly as the spymaster submitted it, kept when it
+        /// differs from the normalized `clue.word` (case, surrounding
+        /// whitespace) so the promised offline audit can still see the
+        /// submitted spelling. `None` when the submission was already
+        /// normalized — and on records written before this field existed,
+        /// which is why it defaults.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        raw_word: Option<String>,
     },
     /// One card flipped. Carries the revealed identity (now public) and
     /// whether the reveal ended the guessing team's turn.
@@ -141,6 +149,7 @@ mod tests {
                     word: "signal".into(),
                     number: 2,
                 },
+                raw_word: Some("  Signal\n".into()),
             },
             CodenamesEvent::GuessRevealed {
                 seat: 1,

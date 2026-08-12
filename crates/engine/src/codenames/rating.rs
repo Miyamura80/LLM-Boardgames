@@ -318,16 +318,18 @@ fn flag_neighbour_overlap(rows: &mut [LeaderboardRow], k: f64) {
 /// Human-facing caveat carrying the game count, emitted next to every
 /// leaderboard (US-CN09: "output includes game count and an uncertainty
 /// warning").
-pub fn uncertainty_note(rows: &[LeaderboardRow]) -> Option<String> {
+///
+/// Always returns a note: the game count is the part a reader needs in *every*
+/// case, and returning `None` when nothing happens to be uncertain dropped it
+/// from exactly the summaries that looked most trustworthy. The warnings are
+/// appended only when they apply.
+pub fn uncertainty_note(rows: &[LeaderboardRow]) -> String {
     let games: u32 = rows.iter().map(|r| r.total_games).sum();
     let flagged = rows.iter().filter(|r| r.high_uncertainty).count();
     let thin = rows
         .iter()
         .filter(|r| r.spymaster.is_none() || r.operative.is_none())
         .count();
-    if flagged == 0 && thin == 0 {
-        return None;
-    }
     let mut parts = vec![format!("{games} seat-games scored")];
     if flagged > 0 {
         parts.push(format!(
@@ -339,7 +341,7 @@ pub fn uncertainty_note(rows: &[LeaderboardRow]) -> Option<String> {
             "{thin} row(s) have played only one role; their headline uses the μ=25 prior for the other"
         ));
     }
-    Some(parts.join("; "))
+    parts.join("; ")
 }
 
 #[cfg(test)]
@@ -459,12 +461,18 @@ mod tests {
         assert!(table.entities.keys().all(|(m, _)| m != "starting"));
     }
 
+    /// The game count is unconditional; the warnings are what come and go.
     #[test]
     fn the_uncertainty_note_carries_the_game_count() {
         let mut table = RatingTable::default();
         table.update(&record(["a", "b", "c", "d"], Team::A));
         let rows = leaderboard(&table, 2.0);
-        let note = uncertainty_note(&rows).expect("a one-game run is uncertain");
-        assert!(note.contains("seat-games scored"), "{note}");
+        let note = uncertainty_note(&rows);
+        assert!(note.contains("4 seat-games scored"), "{note}");
+        assert!(note.contains("only one role"), "{note}");
+
+        // Even with nothing to warn about, the count still ships.
+        let note = uncertainty_note(&[]);
+        assert_eq!(note, "0 seat-games scored");
     }
 }

@@ -24,9 +24,28 @@ pub enum WordlistError {
 
 /// A validated word pool. Order is preserved from the source file; the board
 /// draw shuffles a copy, so the file's ordering never biases a game.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+///
+/// Every construction path runs the same validation: [`Wordlist::parse`] for
+/// text, [`Wordlist::from_words`] for an in-memory list, and the hand-written
+/// [`Deserialize`] below, which routes through `from_words` rather than filling
+/// the field directly. A derived `Deserialize` would let a malformed or
+/// undersized pool back in through a stored `GameState` and produce a board
+/// too small to deal — the forced mandatory guess then panics.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct Wordlist {
     words: Vec<String>,
+}
+
+impl<'de> Deserialize<'de> for Wordlist {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        /// The field layout only — validation lives in `from_words`.
+        #[derive(Deserialize)]
+        struct Raw {
+            words: Vec<String>,
+        }
+        let raw = Raw::deserialize(deserializer)?;
+        Wordlist::from_words(raw.words).map_err(serde::de::Error::custom)
+    }
 }
 
 impl Wordlist {
@@ -34,29 +53,48 @@ impl Wordlist {
     /// every remaining line must be a unique lowercase token.
     pub fn parse(text: &str) -> Result<Self, WordlistError> {
         let mut words: Vec<String> = Vec::new();
+        let mut lines: Vec<usize> = Vec::new();
         for (i, raw) in text.lines().enumerate() {
             let word = raw.trim();
             if word.is_empty() || word.starts_with('#') {
                 continue;
             }
+            words.push(word.to_string());
+            lines.push(i + 1);
+        }
+        Self::validate(&words, |i| lines[i])?;
+        Ok(Self { words })
+    }
+
+    /// The same invariants as [`Self::parse`], for a list that did not come
+    /// from a file (deserialization, callers building a pool in memory). Error
+    /// positions are 1-based indices into `words`.
+    pub fn from_words(words: Vec<String>) -> Result<Self, WordlistError> {
+        Self::validate(&words, |i| i + 1)?;
+        Ok(Self { words })
+    }
+
+    /// Every word unique, well-formed, and enough of them to deal a board.
+    /// `locate` maps a word's index to the position an error should report.
+    fn validate(words: &[String], locate: impl Fn(usize) -> usize) -> Result<(), WordlistError> {
+        for (i, word) in words.iter().enumerate() {
             if !is_valid_word(word) {
                 return Err(WordlistError::BadWord {
-                    line: i + 1,
-                    word: word.to_string(),
+                    line: locate(i),
+                    word: word.clone(),
                 });
             }
-            if words.iter().any(|w| w == word) {
+            if words[..i].contains(word) {
                 return Err(WordlistError::Duplicate {
-                    line: i + 1,
-                    word: word.to_string(),
+                    line: locate(i),
+                    word: word.clone(),
                 });
             }
-            words.push(word.to_string());
         }
         if words.len() < CARD_COUNT {
             return Err(WordlistError::TooShort { found: words.len() });
         }
-        Ok(Self { words })
+        Ok(())
     }
 
     /// The vendored pool. Panics on a malformed asset — a broken checked-in
@@ -131,6 +169,44 @@ mod tests {
             Wordlist::parse(&format!("{src}worda\n")),
             Err(WordlistError::Duplicate { .. })
         ));
+    }
+
+    /// Deserialization is a construction path like any other: it must enforce
+    /// the same invariants, or a stored state could deal a board from an
+    /// undersized or malformed pool.
+    #[test]
+    fn deserializing_enforces_the_same_invariants_as_parsing() {
+        let valid = Wordlist::default_embedded();
+        let json = serde_json::to_string(&valid).expect("serializes");
+        let back: Wordlist = serde_json::from_str(&json).expect("valid pool round-trips");
+        assert_eq!(back.content_hash(), valid.content_hash());
+
+        let words: Vec<String> = valid.words().to_vec();
+        for (bad, expected) in [
+            (words[..CARD_COUNT - 1].to_vec(), "a board needs at least"),
+            (
+                {
+                    let mut w = words[..CARD_COUNT].to_vec();
+                    w[0] = "Uppercase".into();
+                    w
+                },
+                "must be lowercase",
+            ),
+            (
+                {
+                    let mut w = words[..CARD_COUNT].to_vec();
+                    w[1] = w[0].clone();
+                    w
+                },
+                "is a duplicate",
+            ),
+        ] {
+            let json = serde_json::json!({ "words": bad }).to_string();
+            let err = serde_json::from_str::<Wordlist>(&json)
+                .expect_err("malformed pool must not deserialize")
+                .to_string();
+            assert!(err.contains(expected), "{err}");
+        }
     }
 
     #[test]

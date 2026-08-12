@@ -3,7 +3,7 @@
 // is the honest story), together with the per-side win-rate diagnostic and the
 // per-model objective metrics.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { describeError } from "../../api/client";
 import {
 	codenamesLeaderboard,
@@ -55,16 +55,34 @@ export function CodenamesLeaderboard() {
 			.catch((e) => setError(describeError(e)));
 	}, []);
 
+	// Monotonic claims, one per commit target: a leaderboard response only lands
+	// while it is still the newest one asked for, so switching run mid-flight
+	// can never let the previous run's rows win the race. `load` also bumps the
+	// progress claim because it resets `progress` — an in-flight schedule check
+	// belongs to the run the user just left.
+	const boardRequest = useRef(0);
+	const progressRequest = useRef(0);
+
 	const load = useCallback((id: string) => {
+		boardRequest.current += 1;
+		progressRequest.current += 1;
+		const token = boardRequest.current;
 		setError(null);
 		setProgress(null);
 		codenamesLeaderboard(id)
 			.then((r) => {
+				if (boardRequest.current !== token) return;
 				setRows(r.rows);
 				setMetrics(r.metrics);
 				setNote(r.uncertainty_note);
 			})
-			.catch((e) => setError(describeError(e)));
+			.catch((e) => {
+				if (boardRequest.current !== token) return;
+				setRows([]);
+				setMetrics([]);
+				setNote(null);
+				setError(describeError(e));
+			});
 	}, []);
 
 	useEffect(() => {
@@ -75,9 +93,15 @@ export function CodenamesLeaderboard() {
 	// reports how much of it is already persisted.
 	const checkProgress = useCallback(() => {
 		if (!runId) return;
+		progressRequest.current += 1;
+		const token = progressRequest.current;
 		codenamesRunMatch({ run_id: runId, max_games: 0 })
-			.then((r) => setProgress(r.progress))
-			.catch((e) => setError(describeError(e)));
+			.then((r) => {
+				if (progressRequest.current === token) setProgress(r.progress);
+			})
+			.catch((e) => {
+				if (progressRequest.current === token) setError(describeError(e));
+			});
 	}, [runId]);
 
 	return (

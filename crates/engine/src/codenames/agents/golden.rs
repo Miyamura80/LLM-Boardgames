@@ -25,6 +25,13 @@ anchor\nbanjo\ncactus\ndragon\nengine\nfossil\nglacier\nharbor\niceberg\njungle\
 kettle\nlantern\nmammoth\nnebula\noyster\npyramid\nquarry\nrocket\nsaddle\ntunnel\n\
 umbrella\nvolcano\nwalnut\nxylophone\nyogurt\nzebra\nbeacon\ncompass\ndomino\nfeather\n";
 
+/// Fixed stand-ins for the two optional framings, so the golden render
+/// exercises the "persona present" and "retry" branches of the assembled
+/// messages. Their own text is arbitrary; what matters is that the literals
+/// wrapped around them are hashed.
+const GOLDEN_PERSONA: &str = "golden persona";
+const GOLDEN_FEEDBACK: &str = "golden feedback";
+
 /// A fixed mid-game position: one resolved clue with a correct guess behind it
 /// and a live clue in front, so every branch of the renderer has something to
 /// show (revealed cards, outcomes, a live guess count).
@@ -106,9 +113,16 @@ fn golden_prompt_render() -> String {
         s.push_str(&prompts::role_brief(&obs));
         s.push_str(&prompts::render_observation(&obs));
         s.push_str(&prompts::clue_rules(&obs));
+        // The assembled messages, both framings present and absent, so the
+        // wrapper literals the agent used to own — the persona directive and
+        // the retry feedback — are hashed alongside the pieces they join.
+        s.push_str(&prompts::system_prompt(&obs, None));
+        s.push_str(&prompts::system_prompt(&obs, Some(GOLDEN_PERSONA)));
         for decision in &golden_decisions() {
             s.push_str(&prompts::decision_ask(&obs, decision));
             s.push_str(prompts::decision_schema(decision));
+            s.push_str(&prompts::user_prompt(&obs, decision, None));
+            s.push_str(&prompts::user_prompt(&obs, decision, Some(GOLDEN_FEEDBACK)));
         }
     }
     s
@@ -125,7 +139,16 @@ pub fn scaffold_version(persona: Option<&str>, temperature: f32) -> String {
     hasher.update(prompts::SPYMASTER_BRIEF);
     hasher.update(prompts::OPERATIVE_BRIEF);
     hasher.update(golden_prompt_render());
-    hasher.update(persona.unwrap_or(""));
+    // Tag the option before its text: no persona and an empty persona produce
+    // different system prompts (one carries the directive line, one does not),
+    // so they must not collide on the same scaffold id.
+    match persona {
+        None => hasher.update([0u8]),
+        Some(p) => {
+            hasher.update([1u8]);
+            hasher.update(p);
+        }
+    }
     hasher.update(temperature.to_le_bytes());
     let digest = hasher.finalize();
     format!("sc-{digest:x}")[..11].to_string()
@@ -146,6 +169,18 @@ mod tests {
         assert_eq!(a.len(), 11);
     }
 
+    /// An empty persona still adds the directive line to the system prompt, so
+    /// it is a different scaffold from no persona at all.
+    #[test]
+    fn an_empty_persona_is_not_the_same_scaffold_as_no_persona() {
+        assert_ne!(scaffold_version(None, 0.5), scaffold_version(Some(""), 0.5));
+        // And the tag cannot be forged by persona text alone.
+        assert_ne!(
+            scaffold_version(Some("\u{0}x"), 0.5),
+            scaffold_version(Some("x"), 0.5)
+        );
+    }
+
     /// The golden position must actually exercise every render branch, or a
     /// wording edit in an unrendered branch would slip past the hash.
     #[test]
@@ -163,6 +198,13 @@ mod tests {
             "give_clue",
             "\"action\": \"pass\"",
             "mandatory",
+            // The assembly wrappers: editing any of these literals must move
+            // the scaffold id, which is only true while they render here.
+            "== YOUR DECISION ==",
+            "Respond with exactly this JSON shape:",
+            "Play style directive: golden persona",
+            "Your previous reply was rejected: golden feedback",
+            "Correct the problem and answer again with valid JSON.",
         ] {
             assert!(
                 render.contains(needle),

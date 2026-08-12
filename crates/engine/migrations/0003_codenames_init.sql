@@ -80,7 +80,7 @@ CREATE TABLE codenames_seats (
 -- Rating entities are (model_id, role); side is a diagnostic aggregated from
 -- codenames_seats, never a rating key (US-CN09).
 CREATE TABLE codenames_ratings (
-    run_id    TEXT NOT NULL,
+    run_id    TEXT NOT NULL REFERENCES codenames_runs(id),
     model_id  TEXT NOT NULL,
     role      TEXT NOT NULL,
     mu        DOUBLE PRECISION NOT NULL,

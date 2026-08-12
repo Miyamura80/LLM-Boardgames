@@ -92,6 +92,7 @@ fn give(seat: Seat, word: &str, number: u8) -> CodenamesEvent {
         seat,
         team: seat_team(seat),
         clue: clue(word, number),
+        raw_word: None,
     }
 }
 

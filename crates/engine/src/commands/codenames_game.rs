@@ -15,6 +15,15 @@ use serde::{Deserialize, Serialize};
 
 /// Parse a seat spec: `bot:<kind>` or a `provider/model` string.
 pub(crate) fn parse_model_spec(s: &str) -> Result<AgentSpec, CommandError> {
+    // A blank model would build an `llm` seat that no provider can route,
+    // whose every call fails and whose every decision becomes a forced
+    // default — a "successful" game that measured nothing.
+    if s.trim().is_empty() {
+        return Err(CommandError::InvalidInput(
+            "a codenames seat spec must be a non-empty 'provider/model' string or 'bot:<kind>'"
+                .into(),
+        ));
+    }
     if let Some(kind) = s.strip_prefix("bot:") {
         let kind = CodenamesAgentKind::parse(kind).map_err(CommandError::InvalidInput)?;
         if kind == CodenamesAgentKind::Llm {
@@ -146,7 +155,7 @@ impl Command for CodenamesPlayGame {
             seed,
             retry_budget: cfg.codenames.retry_budget,
             schedule_label: "adhoc".into(),
-            rules: rules_from_config(&cfg.codenames),
+            rules: rules_from_config(&cfg.codenames).map_err(CommandError::InvalidInput)?,
             wordlist: wordlist_from_config(&cfg.codenames).map_err(CommandError::InvalidInput)?,
         };
         let record = run_game(&game_cfg, &mut agents, &anchors).await;
@@ -285,5 +294,18 @@ mod tests {
             parse_model_spec("bot:random-legal"),
             Err(CommandError::InvalidInput(_))
         ));
+    }
+
+    /// A blank seat spec is invalid input, not a seat that quietly forfeits
+    /// every decision to the forced default.
+    #[test]
+    fn blank_model_names_are_rejected() {
+        for blank in ["", " ", "\t", "\n  "] {
+            let err = match parse_model_spec(blank) {
+                Err(CommandError::InvalidInput(e)) => e,
+                other => panic!("{blank:?} should be invalid input, got {other:?}"),
+            };
+            assert!(err.contains("non-empty"), "{err}");
+        }
     }
 }

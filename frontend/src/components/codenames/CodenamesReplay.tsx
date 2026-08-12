@@ -7,7 +7,7 @@
 // unreachable entirely, a bundled demo record so the view can be developed
 // against `bun run dev` alone.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { describeError } from "../../api/client";
 import {
 	codenamesListGames,
@@ -49,49 +49,112 @@ export function CodenamesReplay() {
 	const [error, setError] = useState<string | null>(null);
 	const [notice, setNotice] = useState<string | null>(null);
 
-	const show = useCallback((rec: GameRecord, from: string) => {
-		setRecord(rec);
-		setSource(from);
-		setStep(rec.events.length);
+	// Every request that can commit a replay record claims this monotonic token
+	// first, and only commits while its claim is still the newest one. Switching
+	// run or game, and racing an ad-hoc game against a stored one, therefore can
+	// never let a late response overwrite the state the user has since asked
+	// for. The per-effect `live` flags below layer ordinary effect cleanup on
+	// top, so a superseded response also stops touching the pickers.
+	const recordRequest = useRef(0);
+	const claimRecord = useCallback(() => {
+		recordRequest.current += 1;
+		return recordRequest.current;
 	}, []);
+	const isCurrent = useCallback(
+		(token: number) => recordRequest.current === token,
+		[],
+	);
+
+	/** Commit a record, unless a newer request has already claimed the view. */
+	const show = useCallback(
+		(token: number, rec: GameRecord, from: string) => {
+			if (!isCurrent(token)) return false;
+			setRecord(rec);
+			setSource(from);
+			setStep(rec.events.length);
+			return true;
+		},
+		[isCurrent],
+	);
+
+	/** Drop whatever is on screen — a failed or empty load must not leave the
+	 * previous game's replay visible next to a selector that no longer names it. */
+	const clearRecord = useCallback(
+		(token: number) => {
+			if (!isCurrent(token)) return;
+			setRecord(null);
+			setStep(0);
+		},
+		[isCurrent],
+	);
 
 	useEffect(() => {
+		const token = claimRecord();
 		codenamesListRuns()
 			.then((r) => {
 				setRuns(r.runs);
 				if (r.runs.length > 0) setRunId(r.runs[0].run_id);
-				else {
+				else if (show(token, DEMO_RECORD, "demo"))
 					setNotice("No stored runs — showing the bundled demo game.");
-					show(DEMO_RECORD, "demo");
-				}
 			})
 			.catch((e) => {
-				setNotice(`${describeError(e)} — showing the bundled demo game.`);
-				show(DEMO_RECORD, "demo");
+				const why = describeError(e);
+				setNotice(
+					show(token, DEMO_RECORD, "demo")
+						? `${why} — showing the bundled demo game.`
+						: why,
+				);
 			});
-	}, [show]);
+	}, [show, claimRecord]);
 
 	useEffect(() => {
 		if (!runId) return;
+		let live = true;
+		const token = claimRecord();
 		codenamesListGames(runId)
 			.then((r) => {
+				if (!live) return;
 				setGames(r.games);
 				setGameId(r.games.length > 0 ? r.games[0].game_id : "");
+				// A run with no stored games must not keep the previous run's
+				// replay on screen beside an empty Game picker.
+				if (r.games.length === 0) clearRecord(token);
 			})
-			.catch((e) => setError(describeError(e)));
-	}, [runId]);
+			.catch((e) => {
+				if (!live) return;
+				setGames([]);
+				setGameId("");
+				clearRecord(token);
+				setError(describeError(e));
+			});
+		return () => {
+			live = false;
+		};
+	}, [runId, claimRecord, clearRecord]);
 
 	useEffect(() => {
 		if (!gameId) return;
+		let live = true;
+		const token = claimRecord();
 		setError(null);
 		codenamesReplay(gameId)
-			.then((r) => show(r.record, "stored"))
-			.catch((e) => setError(describeError(e)));
-	}, [gameId, show]);
+			.then((r) => {
+				if (live) show(token, r.record, "stored");
+			})
+			.catch((e) => {
+				if (!live) return;
+				clearRecord(token);
+				setError(describeError(e));
+			});
+		return () => {
+			live = false;
+		};
+	}, [gameId, show, clearRecord, claimRecord]);
 
 	const playAdHoc = useCallback(() => {
 		setBusy(true);
 		setError(null);
+		const token = claimRecord();
 		const models = seats
 			.split(",")
 			.map((s) => s.trim())
@@ -102,12 +165,15 @@ export function CodenamesReplay() {
 			include_record: true,
 		})
 			.then((r) => {
-				if (r.record) show(r.record, "ad-hoc");
+				if (!isCurrent(token)) return;
+				if (r.record) show(token, r.record, "ad-hoc");
 				else setError("the engine returned no record");
 			})
-			.catch((e) => setError(describeError(e)))
+			.catch((e) => {
+				if (isCurrent(token)) setError(describeError(e));
+			})
 			.finally(() => setBusy(false));
-	}, [seats, show]);
+	}, [seats, show, claimRecord, isCurrent]);
 
 	const cards = useMemo(
 		() => (record ? foldGrid(record, step) : []),

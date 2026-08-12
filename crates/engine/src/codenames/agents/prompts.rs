@@ -257,6 +257,43 @@ pub fn decision_ask(obs: &Observation, decision: &DecisionPoint) -> String {
     }
 }
 
+/// The complete system message an LLM seat sends: rules digest, role brief,
+/// output contract, and the optional persona framing.
+///
+/// Assembled here rather than in the agent so the joining literals — and the
+/// persona directive in particular — sit inside the scaffold hash: editing this
+/// wrapper must invalidate the scaffold id, exactly like editing a constant.
+pub fn system_prompt(obs: &Observation, persona: Option<&str>) -> String {
+    let mut s = format!(
+        "{}\n\n{}\n\n{}",
+        RULES_SUMMARY,
+        role_brief(obs),
+        OUTPUT_CONTRACT
+    );
+    if let Some(p) = persona {
+        s.push_str(&format!("\n\nPlay style directive: {p}"));
+    }
+    s
+}
+
+/// The complete user message: the observation render, what to decide, the
+/// strict JSON shape, and the retry framing after a rejected reply. Hashed for
+/// the same reason [`system_prompt`] is.
+pub fn user_prompt(obs: &Observation, decision: &DecisionPoint, feedback: Option<&str>) -> String {
+    let mut s = format!(
+        "{}\n== YOUR DECISION ==\n{}\nRespond with exactly this JSON shape:\n{}",
+        render_observation(obs),
+        decision_ask(obs, decision),
+        decision_schema(decision),
+    );
+    if let Some(f) = feedback {
+        s.push_str(&format!(
+            "\n\nYour previous reply was rejected: {f}\nCorrect the problem and answer again with valid JSON."
+        ));
+    }
+    s
+}
+
 /// The strict JSON shape for each decision, shown verbatim to the model.
 pub fn decision_schema(decision: &DecisionPoint) -> &'static str {
     match decision {

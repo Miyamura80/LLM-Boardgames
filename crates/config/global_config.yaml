@@ -76,10 +76,18 @@ codenames:
   clue_word_max_len: 20
   # Controlled mode seats 1 candidate + exactly 3 frozen anchors across the
   # four fixed seats (spymaster + operative per team).
+  #
+  # The shipped pool uses only anchors that work out of the box. The
+  # codenames-embedding anchor is deliberately NOT here: it requires
+  # vectors_path above, which ships null, so including it would make the
+  # default controlled run fail at seat construction before a run row exists.
+  # To use it, point vectors_path at a GloVe/word2vec text file and swap one
+  # anchor for the commented line below.
   pools:
     pool-a:
-      - { name: random, kind: codenames-random }
-      - { name: embed, kind: codenames-embedding }
+      - { name: random-a, kind: codenames-random }
+      - { name: random-b, kind: codenames-random }
+      # - { name: embed, kind: codenames-embedding }   # needs vectors_path
       - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.1-24b-instruct }
   # Arena model sets: exactly 4 seat specs per set.
   model_sets:

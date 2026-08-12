@@ -189,11 +189,47 @@ impl EndReason {
     }
 }
 
+/// The smallest legal value of `clue_word_max_len`, and the length of the
+/// shortest word any pool may contribute (the vendored curation's shortest
+/// words — `bee`, `bus`, `cat` — are three characters).
+///
+/// A cap below this is not merely restrictive, it is *degenerate*: every pool
+/// word is filtered out, so the forced legal default has nothing legal to draw,
+/// falls back to a synthetic token that is itself over the cap, and the shared
+/// rethink loop panics on `expect("forced default must be legal")`. The cap is
+/// therefore validated where a game is constructed rather than repaired deep in
+/// the fallback.
+pub const MIN_CLUE_WORD_MAX_LEN: usize = 3;
+
 /// Per-game rules knobs (config-driven; the defaults keep tests hermetic).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct GameConfig {
-    /// Maximum characters in a clue word. Tune-later per PRD §9 item 12.
+    /// Maximum characters in a clue word, at least [`MIN_CLUE_WORD_MAX_LEN`].
+    /// Tune-later per PRD §9 item 12.
     pub clue_word_max_len: usize,
+}
+
+impl GameConfig {
+    /// The validating constructor: rejects a degenerate clue-word cap up front.
+    pub fn new(clue_word_max_len: usize) -> Result<Self, String> {
+        let cfg = Self { clue_word_max_len };
+        cfg.validate()?;
+        Ok(cfg)
+    }
+
+    /// Check the knobs a game cannot survive. Called by every boundary that
+    /// builds a game (`codenames_play_game`, `codenames_run_match`).
+    pub fn validate(&self) -> Result<(), String> {
+        if self.clue_word_max_len < MIN_CLUE_WORD_MAX_LEN {
+            return Err(format!(
+                "codenames clue_word_max_len is {}, but the shortest pool word is \
+                 {MIN_CLUE_WORD_MAX_LEN} characters: every clue would be illegal and no legal \
+                 forced default exists, so the cap must be at least {MIN_CLUE_WORD_MAX_LEN}",
+                self.clue_word_max_len
+            ));
+        }
+        Ok(())
+    }
 }
 
 impl Default for GameConfig {
