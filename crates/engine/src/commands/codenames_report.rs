@@ -15,8 +15,10 @@
 //! carry every identity the game disclosed.
 
 use crate::codenames::board::KeyCard;
+use crate::codenames::events::CodenamesEvent;
 use crate::codenames::metrics::key_card_for;
 use crate::codenames::runner::{wordlist_from_config, GameRecord};
+use crate::codenames::types::Seat;
 use crate::commands::codenames_match::open_codenames_store;
 use crate::commands::{Command, CommandError, Expose};
 use crate::context::Ctx;
@@ -24,9 +26,63 @@ use crate::register_command;
 use async_trait::async_trait;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::path::Path;
 
 const TEMPLATE: &str = include_str!("../../templates/codenames_game_report.html");
+
+/// The seat whose *action* an event records, or `None` for engine bookkeeping
+/// (turn boundaries, the deal, forced-default notices, the final result).
+fn action_seat(event: &CodenamesEvent) -> Option<Seat> {
+    match event {
+        CodenamesEvent::ClueGiven { seat, .. }
+        | CodenamesEvent::GuessRevealed { seat, .. }
+        | CodenamesEvent::TurnPassed { seat, .. } => Some(*seat),
+        _ => None,
+    }
+}
+
+/// The event a thought explains.
+///
+/// [`crate::game_core::ThoughtRecord::at_event`] is the length of the event log
+/// *after* the decision's own events were appended — the convention every game
+/// loop in this repo shares (Codenames, Catan and Secret Hitler all stamp
+/// `state.events.len()` once `resolve_decision` has returned). A guess that ends
+/// a turn appends both its `GuessRevealed` and the next `TurnStarted`, so
+/// `at_event` points one *past* the following turn's opening; keying a thought
+/// on it directly drags a turn's last thought into the next turn's card and
+/// shifts every disclosure by one row. Anchor instead on the acting seat's last
+/// action event strictly before `at_event` — the event the reasoning produced.
+fn anchor_event(record: &GameRecord, seat: Seat, at_event: u32) -> u32 {
+    let upto = (at_event as usize).min(record.events.len());
+    record.events[..upto]
+        .iter()
+        .rev()
+        .find(|r| action_seat(&r.event) == Some(seat))
+        .map_or_else(|| upto.saturating_sub(1) as u32, |r| r.idx)
+}
+
+/// Every thought in the record, grouped by the event index it renders above.
+/// Values are `(seat, position in that seat's `thoughts`)` pairs, so the page
+/// keeps exactly one copy of each (often long) reasoning text.
+///
+/// Retries anchor several thoughts to one action; they keep the order the
+/// record stores them in.
+fn thought_anchors(record: &GameRecord) -> BTreeMap<u32, Vec<(Seat, usize)>> {
+    let mut flat: Vec<_> = record
+        .seats
+        .iter()
+        .flat_map(|s| s.thoughts.iter().enumerate().map(move |(i, t)| (s, i, t)))
+        .collect();
+    flat.sort_by_key(|(s, _, t)| (t.at_event, s.seat));
+    let mut out: BTreeMap<u32, Vec<(Seat, usize)>> = BTreeMap::new();
+    for (s, i, t) in flat {
+        out.entry(anchor_event(record, s.seat, t.at_event))
+            .or_default()
+            .push((s.seat, i));
+    }
+    out
+}
 
 /// Render a complete Codenames game record into the self-contained HTML report.
 /// `key` is the reconstructed key card when it is available; `None` renders the
@@ -46,6 +102,7 @@ pub(crate) fn render_codenames_game_report(
     let data = payload(serde_json::to_value(record))?;
     let lines = payload(serde_json::to_value(&rendered))?;
     let key_json = payload(serde_json::to_value(key))?;
+    let thoughts = payload(serde_json::to_value(thought_anchors(record)))?;
 
     // Split at the markers instead of sequential global replaces: model-authored
     // text inside the payloads could itself contain a marker.
@@ -55,11 +112,14 @@ pub(crate) fn render_codenames_game_report(
     let (between, rest) = rest
         .split_once("__RENDERED__")
         .ok_or_else(|| CommandError::Other("template missing __RENDERED__".into()))?;
-    let (between2, after) = rest
+    let (between2, rest) = rest
         .split_once("__KEY_CARD__")
         .ok_or_else(|| CommandError::Other("template missing __KEY_CARD__".into()))?;
+    let (between3, after) = rest
+        .split_once("__THOUGHTS__")
+        .ok_or_else(|| CommandError::Other("template missing __THOUGHTS__".into()))?;
     Ok(format!(
-        "{before}{data}{between}{lines}{between2}{key_json}{after}"
+        "{before}{data}{between}{lines}{between2}{key_json}{between3}{thoughts}{after}"
     ))
 }
 
@@ -170,13 +230,43 @@ register_command!(CodenamesExportGameReport);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::codenames::events::CodenamesEvent;
+    use crate::codenames::types::Role;
     use crate::codenames::wordlist::Wordlist;
+    use crate::game_core::ThoughtRecord;
 
     const FIXTURE: &str = include_str!("../../fixtures/codenames_bots.json");
 
     fn fixture_record() -> GameRecord {
         serde_json::from_str(FIXTURE).expect("fixture is a GameRecord")
+    }
+
+    /// The fixture's bot seats reason silently, so thoughts are attached here
+    /// exactly as a live loop would stamp them: `at_event` is the transcript
+    /// length *after* the decision's own events landed.
+    fn with_thoughts(record: &mut GameRecord, seat: Seat, at_events: &[u32]) {
+        let s = record
+            .seats
+            .iter_mut()
+            .find(|s| s.seat == seat)
+            .expect("seat exists");
+        let decision = if s.role == Role::Spymaster {
+            "give-clue"
+        } else {
+            "guess-or-pass"
+        };
+        s.thoughts = at_events
+            .iter()
+            .map(|&at_event| ThoughtRecord {
+                round: 0,
+                at_event,
+                decision: decision.into(),
+                text: format!("reasoning stamped at {at_event}"),
+            })
+            .collect();
+    }
+
+    fn event_at(record: &GameRecord, idx: u32) -> &CodenamesEvent {
+        &record.events[idx as usize].event
     }
 
     /// The fixture must render into a page that is self-contained (no network
@@ -248,6 +338,77 @@ mod tests {
         for seat in &record.seats {
             assert!(html.contains(seat.model_id.as_str()));
         }
+    }
+
+    /// The disclosure bug this pins: `at_event` is stamped *after* the
+    /// decision's own events land, so a turn-ending guess (whose action also
+    /// appends the next `TurnStarted`) must still anchor to its own
+    /// `GuessRevealed` — never to the next turn's clue, which would drag the
+    /// thought into the following turn card and shift every row after it.
+    #[test]
+    fn thoughts_anchor_to_the_action_that_produced_them() {
+        let mut record = fixture_record();
+        // Fixture turn 1: clue at 3, the guess that ends the turn at 4, the
+        // next turn opens at 5 and takes its clue at 6.
+        assert!(matches!(
+            event_at(&record, 4),
+            CodenamesEvent::GuessRevealed {
+                seat: 1,
+                ends_turn: true,
+                ..
+            }
+        ));
+        assert!(matches!(
+            event_at(&record, 5),
+            CodenamesEvent::TurnStarted { .. }
+        ));
+        assert!(matches!(
+            event_at(&record, 6),
+            CodenamesEvent::ClueGiven { seat: 2, .. }
+        ));
+
+        with_thoughts(&mut record, 0, &[4]); // clue at 3; log length 4 after it
+        with_thoughts(&mut record, 1, &[6]); // guess at 4 + TurnStarted at 5
+        with_thoughts(&mut record, 3, &[9]); // guess at 7 + TurnStarted at 8
+
+        let anchors = thought_anchors(&record);
+        assert_eq!(anchors.keys().copied().collect::<Vec<_>>(), vec![3, 4, 7]);
+        assert_eq!(
+            anchors[&3],
+            [(0, 0)],
+            "the spymaster's thought sits on the clue it gave"
+        );
+        assert_eq!(
+            anchors[&4],
+            [(1, 0)],
+            "the turn-ending guess keeps its thought in its own turn"
+        );
+        assert_eq!(anchors[&7], [(3, 0)]);
+
+        // The anchored map is what the page reads — nothing re-derives
+        // `at_event` client-side.
+        let html = render_codenames_game_report(&record, None).expect("renders");
+        assert!(html.contains(r#"const THOUGHTS = {"3":[[0,0]],"4":[[1,0]],"7":[[3,0]]}"#));
+        assert!(html.contains("reasoning stamped at 6"));
+        assert!(
+            !html.contains("t.at_event"),
+            "thoughts re-keyed client-side"
+        );
+    }
+
+    /// Retries file several thoughts against one action; all of them stay above
+    /// that action's row, in the order the record stores them.
+    #[test]
+    fn several_thoughts_on_one_action_stay_together_in_order() {
+        let mut record = fixture_record();
+        with_thoughts(&mut record, 1, &[5, 6]);
+        let anchors = thought_anchors(&record);
+        assert_eq!(anchors.keys().copied().collect::<Vec<_>>(), vec![4]);
+        assert_eq!(
+            anchors[&4],
+            [(1, 0), (1, 1)],
+            "both attempts render above the guess they produced, in record order"
+        );
     }
 
     /// A record whose pool cannot be identified still renders — the key falls

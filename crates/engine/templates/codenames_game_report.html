@@ -270,6 +270,12 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 const GAME = __GAME_DATA__;
 const RENDERED = __RENDERED__;  // canonical lines from CodenamesEvent::render, index-aligned with GAME.events
 const KEY = __KEY_CARD__;       // full key card when it could be reconstructed, else null
+// [seat, index into that seat's thoughts] pairs, grouped by the event index
+// each one sits directly above. The engine does the anchoring (see
+// `thought_anchors` in codenames_report.rs): a ThoughtRecord's own `at_event`
+// is stamped *after* the decision's events were appended, so a turn-ending
+// guess would otherwise file its thought under the next turn's card.
+const THOUGHTS = __THOUGHTS__;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
 const TEAM = {a:"A", b:"B"};
@@ -419,15 +425,15 @@ if (!KEY) {   // nothing to peek at: the key never left the engine for this reco
 refresh();
 
 // ---- transcript ----------------------------------------------------------
-const thoughtsAt = new Map();
-for (const s of GAME.seats) for (const t of (s.thoughts || [])) {
-  const list = thoughtsAt.get(t.at_event) || [];
-  list.push({seat: s.seat, team: s.team, role: s.role, decision: t.decision, text: t.text});
-  thoughtsAt.set(t.at_event, list);
-}
-const renderThoughts = (idx) => (thoughtsAt.get(idx) || []).map(t =>
-  `<details class="thought"><summary>💭 team ${TEAM[t.team]} ${esc(t.role)} (seat ${t.seat}) before ${esc(t.decision)}</summary>`
-  + `<p>${esc(t.text)}</p></details>`).join("");
+// Each thought renders immediately above the row for the action it produced —
+// the operative's reasoning on top of the word it guessed, the spymaster's on
+// top of its turn card (the clue itself lives in the header). Retries anchor
+// several thoughts to one action; they print in the order they were recorded.
+const renderThoughts = (idx) => (THOUGHTS[idx] || []).map(([seat, i]) => {
+  const s = _seatOf(seat), t = s.thoughts[i];
+  return `<details class="thought"><summary>💭 team ${TEAM[s.team]} ${esc(s.role)} (seat ${seat}) before ${esc(t.decision)}</summary>`
+    + `<p>${esc(t.text)}</p></details>`;
+}).join("");
 
 function guessRow(e) {
   const k = idKey(e.identity);
@@ -473,7 +479,6 @@ for (const rec of GAME.events) {
   cur.rows.push(renderThoughts(rec.idx) + eventRow(rec));
   cur.upto = rec.idx + 1;
 }
-cur?.rows.push(renderThoughts(GAME.events.length));
 flush();
 
 $("log").innerHTML = cards.map((c, ci) => {

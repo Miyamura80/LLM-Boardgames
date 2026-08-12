@@ -55,6 +55,8 @@ export interface ThoughtEntry {
 	seat: Seat;
 	decision: string;
 	text: string;
+	/** The record's own stamp, kept as a stable per-thought identity. */
+	atEvent: number;
 }
 
 /** Stable identity slug, used for both CSS classes and labels. */
@@ -180,33 +182,46 @@ export function buildTurns(record: GameRecord): TurnBlock[] {
 }
 
 /**
- * Thoughts keyed by the event they explain. `at_event` is the transcript
- * length *after* the decision applied, so anchor each thought to that seat's
- * most recent action event before it (the same convention the Catan replay
- * uses, made robust against decisions that emit several events).
+ * Thoughts keyed by the event they explain — the row each one renders directly
+ * above.
+ *
+ * `at_event` is the transcript length *after* the decision's own events landed
+ * (every game loop in the repo stamps `state.events.len()` once the action has
+ * applied). A guess that ends a turn appends both its `GuessRevealed` and the
+ * next `TurnStarted`, so `at_event` points past the following turn's opening;
+ * keying on it directly would file that thought under the next turn. Anchor
+ * instead on the acting seat's last action event before `at_event`, exactly as
+ * `thought_anchors` does for the HTML report.
  */
 export function thoughtsByEvent(
 	record: GameRecord,
 ): Map<number, ThoughtEntry[]> {
-	const actions = record.events.filter(
-		(r) =>
-			r.event.type === "ClueGiven" ||
-			r.event.type === "GuessRevealed" ||
-			r.event.type === "TurnPassed",
-	);
+	const isAction = (type: string) =>
+		type === "ClueGiven" || type === "GuessRevealed" || type === "TurnPassed";
 	const map = new Map<number, ThoughtEntry[]>();
-	for (const seat of record.seats) {
-		for (const t of seat.thoughts) {
-			let anchor = t.at_event - 1;
-			for (const r of actions) {
-				const e = r.event;
-				if (r.idx >= t.at_event) break;
-				if ("seat" in e && e.seat === seat.seat) anchor = r.idx;
+	const flat = record.seats.flatMap((seat) =>
+		seat.thoughts.map((t) => ({ seat: seat.seat, t })),
+	);
+	// Retries anchor several thoughts to one action: keep the recorded order.
+	flat.sort((a, b) => a.t.at_event - b.t.at_event || a.seat - b.seat);
+	for (const { seat, t } of flat) {
+		const upto = Math.min(t.at_event, record.events.length);
+		let anchor = Math.max(0, upto - 1);
+		for (let i = upto - 1; i >= 0; i--) {
+			const e = record.events[i].event;
+			if (isAction(e.type) && "seat" in e && e.seat === seat) {
+				anchor = i;
+				break;
 			}
-			const list = map.get(anchor) ?? [];
-			list.push({ seat: seat.seat, decision: t.decision, text: t.text });
-			map.set(anchor, list);
 		}
+		const list = map.get(anchor) ?? [];
+		list.push({
+			seat,
+			decision: t.decision,
+			text: t.text,
+			atEvent: t.at_event,
+		});
+		map.set(anchor, list);
 	}
 	return map;
 }

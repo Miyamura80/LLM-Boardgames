@@ -113,6 +113,14 @@ function Turn({
 					{open ? "hide board ▴" : "show board ▾"}
 				</button>
 			</header>
+			{/* Every 💭 sits directly above the row for the action it produced,
+			    the way the HTML game report orders them. */}
+			<Thoughts
+				at={t.clueIdx}
+				seatLabel={seatLabel}
+				step={step}
+				thoughts={thoughts}
+			/>
 			{t.clue && t.clueIdx !== null && t.clueIdx < step ? (
 				<p className="cn-line">
 					<span className="cn-clue">
@@ -122,17 +130,17 @@ function Turn({
 			) : (
 				<p className="cn-dim">thinking…</p>
 			)}
-			<Thoughts
-				at={t.clueIdx}
-				seatLabel={seatLabel}
-				step={step}
-				thoughts={thoughts}
-			/>
 			<ul className="cn-guesses">
 				{t.guesses
 					.filter((g) => g.idx < step)
 					.map((g) => (
 						<li key={g.idx}>
+							<Thoughts
+								at={g.idx}
+								seatLabel={seatLabel}
+								step={step}
+								thoughts={thoughts}
+							/>
 							<span className="cn-line">
 								<span
 									className={`cn-outcome cn-out-${identityKey(g.identity)}`}
@@ -145,23 +153,17 @@ function Turn({
 									{g.endsTurn ? " · turn ends" : ""}
 								</span>
 							</span>
-							<Thoughts
-								at={g.idx}
-								seatLabel={seatLabel}
-								step={step}
-								thoughts={thoughts}
-							/>
 						</li>
 					))}
 				{t.passedIdx !== null && t.passedIdx < step && (
 					<li>
-						<span className="cn-line cn-dim">— passed —</span>
 						<Thoughts
 							at={t.passedIdx}
 							seatLabel={seatLabel}
 							step={step}
 							thoughts={thoughts}
 						/>
+						<span className="cn-line cn-dim">— passed —</span>
 					</li>
 				)}
 				{t.forced
@@ -227,7 +229,12 @@ function Thoughts({
 	return (
 		<>
 			{list.map((t) => (
-				<details className="cn-thought" key={`${at}-${t.seat}-${t.decision}`}>
+				<details
+					className="cn-thought"
+					// Retries put several thoughts on one action, so the seat's
+					// own stamp is part of the identity.
+					key={`${at}-${t.seat}-${t.atEvent}`}
+				>
 					<summary>
 						💭 {seatLabel(t.seat)}{" "}
 						<span className="cn-dim">({t.decision})</span>
