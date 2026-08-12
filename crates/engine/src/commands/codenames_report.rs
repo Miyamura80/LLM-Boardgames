@@ -238,6 +238,13 @@ mod tests {
         assert!(html.contains("Spymaster key"));
         assert!(html.contains("Clue by clue"));
         assert!(html.contains("Seats, reliability"));
+        // Each turn card carries its own expandable board snapshot (a real
+        // button with aria-expanded) instead of a control that jumps the main
+        // grid, and both boards go through the one grid renderer.
+        assert!(html.contains("show board"));
+        assert!(html.contains(r#"class="btn snapbtn" type="button" aria-expanded="false""#));
+        assert!(html.contains("function gridHTML(f)"));
+        assert!(!html.contains("board here"));
         for seat in &record.seats {
             assert!(html.contains(seat.model_id.as_str()));
         }

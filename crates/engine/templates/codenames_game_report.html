@@ -163,8 +163,24 @@ label.sw{display:inline-flex;align-items:center;gap:.3rem;font-size:12px;color:v
 .clue b{font-family:var(--display);text-transform:uppercase;letter-spacing:.08em;font-size:12.5px;color:var(--card-ink)}
 .clue em{font-style:normal;font-family:var(--mono);font-weight:700;font-size:11px;width:1.25rem;height:1.25rem;
   display:inline-flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;background:var(--accent)}
-.th .jump{margin-left:auto}
+.th .snapbtn{margin-left:auto}
+.th .snapbtn[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
 .body{padding:.35rem .6rem .5rem}
+/* ---- inline board snapshot inside a turn card ---- */
+/* Same .grid/.cd machinery as the main board, only scaled down: the snapshot
+   must never grow into a second board competing with the one up top. */
+.snap{border-top:1px dashed var(--line);padding:.45rem .6rem .55rem;background:var(--panel);border-radius:0 0 6px 6px}
+.snap[hidden]{display:none}
+.snap .grid{gap:3px;max-width:min(100%,330px)}
+.snap .cd{border-radius:4px;padding:.1rem;box-shadow:0 1px 0 rgba(23,33,43,.08)}
+.snap .cd:hover{transform:none}
+.snap .cd::before{inset:2px;border-radius:3px}
+.snap .cd .w{font-size:clamp(5px,1.05vw,8.5px);letter-spacing:.03em;line-height:1.05}
+.snap .cd .n{display:none}
+.snap .cd .t{font-size:6px;top:1px;right:2px;opacity:.9}
+.snap .cd .gl{display:none}
+body.peek .snap .cd:not(.rv) .dot{width:3px}
+.snap .cap{font-size:11px;color:var(--muted);margin-top:.35rem}
 .g{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;font-size:12.5px;padding:.18rem .3rem;border-radius:5px}
 .g+.g{margin-top:.15rem}
 .gw{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:12.5px}
@@ -210,7 +226,7 @@ td.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
   <section class="panel">
     <h2>The grid</h2>
-    <p class="note" style="margin-bottom:.7rem">Twenty-five word cards, face up from the start — only their allegiances are secret. Drag the slider (or step with ◀ ▶) to replay the game card by card; the score track and the key follow it. Click <em>board here</em> on any turn below to jump the grid to that moment.</p>
+    <p class="note" style="margin-bottom:.7rem">Twenty-five word cards, face up from the start — only their allegiances are secret. Drag the slider (or step with ◀ ▶) to replay the game card by card; the score track and the key follow it. Every turn below carries its own <em>show board</em> toggle, which opens a small copy of the grid as it stood at the end of that turn — this one stays where you left it.</p>
     <div class="boardgrid">
       <div>
         <div class="grid" id="grid"></div>
@@ -330,8 +346,14 @@ function fold(step) {
 }
 
 // ---- grid ----------------------------------------------------------------
-function drawGrid(f) {
-  $("grid").innerHTML = WORDS.map((w, i) => {
+// One renderer for every board on the page: the main grid up top and the
+// per-turn snapshots in the transcript both call this with a folded state, so
+// colors, turn badges and key classes can never drift apart. The "reveal the
+// key" peek is a body-level CSS state (`body.peek`), so it applies to every
+// board already on the page — open snapshots follow the checkbox with no
+// re-render, and lazily rendered ones pick it up on first paint.
+function gridHTML(f) {
+  return WORDS.map((w, i) => {
     const r = f.revealed.get(w);
     const k = r ? idKey(r.id) : (KEY ? idKey(KEY.identities[i]) : "unknown");
     const cls = r ? `rv ${k}` : `k-${k}`;
@@ -341,6 +363,8 @@ function drawGrid(f) {
       + `<span class="w">${esc(w)}</span>${r ? (GLYPH[k] || "") : ""}</div>`;
   }).join("");
 }
+
+function drawGrid(f) { $("grid").innerHTML = gridHTML(f); }
 
 function drawTrack(f) {
   $("track").innerHTML = ["a","b"].map(t => {
@@ -452,23 +476,41 @@ for (const rec of GAME.events) {
 cur?.rows.push(renderThoughts(GAME.events.length));
 flush();
 
-$("log").innerHTML = cards.map(c => {
+$("log").innerHTML = cards.map((c, ci) => {
   const head = c.turn === null
     ? `<span class="tno">Setup</span><span class="chip n">deal</span>`
     : `<span class="tno">Turn ${c.turn}</span><span class="chip ${teamCls(c.team)}">TEAM ${TEAM[c.team]}</span>`
       + (c.clue
         ? `<span class="clue"><b>${esc(c.clue.word)}</b><em>${c.clue.number}</em></span>`
         : `<span class="note">no clue recorded</span>`);
+  const sid = `snap${ci}`;
   return `<article class="turncard ${c.team ? teamCls(c.team) : ""}">`
-    + `<div class="th">${head}<button class="btn jump" type="button" data-upto="${c.upto}">board here</button></div>`
-    + `<div class="body">${c.rows.join("")}</div></article>`;
+    + `<div class="th">${head}`
+    + `<button class="btn snapbtn" type="button" aria-expanded="false" aria-controls="${sid}"`
+    + ` data-upto="${c.upto}" data-snap="${sid}">show board ▾</button></div>`
+    + `<div class="body">${c.rows.join("")}</div>`
+    + `<div class="snap" id="${sid}" hidden><div class="grid"></div><p class="cap"></p></div>`
+    + `</article>`;
 }).join("");
 
-for (const b of document.querySelectorAll("button.jump")) {
+// Each turn card opens its own board, as it stood at the end of that turn's
+// events — several can stay open at once, and the main grid never moves.
+// Rendered on first expand: 25 cards per turn is not worth painting up front.
+for (const b of document.querySelectorAll("button.snapbtn")) {
+  const panel = $(b.dataset.snap);
   b.addEventListener("click", () => {
-    slider.value = b.dataset.upto;
-    refresh();
-    $("grid").scrollIntoView({behavior: "smooth", block: "center"});
+    const open = b.getAttribute("aria-expanded") === "true";
+    if (!open && !panel.dataset.drawn) {
+      const f = fold(Number(b.dataset.upto));
+      panel.querySelector(".grid").innerHTML = gridHTML(f);
+      panel.querySelector(".cap").textContent =
+        (f.turn ? `board after turn ${f.turn}` : "the freshly dealt board")
+        + ` — ${f.revealed.size} of ${WORDS.length} cards turned over`;
+      panel.dataset.drawn = "1";
+    }
+    panel.hidden = open;
+    b.setAttribute("aria-expanded", String(!open));
+    b.textContent = open ? "show board ▾" : "hide board ▴";
   });
 }
 

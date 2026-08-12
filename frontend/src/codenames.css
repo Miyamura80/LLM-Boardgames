@@ -247,6 +247,34 @@
 	padding-top: 62%; /* card aspect, so the grid stays square-ish */
 }
 
+/* Snapshot scale: identical markup and colors as the main grid, only smaller,
+ * so a turn block can carry its own board without shouting over the transcript. */
+.cn-grid-mini {
+	gap: 2px;
+}
+
+.cn-grid-mini .cn-card {
+	padding: 0.1rem;
+	border-radius: 3px;
+	box-shadow: none;
+}
+
+.cn-grid-mini .cn-card-word {
+	font-size: clamp(0.34rem, 0.72vw, 0.5rem);
+	letter-spacing: 0.02em;
+}
+
+.cn-grid-mini .cn-card-tag,
+.cn-grid-mini .cn-card-pip {
+	top: 1px;
+	left: 2px;
+	font-size: 0.4rem;
+}
+
+.cn-grid-mini .cn-key {
+	border-width: 2px;
+}
+
 .cn-card {
 	position: absolute;
 	inset: 0;
@@ -491,18 +519,41 @@
 	color: var(--cn-alarm);
 }
 
-.cn-seek {
-	background: none;
-	border: none;
-	padding: 0;
-	color: inherit;
-	font: inherit;
+.cn-line {
+	display: block;
+	margin: 0;
 	text-align: left;
+}
+
+/* Per-turn board snapshot: the toggle sits at the end of the turn header, the
+ * board itself unfolds under the guesses. */
+.cn-snapbtn {
+	margin-left: auto;
+	background: none;
+	border: 1px solid var(--cn-rule);
+	border-radius: 3px;
+	padding: 0 0.3rem;
+	color: var(--cn-dim);
+	font: inherit;
+	font-size: 0.65rem;
+	letter-spacing: 0.04em;
 	cursor: pointer;
 }
 
-.cn-seek:hover {
-	text-decoration: underline dotted;
+.cn-snapbtn:hover,
+.cn-snapbtn[aria-expanded="true"] {
+	border-color: var(--cn-brass);
+	color: var(--cn-brass);
+}
+
+.cn-snap {
+	margin: 0.35rem 0 0.2rem;
+	max-width: 20rem;
+}
+
+.cn-snap p {
+	margin: 0.25rem 0 0;
+	font-size: 0.7rem;
 }
 
 .cn-forced {

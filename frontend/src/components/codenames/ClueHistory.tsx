@@ -1,17 +1,23 @@
 // Clue-history sidebar: one block per team turn, each with the clue the
 // spymaster gave, the guesses it bought (and what they cost), and the 💭
 // private reasoning behind each decision — the same ThoughtRecord disclosure
-// the Catan and Secret Hitler replays use. Entries are clickable and seek the
-// step slider.
+// the Catan and Secret Hitler replays use.
+//
+// A turn expands to show its *own* compact board — the grid as it stood at the
+// end of that turn — instead of yanking the main grid (and the slider) to that
+// moment. Several turns can stay open at once, and the snapshot follows the
+// spymaster overlay exactly as the main grid does.
 
-import type { ReactNode } from "react";
-import type { CardIdentity, Seat } from "../../api/codenames";
+import { useState } from "react";
+import type { CardIdentity, GameRecord, Seat } from "../../api/codenames";
 import {
+	foldGrid,
 	identityKey,
 	identityLabel,
 	type ThoughtEntry,
 	type TurnBlock,
 } from "./replay";
+import { WordGrid } from "./WordGrid";
 
 /** Outcome glyph for a guess, paired with the identity label in the text. */
 function outcome(id: CardIdentity, hit: boolean): string {
@@ -20,12 +26,30 @@ function outcome(id: CardIdentity, hit: boolean): string {
 	return hit ? "✓" : "✕";
 }
 
+/**
+ * Event count that folds in this turn's last event — clamped to the slider, so
+ * a snapshot never shows the viewer a card the replay has not reached yet.
+ */
+function turnEnd(t: TurnBlock, step: number): number {
+	const idxs = [
+		t.startIdx,
+		t.clueIdx ?? -1,
+		t.passedIdx ?? -1,
+		...t.guesses.map((g) => g.idx),
+		...t.forced.map((f) => f.idx),
+	];
+	return Math.min(Math.max(...idxs) + 1, step);
+}
+
 interface Props {
 	turns: TurnBlock[];
 	step: number;
 	thoughts: Map<number, ThoughtEntry[]>;
 	seatLabel: (seat: Seat) => string;
-	onSeek: (idx: number) => void;
+	/** Source record for the per-turn board snapshots. */
+	record: GameRecord;
+	/** Mirrors the main grid's spymaster overlay. */
+	spymaster: boolean;
 }
 
 export function ClueHistory({
@@ -33,7 +57,8 @@ export function ClueHistory({
 	step,
 	thoughts,
 	seatLabel,
-	onSeek,
+	record,
+	spymaster,
 }: Props) {
 	const visible = turns.filter((t) => t.startIdx < step);
 	const activeTurn = visible[visible.length - 1];
@@ -43,94 +68,146 @@ export function ClueHistory({
 			<h3>Clue history</h3>
 			{visible.length === 0 && <p className="cn-dim">No clues yet.</p>}
 			{visible.map((t) => (
-				<section
-					className={t === activeTurn ? "cn-turn cn-turn-active" : "cn-turn"}
+				<Turn
+					active={t === activeTurn}
 					key={t.startIdx}
-				>
-					<header className={`cn-turn-head cn-side-${t.team}`}>
-						<span className="cn-turn-no">Turn {t.turn}</span>
-						<span className="cn-turn-team">Team {t.team.toUpperCase()}</span>
-					</header>
-					{t.clue && t.clueIdx !== null && t.clueIdx < step ? (
-						<Line idx={t.clueIdx} onSeek={onSeek}>
-							<span className="cn-clue">
-								{t.clue.word} <b>{t.clue.number}</b>
-							</span>
-						</Line>
-					) : (
-						<p className="cn-dim">thinking…</p>
-					)}
-					<Thoughts
-						at={t.clueIdx}
-						step={step}
-						thoughts={thoughts}
-						seatLabel={seatLabel}
-					/>
-					<ul className="cn-guesses">
-						{t.guesses
-							.filter((g) => g.idx < step)
-							.map((g) => (
-								<li key={g.idx}>
-									<Line idx={g.idx} onSeek={onSeek}>
-										<span
-											className={`cn-outcome cn-out-${identityKey(g.identity)}`}
-										>
-											{outcome(g.identity, g.hit)}
-										</span>{" "}
-										<span className="cn-guess-word">{g.word}</span>{" "}
-										<span className="cn-dim">
-											{identityLabel(g.identity)}
-											{g.endsTurn ? " · turn ends" : ""}
-										</span>
-									</Line>
-									<Thoughts
-										at={g.idx}
-										step={step}
-										thoughts={thoughts}
-										seatLabel={seatLabel}
-									/>
-								</li>
-							))}
-						{t.passedIdx !== null && t.passedIdx < step && (
-							<li>
-								<Line idx={t.passedIdx} onSeek={onSeek}>
-									<span className="cn-dim">— passed —</span>
-								</Line>
-								<Thoughts
-									at={t.passedIdx}
-									step={step}
-									thoughts={thoughts}
-									seatLabel={seatLabel}
-								/>
-							</li>
-						)}
-						{t.forced
-							.filter((f) => f.idx < step)
-							.map((f) => (
-								<li className="cn-forced" key={f.idx}>
-									forced default · {seatLabel(f.seat)} · {f.decision}
-								</li>
-							))}
-					</ul>
-				</section>
+					record={record}
+					seatLabel={seatLabel}
+					spymaster={spymaster}
+					step={step}
+					thoughts={thoughts}
+					turn={t}
+				/>
 			))}
 		</div>
 	);
 }
 
-function Line({
-	idx,
-	onSeek,
-	children,
-}: {
-	idx: number;
-	onSeek: (idx: number) => void;
-	children: ReactNode;
+function Turn({
+	turn: t,
+	active,
+	step,
+	thoughts,
+	seatLabel,
+	record,
+	spymaster,
+}: Omit<Props, "turns"> & {
+	turn: TurnBlock;
+	active: boolean;
 }) {
+	const [open, setOpen] = useState(false);
+	const panelId = `cn-snap-${t.startIdx}`;
+
 	return (
-		<button className="cn-seek" onClick={() => onSeek(idx + 1)} type="button">
-			{children}
-		</button>
+		<section className={active ? "cn-turn cn-turn-active" : "cn-turn"}>
+			<header className={`cn-turn-head cn-side-${t.team}`}>
+				<span className="cn-turn-no">Turn {t.turn}</span>
+				<span className="cn-turn-team">Team {t.team.toUpperCase()}</span>
+				<button
+					aria-controls={panelId}
+					aria-expanded={open}
+					className="cn-snapbtn"
+					onClick={() => setOpen(!open)}
+					type="button"
+				>
+					{open ? "hide board ▴" : "show board ▾"}
+				</button>
+			</header>
+			{t.clue && t.clueIdx !== null && t.clueIdx < step ? (
+				<p className="cn-line">
+					<span className="cn-clue">
+						{t.clue.word} <b>{t.clue.number}</b>
+					</span>
+				</p>
+			) : (
+				<p className="cn-dim">thinking…</p>
+			)}
+			<Thoughts
+				at={t.clueIdx}
+				seatLabel={seatLabel}
+				step={step}
+				thoughts={thoughts}
+			/>
+			<ul className="cn-guesses">
+				{t.guesses
+					.filter((g) => g.idx < step)
+					.map((g) => (
+						<li key={g.idx}>
+							<span className="cn-line">
+								<span
+									className={`cn-outcome cn-out-${identityKey(g.identity)}`}
+								>
+									{outcome(g.identity, g.hit)}
+								</span>{" "}
+								<span className="cn-guess-word">{g.word}</span>{" "}
+								<span className="cn-dim">
+									{identityLabel(g.identity)}
+									{g.endsTurn ? " · turn ends" : ""}
+								</span>
+							</span>
+							<Thoughts
+								at={g.idx}
+								seatLabel={seatLabel}
+								step={step}
+								thoughts={thoughts}
+							/>
+						</li>
+					))}
+				{t.passedIdx !== null && t.passedIdx < step && (
+					<li>
+						<span className="cn-line cn-dim">— passed —</span>
+						<Thoughts
+							at={t.passedIdx}
+							seatLabel={seatLabel}
+							step={step}
+							thoughts={thoughts}
+						/>
+					</li>
+				)}
+				{t.forced
+					.filter((f) => f.idx < step)
+					.map((f) => (
+						<li className="cn-forced" key={f.idx}>
+							forced default · {seatLabel(f.seat)} · {f.decision}
+						</li>
+					))}
+			</ul>
+			{open && (
+				<TurnBoard
+					at={turnEnd(t, step)}
+					id={panelId}
+					record={record}
+					spymaster={spymaster}
+					turn={t.turn}
+				/>
+			)}
+		</section>
+	);
+}
+
+/** The board as it stood after `at` events, shrunk to fit inside a turn block. */
+function TurnBoard({
+	record,
+	at,
+	turn,
+	spymaster,
+	id,
+}: {
+	record: GameRecord;
+	at: number;
+	turn: number;
+	spymaster: boolean;
+	id: string;
+}) {
+	const cards = foldGrid(record, at);
+	const flipped = cards.filter((c) => c.identity !== null).length;
+	return (
+		<div className="cn-snap" id={id}>
+			<WordGrid activeWord={null} cards={cards} compact spymaster={spymaster} />
+			<p className="cn-dim">
+				board after turn {turn} — {flipped} of {cards.length} cards turned over
+			</p>
+		</div>
 	);
 }
 

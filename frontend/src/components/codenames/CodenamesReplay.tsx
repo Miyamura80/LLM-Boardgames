@@ -250,8 +250,9 @@ export function CodenamesReplay() {
 						</div>
 
 						<ClueHistory
-							onSeek={setStep}
+							record={record}
 							seatLabel={seatLabel}
+							spymaster={spymaster}
 							step={step}
 							thoughts={thoughts}
 							turns={turns}

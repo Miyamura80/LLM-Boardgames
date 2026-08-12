@@ -24,11 +24,13 @@ interface Props {
 	spymaster: boolean;
 	/** Word flipped by the event the slider sits on, pulsed for one step. */
 	activeWord: string | null;
+	/** Shrink the cards so the grid can sit inside a turn block as a snapshot. */
+	compact?: boolean;
 }
 
-export function WordGrid({ cards, spymaster, activeWord }: Props) {
+export function WordGrid({ cards, spymaster, activeWord, compact }: Props) {
 	return (
-		<div className="cn-grid">
+		<div className={compact ? "cn-grid cn-grid-mini" : "cn-grid"}>
 			{cards.map((card) => (
 				<Card
 					card={card}
