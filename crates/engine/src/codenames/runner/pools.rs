@@ -153,11 +153,17 @@ impl AgentFactory {
     }
 }
 
-/// The rules knobs a game runs under, from config. A degenerate clue-word cap
-/// is rejected here, before a game exists: see
-/// [`MIN_CLUE_WORD_MAX_LEN`](crate::codenames::types::MIN_CLUE_WORD_MAX_LEN).
-pub fn rules_from_config(cfg: &app_config::CodenamesConfig) -> Result<RulesConfig, String> {
-    RulesConfig::new(cfg.clue_word_max_len)
+/// The rules knobs a game runs under, from config, validated against the pool
+/// the game will actually be dealt from — `wordlist` must be the effective one
+/// ([`wordlist_from_config`]), because a `wordlist_path` override moves the
+/// floor the clue-word cap has to clear. A degenerate pair is rejected here,
+/// before a game exists: see
+/// [`GameConfig::validate`](crate::codenames::types::GameConfig::validate).
+pub fn rules_from_config(
+    cfg: &app_config::CodenamesConfig,
+    wordlist: &Wordlist,
+) -> Result<RulesConfig, String> {
+    RulesConfig::new(cfg.clue_word_max_len, wordlist.min_word_len())
 }
 
 /// The configured pool: the `wordlist_path` override if set, else the vendored
@@ -308,7 +314,7 @@ mod tests {
     fn config_supplies_the_rules_knobs_and_the_default_pool() {
         let cfg = app_config::CodenamesConfig::default();
         assert_eq!(
-            rules_from_config(&cfg)
+            rules_from_config(&cfg, &Wordlist::default_embedded())
                 .expect("shipped cap is sane")
                 .clue_word_max_len,
             cfg.clue_word_max_len
@@ -328,23 +334,91 @@ mod tests {
             .contains("wordlist_path"));
     }
 
-    /// A clue-word cap below the shortest pool word makes every clue illegal
-    /// (including the forced default), so it is rejected here rather than
-    /// reaching a game.
+    /// A pool of `n` distinct words of exactly `len` characters.
+    fn pool_of(len: usize, n: usize) -> Wordlist {
+        let alphabet: Vec<char> = ('a'..='z').collect();
+        let words: Vec<String> = (0..n)
+            .map(|i| {
+                let mut w: String = alphabet[i % 26].to_string().repeat(len);
+                // Vary the tail so the words stay distinct without changing len.
+                let tail = alphabet[(i / 26) % 26];
+                w.pop();
+                w.push(tail);
+                w
+            })
+            .collect();
+        Wordlist::from_words(words).expect("a well-formed pool")
+    }
+
+    /// A clue-word cap below the shortest word of the **effective** pool makes
+    /// every clue illegal (including the forced default), so it is rejected
+    /// here rather than reaching a game. The floor moves with the pool: the
+    /// vendored curation's shortest word is three characters, a custom pool's
+    /// can be anything.
     #[test]
     fn a_degenerate_clue_word_cap_is_rejected_by_the_config_plumbing() {
+        let vendored = Wordlist::default_embedded();
+        assert_eq!(vendored.min_word_len(), 3, "the vendored floor");
+        let with_cap = |cap: usize| app_config::CodenamesConfig {
+            clue_word_max_len: cap,
+            ..app_config::CodenamesConfig::default()
+        };
         for cap in [0usize, 1, 2] {
+            let err = rules_from_config(&with_cap(cap), &vendored).expect_err("degenerate cap");
+            assert!(err.contains("clue_word_max_len"), "{err}");
+            assert!(err.contains("at least 3"), "{err}");
+        }
+        assert!(rules_from_config(&with_cap(3), &vendored).is_ok());
+    }
+
+    /// The bug a constant floor hides: a custom `wordlist_path` whose shortest
+    /// word is over the cap passed validation, and the forced-default fallback
+    /// then had nothing legal to draw. Validation follows the effective pool in
+    /// both directions — long words raise the floor, short words lower it.
+    #[test]
+    fn the_cap_is_validated_against_the_effective_wordlist_not_a_constant() {
+        let long = pool_of(8, 30);
+        assert_eq!(long.min_word_len(), 8);
+        for cap in [3usize, 5, 7] {
             let cfg = app_config::CodenamesConfig {
                 clue_word_max_len: cap,
                 ..app_config::CodenamesConfig::default()
             };
-            let err = rules_from_config(&cfg).expect_err("degenerate cap");
-            assert!(err.contains("clue_word_max_len"), "{err}");
+            let err = rules_from_config(&cfg, &long)
+                .expect_err("every word of this pool is over the cap");
+            assert!(err.contains("at least 8"), "{err}");
         }
-        assert!(rules_from_config(&app_config::CodenamesConfig {
-            clue_word_max_len: crate::codenames::types::MIN_CLUE_WORD_MAX_LEN,
-            ..app_config::CodenamesConfig::default()
-        })
+        assert!(rules_from_config(
+            &app_config::CodenamesConfig {
+                clue_word_max_len: 8,
+                ..app_config::CodenamesConfig::default()
+            },
+            &long
+        )
         .is_ok());
+
+        // …and a two-letter pool at a cap of two is a real, playable game, not
+        // something to reject on a constant's say-so.
+        let short = pool_of(2, 30);
+        assert_eq!(short.min_word_len(), 2);
+        let cfg = app_config::CodenamesConfig {
+            clue_word_max_len: 2,
+            ..app_config::CodenamesConfig::default()
+        };
+        assert_eq!(
+            rules_from_config(&cfg, &short)
+                .expect("two-letter words fit a cap of two")
+                .clue_word_max_len,
+            2
+        );
+        // A cap of zero stays structurally impossible whatever the pool.
+        assert!(rules_from_config(
+            &app_config::CodenamesConfig {
+                clue_word_max_len: 0,
+                ..app_config::CodenamesConfig::default()
+            },
+            &short
+        )
+        .is_err());
     }
 }

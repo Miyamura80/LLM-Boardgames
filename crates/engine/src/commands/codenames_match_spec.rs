@@ -42,8 +42,8 @@ pub(crate) fn ensure_stored_spec_matches(
 
 /// A resume must play under the config the run was created with. Live config is
 /// re-read on every call, so without this an edit to the wordlist, the
-/// clue-word cap, or the retry budget would silently mix games played under two
-/// rule sets into one rating.
+/// clue-word cap, the retry budget, or the agent-side settings would silently
+/// mix games played under two configurations into one rating.
 pub(crate) fn ensure_fingerprint_matches(
     run_id: &str,
     stored: Option<&str>,
@@ -56,21 +56,61 @@ pub(crate) fn ensure_fingerprint_matches(
         Some(fp) if fp == live => Ok(()),
         Some(fp) => Err(CommandError::InvalidInput(format!(
             "run '{run_id}' was created under a different codenames configuration \
-             (fingerprint {fp}, now {live}): the wordlist, clue_word_max_len, or retry_budget \
-             changed, and resuming would mix incomparable games — restore the configuration or \
-             start a new run"
+             (fingerprint {fp}, now {live}): the wordlist, clue_word_max_len, retry_budget, \
+             vectors_path, agent_temperature, or agent_max_tokens changed, and resuming would mix \
+             incomparable games — restore the configuration or start a new run"
         ))),
     }
 }
 
+/// The fingerprint a run is pinned to: the per-game rules
+/// ([`GameConfig::fingerprint`]) plus the agent-side settings every seat is
+/// built with.
+///
+/// The rules half alone is not enough. `vectors_path` decides what the
+/// `codenames-embedding` anchor actually knows, and `agent_temperature` /
+/// `agent_max_tokens` are the sampling settings each LLM seat inherits when its
+/// spec does not override them — change any of them mid-run and the games
+/// before and after are played by differently configured agents while the
+/// rating adds them up as one.
+///
+/// It is deliberately coarse, at run level. A per-seat scaffold change is
+/// already *visible* in the record (`scaffold_version` per seat), but nothing
+/// keys a rating off it, so nothing stops a resume from mixing scaffolds
+/// either; pinning the run-level knobs is the cheap guard that covers the
+/// config-driven half of that. `vectors_path` is fingerprinted as the path
+/// string — editing the file it points at is not caught (the same latitude the
+/// rest of the config gets).
+pub(crate) fn config_fingerprint(cfg: &app_config::AppConfig, base: &GameConfig) -> String {
+    use sha2::{Digest, Sha256};
+    let mut h = Sha256::new();
+    h.update(b"codenames-run-config-v2\n");
+    h.update(base.fingerprint().as_bytes());
+    h.update(b"\nvectors_path=");
+    h.update(
+        cfg.codenames
+            .vectors_path
+            .as_deref()
+            .unwrap_or("")
+            .as_bytes(),
+    );
+    h.update(b"\nagent_temperature=");
+    h.update(cfg.codenames.agent_temperature.to_le_bytes());
+    h.update(b"\nagent_max_tokens=");
+    h.update(cfg.codenames.agent_max_tokens.to_le_bytes());
+    h.finalize().iter().map(|b| format!("{b:02x}")).collect()
+}
+
 /// The base per-game config a match plays under (rules knobs + the pool every
 /// board is drawn from). Resolved once per call so a broken `wordlist_path`,
-/// `vectors_path`, or clue-word cap fails before any game starts.
+/// `vectors_path`, or clue-word cap fails before any game starts. The cap is
+/// validated against the effective wordlist, so the two are resolved together.
 pub(crate) fn base_game_config(cfg: &app_config::AppConfig) -> Result<GameConfig, CommandError> {
+    let wordlist = wordlist_from_config(&cfg.codenames).map_err(CommandError::InvalidInput)?;
     Ok(GameConfig {
         retry_budget: cfg.codenames.retry_budget,
-        rules: rules_from_config(&cfg.codenames).map_err(CommandError::InvalidInput)?,
-        wordlist: wordlist_from_config(&cfg.codenames).map_err(CommandError::InvalidInput)?,
+        rules: rules_from_config(&cfg.codenames, &wordlist).map_err(CommandError::InvalidInput)?,
+        wordlist,
         ..GameConfig::default()
     })
 }
@@ -199,5 +239,69 @@ mod tests {
             ..base.clone()
         };
         assert_eq!(per_game.fingerprint(), live);
+    }
+
+    /// The rules half is not the whole configuration a rating depends on: the
+    /// seats are built from `vectors_path`, `agent_temperature`, and
+    /// `agent_max_tokens`, so a resume after editing any of them would mix
+    /// differently configured agents into one rating.
+    #[test]
+    fn the_run_fingerprint_covers_the_agent_side_settings_too() {
+        let base = GameConfig::default();
+        let cfg = app_config::get_config().clone();
+        let live = config_fingerprint(&cfg, &base);
+        assert!(ensure_fingerprint_matches("r", Some(&live), &live).is_ok());
+        assert_ne!(
+            live,
+            base.fingerprint(),
+            "the run pin is more than the per-game rules"
+        );
+
+        let variants: Vec<(&str, app_config::CodenamesConfig)> = vec![
+            (
+                "vectors_path",
+                app_config::CodenamesConfig {
+                    vectors_path: Some("/tmp/other_vectors.txt".into()),
+                    ..cfg.codenames.clone()
+                },
+            ),
+            (
+                "agent_temperature",
+                app_config::CodenamesConfig {
+                    agent_temperature: cfg.codenames.agent_temperature + 0.25,
+                    ..cfg.codenames.clone()
+                },
+            ),
+            (
+                "agent_max_tokens",
+                app_config::CodenamesConfig {
+                    agent_max_tokens: cfg.codenames.agent_max_tokens + 1,
+                    ..cfg.codenames.clone()
+                },
+            ),
+        ];
+        for (what, codenames) in variants {
+            let edited = app_config::AppConfig {
+                codenames,
+                ..cfg.clone()
+            };
+            assert_ne!(
+                config_fingerprint(&edited, &base),
+                live,
+                "{what} must key the run pin"
+            );
+        }
+
+        // The rules half still keys it, and per-game fields still do not.
+        let mut changed = base.clone();
+        changed.retry_budget += 1;
+        assert_ne!(config_fingerprint(&cfg, &changed), live);
+        let per_game = GameConfig {
+            game_id: "other".into(),
+            seed: 99,
+            schedule_label: "arena/g3".into(),
+            ..base.clone()
+        };
+        assert_eq!(config_fingerprint(&cfg, &per_game), live);
     }
 }

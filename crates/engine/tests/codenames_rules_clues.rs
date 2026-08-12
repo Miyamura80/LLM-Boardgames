@@ -14,6 +14,7 @@ use engine::codenames::events::CodenamesEvent;
 use engine::codenames::state::{GameState, Phase};
 use engine::codenames::testkit;
 use engine::codenames::types::*;
+use engine::codenames::wordlist::Wordlist;
 
 fn clue(word: &str, number: u8) -> Action {
     Action::GiveClue {
@@ -95,38 +96,87 @@ fn a_normalized_submission_records_no_raw_spelling() {
         .any(|e| matches!(&e.event, CodenamesEvent::ClueGiven { raw_word: None, .. })));
 }
 
-/// A clue-word cap below the shortest pool word makes every candidate — and
-/// every forced default — illegal, which the shared resolver turns into a
-/// panic. It is rejected where a game is built, so the degenerate value can no
-/// longer reach the forced-default path at all.
+/// Play a whole game on nothing but forced defaults, asserting every one of
+/// them is legal — the property the clue-word cap validation exists to protect.
+/// Returns the clue words the forced defaults produced.
+fn play_out_on_forced_defaults(seed: u64, wordlist: Wordlist, rules: GameConfig) -> Vec<String> {
+    let mut state = GameState::with_wordlist(seed, wordlist, rules);
+    let mut clues = Vec::new();
+    let mut steps = 0;
+    while !state.is_over() {
+        let decision = state.pending_decisions().remove(0);
+        let action = state.forced_default(&decision);
+        if let Action::GiveClue { word, .. } = &action {
+            clues.push(word.clone());
+        }
+        state
+            .apply(decision.seat(), action)
+            .expect("a forced default must be legal by construction");
+        steps += 1;
+        assert!(steps < 500, "game failed to terminate");
+    }
+    clues
+}
+
+/// A clue-word cap below the shortest word of the pool the game is dealt from
+/// makes every candidate — and every forced default — illegal, which the shared
+/// resolver turns into a panic. It is rejected where a game is built, so the
+/// degenerate value can no longer reach the forced-default path at all.
+///
+/// The floor is the *effective* pool's, not a constant: `clue_word_max_len` and
+/// the wordlist are only degenerate as a pair.
 #[test]
 fn a_degenerate_clue_word_cap_is_rejected_before_a_game_exists() {
+    let vendored = Wordlist::default_embedded();
     for cap in [0usize, 1, 2] {
-        let err = GameConfig::new(cap).expect_err("degenerate cap");
+        let err = GameConfig::new(cap, vendored.min_word_len()).expect_err("degenerate cap");
         assert!(err.contains("clue_word_max_len"), "{err}");
         assert!(err.contains("at least 3"), "{err}");
     }
 
-    // At the minimum cap a game still plays out entirely on forced defaults —
-    // the fallback always has something legal to draw.
-    let rules = GameConfig::new(MIN_CLUE_WORD_MAX_LEN).expect("the minimum is allowed");
+    // At the vendored pool's floor a game still plays out entirely on forced
+    // defaults — the fallback always has something legal to draw.
+    let rules = GameConfig::new(3, vendored.min_word_len()).expect("the pool's floor is allowed");
     for seed in 0..4u64 {
-        let mut state = GameState::with_wordlist(
-            seed,
-            engine::codenames::wordlist::Wordlist::default_embedded(),
-            rules.clone(),
-        );
-        let mut steps = 0;
-        while !state.is_over() {
-            let decision = state.pending_decisions().remove(0);
-            let action = state.forced_default(&decision);
-            state
-                .apply(decision.seat(), action)
-                .expect("a forced default is legal at the minimum cap");
-            steps += 1;
-            assert!(steps < 500, "game failed to terminate");
-        }
+        play_out_on_forced_defaults(seed, vendored.clone(), rules.clone());
     }
+}
+
+/// The other half of the pair: a custom pool of two-letter words at a cap of
+/// two is a legitimate game — a constant floor rejected it — and it stays
+/// playable on forced defaults alone.
+///
+/// The pool is exactly one grid's worth, so every word is on the board and
+/// every board word blocks itself: the pool draw runs dry and the synthetic
+/// ladder has to carry every clue. Between them the 25 words also use all 26
+/// letters, so no single letter is legal either and the ladder has to climb.
+#[test]
+fn a_short_word_pool_is_playable_at_a_matching_cap() {
+    let l: Vec<char> = ('a'..='z').collect();
+    let mut words: Vec<String> = (0..13)
+        .map(|i| format!("{}{}", l[2 * i], l[2 * i + 1]))
+        .collect();
+    words.extend((0..CARD_COUNT - 13).map(|i| format!("{}{}", l[i], l[i + 2])));
+    let pool = Wordlist::from_words(words).expect("25 distinct two-letter words");
+    assert_eq!(pool.len(), CARD_COUNT, "exactly one grid's worth");
+    assert_eq!(pool.min_word_len(), 2);
+
+    let rules = GameConfig::new(2, pool.min_word_len()).expect("two-letter words fit a cap of two");
+    for seed in 0..8u64 {
+        let clues = play_out_on_forced_defaults(seed, pool.clone(), rules.clone());
+        assert!(!clues.is_empty(), "a game gives at least one clue");
+        // Before the first reveal the whole pool is on the board and blocks
+        // itself, so that clue can only have come from the synthetic ladder.
+        // (Later ones may draw a pool word again: a revealed word is legal.)
+        assert!(
+            !pool.words().contains(&clues[0]),
+            "the opening clue must come from the synthetic ladder: {clues:?}"
+        );
+    }
+
+    // A cap under the structural floor is still refused, whatever the pool.
+    assert!(GameConfig::new(0, pool.min_word_len()).is_err());
+    assert_eq!(MIN_CLUE_WORD_MAX_LEN, 1, "one character is the hard floor");
 }
 
 #[test]

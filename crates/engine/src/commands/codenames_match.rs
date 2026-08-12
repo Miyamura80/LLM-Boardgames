@@ -10,7 +10,8 @@ use crate::codenames::store::{
 };
 use crate::commands::codenames_game::parse_model_spec;
 use crate::commands::codenames_match_spec::{
-    base_game_config, ensure_fingerprint_matches, ensure_stored_spec_matches, resolve_pool,
+    base_game_config, config_fingerprint, ensure_fingerprint_matches, ensure_stored_spec_matches,
+    resolve_pool,
 };
 use crate::commands::{Command, CommandError};
 use crate::context::Ctx;
@@ -100,9 +101,10 @@ impl Command for CodenamesRunMatch {
             .clone()
             .unwrap_or_else(|| format!("codenames-run-{}", cx.request_id));
 
-        // The effective config this call would play under; a run is pinned to
-        // the one it was created with.
-        let fingerprint = base.fingerprint();
+        // The effective config this call would play under — rules *and* the
+        // agent-side settings every seat is built with; a run is pinned to the
+        // one it was created with.
+        let fingerprint = config_fingerprint(cfg, &base);
 
         // Resume from the stored spec, else build one from the input.
         let spec: MatchSpec = match store

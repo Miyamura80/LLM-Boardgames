@@ -46,38 +46,54 @@ export function CodenamesLeaderboard() {
 	const [progress, setProgress] = useState<MatchProgress | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
+	// Stale-response invariant (mirrors CodenamesReplay): every response that
+	// commits state validates against BOTH the selection it was issued for
+	// (`selected`, updated synchronously with the run change) and its own
+	// monotonic token. The token alone is not enough — it is bumped inside
+	// `load`, which runs in an effect *after* the runId state change, so a
+	// response landing in that gap would otherwise commit the old run's rows
+	// under the new selection.
+	const selected = useRef("");
+	const boardRequest = useRef(0);
+	const progressRequest = useRef(0);
+
+	/** Switch runs: claim the selection first, then re-render. */
+	const selectRun = useCallback((id: string) => {
+		selected.current = id;
+		setRunId(id);
+	}, []);
+
 	useEffect(() => {
 		codenamesListRuns()
 			.then((r) => {
 				setRuns(r.runs);
-				if (r.runs.length > 0) setRunId(r.runs[0].run_id);
+				if (r.runs.length > 0) selectRun(r.runs[0].run_id);
 			})
 			.catch((e) => setError(describeError(e)));
-	}, []);
+	}, [selectRun]);
 
 	// Monotonic claims, one per commit target: a leaderboard response only lands
 	// while it is still the newest one asked for, so switching run mid-flight
 	// can never let the previous run's rows win the race. `load` also bumps the
 	// progress claim because it resets `progress` — an in-flight schedule check
 	// belongs to the run the user just left.
-	const boardRequest = useRef(0);
-	const progressRequest = useRef(0);
-
 	const load = useCallback((id: string) => {
 		boardRequest.current += 1;
 		progressRequest.current += 1;
 		const token = boardRequest.current;
+		const mine = () =>
+			boardRequest.current === token && selected.current === id;
 		setError(null);
 		setProgress(null);
 		codenamesLeaderboard(id)
 			.then((r) => {
-				if (boardRequest.current !== token) return;
+				if (!mine()) return;
 				setRows(r.rows);
 				setMetrics(r.metrics);
 				setNote(r.uncertainty_note);
 			})
 			.catch((e) => {
-				if (boardRequest.current !== token) return;
+				if (!mine()) return;
 				setRows([]);
 				setMetrics([]);
 				setNote(null);
@@ -95,12 +111,14 @@ export function CodenamesLeaderboard() {
 		if (!runId) return;
 		progressRequest.current += 1;
 		const token = progressRequest.current;
+		const mine = () =>
+			progressRequest.current === token && selected.current === runId;
 		codenamesRunMatch({ run_id: runId, max_games: 0 })
 			.then((r) => {
-				if (progressRequest.current === token) setProgress(r.progress);
+				if (mine()) setProgress(r.progress);
 			})
 			.catch((e) => {
-				if (progressRequest.current === token) setError(describeError(e));
+				if (mine()) setError(describeError(e));
 			});
 	}, [runId]);
 
@@ -109,7 +127,7 @@ export function CodenamesLeaderboard() {
 			<div className="cn-toolbar">
 				<label>
 					Run{" "}
-					<select onChange={(e) => setRunId(e.target.value)} value={runId}>
+					<select onChange={(e) => selectRun(e.target.value)} value={runId}>
 						{runs.length === 0 && <option value="">—</option>}
 						{runs.map((r) => (
 							<option key={r.run_id} value={r.run_id}>

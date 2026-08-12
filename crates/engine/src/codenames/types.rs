@@ -189,42 +189,56 @@ impl EndReason {
     }
 }
 
-/// The smallest legal value of `clue_word_max_len`, and the length of the
-/// shortest word any pool may contribute (the vendored curation's shortest
-/// words — `bee`, `bus`, `cat` — are three characters).
+/// The *structural* floor on `clue_word_max_len`: a clue token is at least one
+/// character, so a cap of zero admits nothing at all — no pool word, and no
+/// synthetic forced default — whatever pool a game is dealt from.
 ///
-/// A cap below this is not merely restrictive, it is *degenerate*: every pool
-/// word is filtered out, so the forced legal default has nothing legal to draw,
-/// falls back to a synthetic token that is itself over the cap, and the shared
-/// rethink loop panics on `expect("forced default must be legal")`. The cap is
-/// therefore validated where a game is constructed rather than repaired deep in
-/// the fallback.
-pub const MIN_CLUE_WORD_MAX_LEN: usize = 3;
+/// This is the only constant floor. The floor that actually bites is the
+/// shortest word of the **effective** wordlist
+/// ([`Wordlist::min_word_len`](crate::codenames::wordlist::Wordlist::min_word_len)),
+/// which a `codenames.wordlist_path` override can move in either direction: a
+/// custom pool of long words makes an otherwise-fine cap degenerate, and a
+/// custom pool of two-letter words makes a cap of 2 perfectly playable. Anchor
+/// validation to a constant and both cases are wrong — one silently, by letting
+/// a cap through that leaves the forced default nothing legal to draw.
+pub const MIN_CLUE_WORD_MAX_LEN: usize = 1;
 
 /// Per-game rules knobs (config-driven; the defaults keep tests hermetic).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct GameConfig {
-    /// Maximum characters in a clue word, at least [`MIN_CLUE_WORD_MAX_LEN`].
+    /// Maximum characters in a clue word. At least [`MIN_CLUE_WORD_MAX_LEN`],
+    /// and at least the shortest word of the wordlist the game is dealt from.
     /// Tune-later per PRD §9 item 12.
     pub clue_word_max_len: usize,
 }
 
 impl GameConfig {
     /// The validating constructor: rejects a degenerate clue-word cap up front.
-    pub fn new(clue_word_max_len: usize) -> Result<Self, String> {
+    /// `shortest_pool_word` is the effective wordlist's shortest word length
+    /// (`wordlist.min_word_len()`) — not a constant, because the pool is
+    /// configurable.
+    pub fn new(clue_word_max_len: usize, shortest_pool_word: usize) -> Result<Self, String> {
         let cfg = Self { clue_word_max_len };
-        cfg.validate()?;
+        cfg.validate(shortest_pool_word)?;
         Ok(cfg)
     }
 
-    /// Check the knobs a game cannot survive. Called by every boundary that
-    /// builds a game (`codenames_play_game`, `codenames_run_match`).
-    pub fn validate(&self) -> Result<(), String> {
-        if self.clue_word_max_len < MIN_CLUE_WORD_MAX_LEN {
+    /// Check the knobs a game cannot survive, against the pool it will actually
+    /// be played with. Called by every boundary that builds a game
+    /// (`codenames_play_game`, `codenames_run_match`), each of which resolves
+    /// the wordlist first so the two are always validated as a pair.
+    ///
+    /// Below this floor every pool word is over the cap, so a spymaster has no
+    /// legal clue and — worse, because it panics rather than merely failing —
+    /// the forced legal default has nothing to draw either.
+    pub fn validate(&self, shortest_pool_word: usize) -> Result<(), String> {
+        let floor = shortest_pool_word.max(MIN_CLUE_WORD_MAX_LEN);
+        if self.clue_word_max_len < floor {
             return Err(format!(
-                "codenames clue_word_max_len is {}, but the shortest pool word is \
-                 {MIN_CLUE_WORD_MAX_LEN} characters: every clue would be illegal and no legal \
-                 forced default exists, so the cap must be at least {MIN_CLUE_WORD_MAX_LEN}",
+                "codenames clue_word_max_len is {}, but the shortest word in the effective \
+                 wordlist is {shortest_pool_word} character(s): every pool word would be over the \
+                 cap, leaving no legal clue and no legal forced default, so the cap must be at \
+                 least {floor}",
                 self.clue_word_max_len
             ));
         }

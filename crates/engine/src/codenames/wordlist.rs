@@ -111,6 +111,22 @@ impl Wordlist {
         self.words.len()
     }
 
+    /// The shortest word in the pool, in characters. This — not any constant —
+    /// is the effective floor on `clue_word_max_len`: a cap below it filters
+    /// every pool word out of the clue space, so no spymaster and no forced
+    /// default can produce a legal pool clue. See
+    /// [`GameConfig::validate`](crate::codenames::types::GameConfig::validate).
+    ///
+    /// A `Wordlist` always holds at least [`CARD_COUNT`] words, so the `0` is
+    /// unreachable; it keeps the accessor total rather than panicking.
+    pub fn min_word_len(&self) -> usize {
+        self.words
+            .iter()
+            .map(|w| w.chars().count())
+            .min()
+            .unwrap_or(0)
+    }
+
     pub fn is_empty(&self) -> bool {
         self.words.is_empty()
     }

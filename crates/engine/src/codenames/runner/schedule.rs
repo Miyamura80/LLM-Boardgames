@@ -56,6 +56,11 @@ pub struct GamePlan {
 /// candidate occupies, and `side_role / 2` is the side (0 = starting team).
 pub const CANDIDATE_CELLS: [Seat; SEAT_COUNT as usize] = [0, 1, 2, 3];
 
+/// Label prefix marking a plan as part of the arena rotation. It is the only
+/// thing that distinguishes the two schedules once they are flattened into
+/// plans, so [`rotation_imbalance_note`] keys off it.
+pub const ARENA_LABEL_PREFIX: &str = "arena/";
+
 /// Hard ceiling on the games one match may schedule. A schedule is fully
 /// materialized in memory before the run row exists, so `boards × 4 × k` (or
 /// `games`) near `u32::MAX` would overflow the capacity arithmetic and exhaust
@@ -208,7 +213,7 @@ pub fn arena_schedule(
                 .collect();
             GamePlan {
                 game_id: format!("{seed:016x}"),
-                label: format!("arena/g{g}"),
+                label: format!("{ARENA_LABEL_PREFIX}g{g}"),
                 seed,
                 seats,
             }
@@ -221,7 +226,20 @@ pub fn arena_schedule(
 /// rotation, some models hold a seat (and therefore a role and a side) more
 /// often than others, so their ratings are not equally confounded. `None` when
 /// every model held every seat the same number of times.
+///
+/// **Arena plans only.** Controlled seating is nonuniform *by design* — the
+/// candidate rotates through all four seats while `pool[0]` holds the two
+/// teammate seats and `pool[1..]` the opposing pair — so a per-model seat count
+/// comparison there always reports an imbalance that is the experiment, not a
+/// defect. A non-arena (or empty) schedule therefore gets `None`.
 pub fn rotation_imbalance_note(plans: &[GamePlan]) -> Option<String> {
+    if plans.is_empty()
+        || !plans
+            .iter()
+            .all(|p| p.label.starts_with(ARENA_LABEL_PREFIX))
+    {
+        return None;
+    }
     let dist = planned_distribution(plans);
     let counts = |key: &str| -> (u32, u32) {
         dist.values()
@@ -423,5 +441,32 @@ mod tests {
         let note = rotation_imbalance_note(&plans).expect("6 is not a multiple of 4");
         assert!(note.contains("6 games"), "{note}");
         assert!(note.contains("seat0"), "{note}");
+    }
+
+    /// Controlled seating is nonuniform on purpose (the candidate rotates, the
+    /// anchors sit still), so the rotation note — which only means anything for
+    /// the arena — must stay silent about it whatever the shape of the run.
+    #[test]
+    fn a_controlled_schedule_never_reports_rotation_imbalance() {
+        for (boards, k) in [(1, 1), (3, 2), (5, 1), (2, 3)] {
+            let plans =
+                controlled_schedule(7, &AgentSpec::llm("cand"), &pool(), boards, k).unwrap();
+            // The counts really are lopsided — this is what used to warn.
+            let dist = planned_distribution(&plans);
+            let seat0: Vec<u32> = dist
+                .values()
+                .map(|by| by.get("seat0").copied().unwrap_or(0))
+                .collect();
+            assert_ne!(
+                seat0.iter().min(),
+                seat0.iter().max(),
+                "controlled seating is deliberately nonuniform: {dist:?}"
+            );
+            assert!(
+                rotation_imbalance_note(&plans).is_none(),
+                "controlled/b{boards}…/r{k} must not report an arena rotation gap"
+            );
+        }
+        assert!(rotation_imbalance_note(&[]).is_none(), "empty schedule");
     }
 }

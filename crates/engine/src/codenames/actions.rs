@@ -118,9 +118,10 @@ impl GameState {
         }
     }
 
-    /// A seeded-random pool word that is legal on the current board, with a
-    /// deterministic synthetic fallback for the (practically unreachable) case
-    /// where the draw leaves the whole pool illegal.
+    /// A seeded-random pool word that is legal on the current board, falling
+    /// back to [`synthetic_clue_word`] when the draw leaves the whole pool
+    /// illegal — which a pool barely larger than one grid really can do, since
+    /// every unrevealed board word blocks itself as a clue.
     fn forced_clue_word(&mut self) -> String {
         let max_len = self.config.clue_word_max_len;
         let candidates: Vec<&String> = self
@@ -133,10 +134,44 @@ impl GameState {
             let pick = self.rng.gen_range(0..candidates.len());
             return candidates[pick].clone();
         }
-        let longest = max_len.max(2);
-        (2..=longest)
-            .map(|n| "z".repeat(n))
-            .find(|w| clue_word_is_legal(&self.board, w, max_len))
-            .unwrap_or_else(|| "z".repeat(longest))
+        synthetic_clue_word(&self.board, max_len)
     }
+}
+
+/// A deterministic clue that is legal on `board` and within `max_len`, built
+/// rather than drawn: the shortest single-letter run (`a`, …, `z`, `aa`, …)
+/// that collides with no unrevealed board word.
+///
+/// This is what keeps the forced default legal for any `(wordlist, cap)` pair
+/// [`GameConfig::validate`](super::types::GameConfig::validate) accepts, where
+/// the old `"zz…"`-only fallback could hand the rethink loop an illegal token
+/// and panic it. A run of length `L` is illegal only if some unrevealed board
+/// word contains it or is contained in it. At `L = longest_unrevealed + 1` the
+/// first is impossible and the second needs a board word that is itself a run
+/// of the same letter — and 25 cards can be runs of at most 25 of the 26
+/// letters, so a legal clue provably exists there. The ladder therefore stops
+/// at `min(cap, longest_unrevealed + 1)`: going past it only adds ways to
+/// swallow a board word, and `cap` alone is unbounded (config could set it to
+/// millions). A cap too tight to reach that length still gets every run it
+/// admits tried, which only a pool contrived to carry a run of every letter
+/// could exhaust; the tail return is that unreachable case.
+fn synthetic_clue_word(board: &super::board::Board, max_len: usize) -> String {
+    let longest = board
+        .cards
+        .iter()
+        .filter(|c| !c.revealed)
+        .map(|c| c.word.chars().count())
+        .max()
+        .unwrap_or(0);
+    let limit = max_len.min(longest.saturating_add(1)).max(1);
+    let mut last = String::new();
+    for len in 1..=limit {
+        for c in 'a'..='z' {
+            last = c.to_string().repeat(len);
+            if clue_word_is_legal(board, &last, max_len) {
+                return last;
+            }
+        }
+    }
+    last
 }

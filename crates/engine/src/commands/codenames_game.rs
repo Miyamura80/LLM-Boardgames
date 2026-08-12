@@ -150,13 +150,17 @@ impl Command for CodenamesPlayGame {
             anchors.push(false);
         }
 
+        // The cap is validated against the pool this game is dealt from, so the
+        // wordlist is resolved first and the two travel together.
+        let wordlist = wordlist_from_config(&cfg.codenames).map_err(CommandError::InvalidInput)?;
         let game_cfg = GameConfig {
             game_id: format!("adhoc-{}", cx.request_id),
             seed,
             retry_budget: cfg.codenames.retry_budget,
             schedule_label: "adhoc".into(),
-            rules: rules_from_config(&cfg.codenames).map_err(CommandError::InvalidInput)?,
-            wordlist: wordlist_from_config(&cfg.codenames).map_err(CommandError::InvalidInput)?,
+            rules: rules_from_config(&cfg.codenames, &wordlist)
+                .map_err(CommandError::InvalidInput)?,
+            wordlist,
         };
         let record = run_game(&game_cfg, &mut agents, &anchors).await;
 

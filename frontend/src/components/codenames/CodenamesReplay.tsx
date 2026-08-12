@@ -49,12 +49,23 @@ export function CodenamesReplay() {
 	const [error, setError] = useState<string | null>(null);
 	const [notice, setNotice] = useState<string | null>(null);
 
-	// Every request that can commit a replay record claims this monotonic token
-	// first, and only commits while its claim is still the newest one. Switching
-	// run or game, and racing an ad-hoc game against a stored one, therefore can
-	// never let a late response overwrite the state the user has since asked
-	// for. The per-effect `live` flags below layer ordinary effect cleanup on
-	// top, so a superseded response also stops touching the pickers.
+	// Stale-response invariant: every response that commits state validates
+	// against BOTH identities that can change under it —
+	//
+	//   selection identity  the `live` flag closed over by each effect: the
+	//                       runId/gameId the request was issued for is still the
+	//                       one selected (and the component still mounted);
+	//   claim identity      the monotonic `recordRequest` token: nothing newer
+	//                       has asked to own the replay view since.
+	//
+	// Both are needed and neither implies the other. `live` alone misses an
+	// ad-hoc game or a manual game pick claiming the view while a list request
+	// is in flight; the token alone misses a stale list response for a run the
+	// user has already left. Commit paths, all guarded below: runs list → games
+	// list → stored replay, ad-hoc play, and manual game selection (which routes
+	// through the gameId effect). A response that loses either check must touch
+	// neither `record` nor `gameId` — setting `gameId` is a commit, because the
+	// replay effect turns it into a fresh claim on the view.
 	const recordRequest = useRef(0);
 	const claimRecord = useCallback(() => {
 		recordRequest.current += 1;
@@ -93,6 +104,10 @@ export function CodenamesReplay() {
 		codenamesListRuns()
 			.then((r) => {
 				setRuns(r.runs);
+				// Auto-selecting a run cascades (games list → stored replay), so
+				// it is a commit like any other: if the user has already claimed
+				// the view with an ad-hoc game, leave their run unselected.
+				if (!isCurrent(token)) return;
 				if (r.runs.length > 0) setRunId(r.runs[0].run_id);
 				else if (show(token, DEMO_RECORD, "demo"))
 					setNotice("No stored runs — showing the bundled demo game.");
@@ -105,7 +120,7 @@ export function CodenamesReplay() {
 						: why,
 				);
 			});
-	}, [show, claimRecord]);
+	}, [show, claimRecord, isCurrent]);
 
 	useEffect(() => {
 		if (!runId) return;
@@ -114,7 +129,12 @@ export function CodenamesReplay() {
 		codenamesListGames(runId)
 			.then((r) => {
 				if (!live) return;
+				// The options belong to `runId`, which `live` already pins, so
+				// they land either way. Auto-selecting the first game does not:
+				// it would claim the view for a stored replay and overwrite an
+				// ad-hoc game (or a manual pick) made while this was in flight.
 				setGames(r.games);
+				if (!isCurrent(token)) return;
 				setGameId(r.games.length > 0 ? r.games[0].game_id : "");
 				// A run with no stored games must not keep the previous run's
 				// replay on screen beside an empty Game picker.
@@ -123,14 +143,15 @@ export function CodenamesReplay() {
 			.catch((e) => {
 				if (!live) return;
 				setGames([]);
+				setError(describeError(e));
+				if (!isCurrent(token)) return;
 				setGameId("");
 				clearRecord(token);
-				setError(describeError(e));
 			});
 		return () => {
 			live = false;
 		};
-	}, [runId, claimRecord, clearRecord]);
+	}, [runId, claimRecord, clearRecord, isCurrent]);
 
 	useEffect(() => {
 		if (!gameId) return;
@@ -203,7 +224,12 @@ export function CodenamesReplay() {
 				<label>
 					Run{" "}
 					<select value={runId} onChange={(e) => setRunId(e.target.value)}>
-						{runs.length === 0 && <option value="">—</option>}
+						{/* A placeholder whenever nothing in the list is selected —
+						    including the case where a response declined to
+						    auto-select because the user had claimed the view. */}
+						{!runs.some((r) => r.run_id === runId) && (
+							<option value="">—</option>
+						)}
 						{runs.map((r) => (
 							<option key={r.run_id} value={r.run_id}>
 								{r.run_id} ({r.games_played} games)
@@ -214,7 +240,9 @@ export function CodenamesReplay() {
 				<label>
 					Game{" "}
 					<select value={gameId} onChange={(e) => setGameId(e.target.value)}>
-						{games.length === 0 && <option value="">—</option>}
+						{!games.some((g) => g.game_id === gameId) && (
+							<option value="">—</option>
+						)}
 						{games.map((g) => (
 							<option key={g.game_id} value={g.game_id}>
 								{g.schedule_label} — {g.winner.toUpperCase()} by {g.end_reason}{" "}
