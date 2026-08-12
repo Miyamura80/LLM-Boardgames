@@ -26,6 +26,7 @@ pub mod rating;
 pub mod runner;
 pub mod state;
 pub mod store;
+mod store_codec;
 pub mod testkit;
 mod transitions;
 pub mod types;
