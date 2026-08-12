@@ -51,11 +51,11 @@ catan:
     pool-a:
       - { name: random, kind: random-legal }
       - { name: greedy, kind: greedy }
-      - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.1 }
+      - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.1-24b-instruct }
   # Arena model sets: exactly 4 seat specs per set.
   model_sets:
     cheap:
-      - openrouter/mistralai/mistral-small-3.1
+      - openrouter/mistralai/mistral-small-3.1-24b-instruct
       - gemini/gemini-3-flash-preview
       - openrouter/deepseek/deepseek-v4-pro
       - openrouter/qwen/qwen3-32b
@@ -80,11 +80,11 @@ codenames:
     pool-a:
       - { name: random, kind: codenames-random }
       - { name: embed, kind: codenames-embedding }
-      - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.1 }
+      - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.1-24b-instruct }
   # Arena model sets: exactly 4 seat specs per set.
   model_sets:
     cheap:
-      - openrouter/mistralai/mistral-small-3.1
+      - openrouter/mistralai/mistral-small-3.1-24b-instruct
       - gemini/gemini-3-flash-preview
       - openrouter/deepseek/deepseek-v4-pro
       - openrouter/qwen/qwen3-32b
