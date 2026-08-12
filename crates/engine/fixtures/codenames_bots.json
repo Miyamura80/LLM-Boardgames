@@ -1,0 +1,1054 @@
+{
+ "game_id": "codenames-bots-seed6",
+ "seed": 6,
+ "rules_version": "codenames-v1",
+ "wordlist_hash": "677947660a67c81b4d8566a31d8cfd26a070776ab5383973dc413133b4b3183c",
+ "schedule_label": "adhoc",
+ "winner": "a",
+ "end_reason": "agents-found",
+ "turns": 21,
+ "seats": [
+  {
+   "seat": 0,
+   "role": "spymaster",
+   "team": "a",
+   "model_id": "bot:codenames-random",
+   "agent_kind": "bot:codenames-random",
+   "scaffold_version": "bot-random-v1",
+   "temperature": null,
+   "is_anchor": false,
+   "won": true,
+   "reliability": {
+    "malformed_outputs": 0,
+    "illegal_moves": 0,
+    "forced_defaults": 0,
+    "transport_failures": 0
+   },
+   "thoughts": [],
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0
+   }
+  },
+  {
+   "seat": 1,
+   "role": "operative",
+   "team": "a",
+   "model_id": "bot:codenames-random",
+   "agent_kind": "bot:codenames-random",
+   "scaffold_version": "bot-random-v1",
+   "temperature": null,
+   "is_anchor": false,
+   "won": true,
+   "reliability": {
+    "malformed_outputs": 0,
+    "illegal_moves": 0,
+    "forced_defaults": 0,
+    "transport_failures": 0
+   },
+   "thoughts": [],
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0
+   }
+  },
+  {
+   "seat": 2,
+   "role": "spymaster",
+   "team": "b",
+   "model_id": "bot:codenames-random",
+   "agent_kind": "bot:codenames-random",
+   "scaffold_version": "bot-random-v1",
+   "temperature": null,
+   "is_anchor": false,
+   "won": false,
+   "reliability": {
+    "malformed_outputs": 0,
+    "illegal_moves": 0,
+    "forced_defaults": 0,
+    "transport_failures": 0
+   },
+   "thoughts": [],
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0
+   }
+  },
+  {
+   "seat": 3,
+   "role": "operative",
+   "team": "b",
+   "model_id": "bot:codenames-random",
+   "agent_kind": "bot:codenames-random",
+   "scaffold_version": "bot-random-v1",
+   "temperature": null,
+   "is_anchor": false,
+   "won": false,
+   "reliability": {
+    "malformed_outputs": 0,
+    "illegal_moves": 0,
+    "forced_defaults": 0,
+    "transport_failures": 0
+   },
+   "thoughts": [],
+   "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0
+   }
+  }
+ ],
+ "events": [
+  {
+   "idx": 0,
+   "round": 0,
+   "visibility": "Public",
+   "event": {
+    "type": "GameStarted",
+    "starting_team": "a",
+    "wordlist_hash": "677947660a67c81b4d8566a31d8cfd26a070776ab5383973dc413133b4b3183c",
+    "rules_version": "codenames-v1"
+   }
+  },
+  {
+   "idx": 1,
+   "round": 0,
+   "visibility": "Public",
+   "event": {
+    "type": "BoardLaid",
+    "words": [
+     "dinosaur",
+     "deer",
+     "bridge",
+     "onion",
+     "rocket",
+     "magnet",
+     "garage",
+     "wolf",
+     "bread",
+     "shirt",
+     "dream",
+     "glass",
+     "adventure",
+     "leg",
+     "garden",
+     "bank",
+     "ankle",
+     "valley",
+     "cliff",
+     "map",
+     "drawer",
+     "grass",
+     "ship",
+     "boat",
+     "bicycle"
+    ]
+   }
+  },
+  {
+   "idx": 2,
+   "round": 1,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 1
+   }
+  },
+  {
+   "idx": 3,
+   "round": 1,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "hunter",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 4,
+   "round": 1,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "rocket",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 5,
+   "round": 2,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 2
+   }
+  },
+  {
+   "idx": 6,
+   "round": 2,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "mermaid",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 7,
+   "round": 2,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "glass",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 8,
+   "round": 3,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 3
+   }
+  },
+  {
+   "idx": 9,
+   "round": 3,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "lightning",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 10,
+   "round": 3,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "map",
+    "identity": {
+     "kind": "bystander"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 11,
+   "round": 4,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 4
+   }
+  },
+  {
+   "idx": 12,
+   "round": 4,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "dog",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 13,
+   "round": 4,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "onion",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 14,
+   "round": 5,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 5
+   }
+  },
+  {
+   "idx": 15,
+   "round": 5,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "fog",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 16,
+   "round": 5,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "leg",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 17,
+   "round": 6,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 6
+   }
+  },
+  {
+   "idx": 18,
+   "round": 6,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "cross",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 19,
+   "round": 6,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "wolf",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 20,
+   "round": 7,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 7
+   }
+  },
+  {
+   "idx": 21,
+   "round": 7,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "shoulder",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 22,
+   "round": 7,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "bicycle",
+    "identity": {
+     "kind": "bystander"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 23,
+   "round": 8,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 8
+   }
+  },
+  {
+   "idx": 24,
+   "round": 8,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "helmet",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 25,
+   "round": 8,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "magnet",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 26,
+   "round": 8,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnPassed",
+    "seat": 3,
+    "team": "b"
+   }
+  },
+  {
+   "idx": 27,
+   "round": 9,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 9
+   }
+  },
+  {
+   "idx": 28,
+   "round": 9,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "office",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 29,
+   "round": 9,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "bread",
+    "identity": {
+     "kind": "bystander"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 30,
+   "round": 10,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 10
+   }
+  },
+  {
+   "idx": 31,
+   "round": 10,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "tie",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 32,
+   "round": 10,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "drawer",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 33,
+   "round": 11,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 11
+   }
+  },
+  {
+   "idx": 34,
+   "round": 11,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "potato",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 35,
+   "round": 11,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "shirt",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 36,
+   "round": 12,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 12
+   }
+  },
+  {
+   "idx": 37,
+   "round": 12,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "basket",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 38,
+   "round": 12,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "boat",
+    "identity": {
+     "kind": "bystander"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 39,
+   "round": 13,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 13
+   }
+  },
+  {
+   "idx": 40,
+   "round": 13,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "blacksmith",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 41,
+   "round": 13,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "ankle",
+    "identity": {
+     "kind": "bystander"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 42,
+   "round": 14,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 14
+   }
+  },
+  {
+   "idx": 43,
+   "round": 14,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "cabin",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 44,
+   "round": 14,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "grass",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 45,
+   "round": 14,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnPassed",
+    "seat": 3,
+    "team": "b"
+   }
+  },
+  {
+   "idx": 46,
+   "round": 15,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 15
+   }
+  },
+  {
+   "idx": 47,
+   "round": 15,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "camel",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 48,
+   "round": 15,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "cliff",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 49,
+   "round": 15,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnPassed",
+    "seat": 1,
+    "team": "a"
+   }
+  },
+  {
+   "idx": 50,
+   "round": 16,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 16
+   }
+  },
+  {
+   "idx": 51,
+   "round": 16,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "pig",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 52,
+   "round": 16,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "garage",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 53,
+   "round": 16,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnPassed",
+    "seat": 3,
+    "team": "b"
+   }
+  },
+  {
+   "idx": 54,
+   "round": 17,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 17
+   }
+  },
+  {
+   "idx": 55,
+   "round": 17,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "wolf",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 56,
+   "round": 17,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "dream",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 57,
+   "round": 17,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnPassed",
+    "seat": 1,
+    "team": "a"
+   }
+  },
+  {
+   "idx": 58,
+   "round": 18,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 18
+   }
+  },
+  {
+   "idx": 59,
+   "round": 18,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "plum",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 60,
+   "round": 18,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "garden",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 61,
+   "round": 19,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 19
+   }
+  },
+  {
+   "idx": 62,
+   "round": 19,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "theater",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 63,
+   "round": 19,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "ship",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 64,
+   "round": 19,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnPassed",
+    "seat": 1,
+    "team": "a"
+   }
+  },
+  {
+   "idx": 65,
+   "round": 20,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 20
+   }
+  },
+  {
+   "idx": 66,
+   "round": 20,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "river",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 67,
+   "round": 20,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "bank",
+    "identity": {
+     "kind": "bystander"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 68,
+   "round": 21,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 21
+   }
+  },
+  {
+   "idx": 69,
+   "round": 21,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "bell",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 70,
+   "round": 21,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "bridge",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 71,
+   "round": 21,
+   "visibility": "Public",
+   "event": {
+    "type": "GameEnded",
+    "winner": "a",
+    "reason": "agents-found",
+    "turns": 21
+   }
+  }
+ ],
+ "duration_ms": 0
+}

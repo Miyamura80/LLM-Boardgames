@@ -51,11 +51,48 @@ catan:
     pool-a:
       - { name: random, kind: random-legal }
       - { name: greedy, kind: greedy }
-      - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.1 }
+      - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.1-24b-instruct }
   # Arena model sets: exactly 4 seat specs per set.
   model_sets:
     cheap:
-      - openrouter/mistralai/mistral-small-3.1
+      - openrouter/mistralai/mistral-small-3.1-24b-instruct
+      - gemini/gemini-3-flash-preview
+      - openrouter/deepseek/deepseek-v4-pro
+      - openrouter/qwen/qwen3-32b
+
+########################################################
+# Codenames eval harness (see docs/PRD-codenames-evals.md)
+########################################################
+codenames:
+  retry_budget: 3
+  agent_max_tokens: 8192
+  agent_temperature: 0.5
+  rating_k: 2.0
+  # Omit (or null) to use the vendored wordlist; set a path to override it.
+  wordlist_path: null
+  # Word vectors for the codenames-embedding anchor (GloVe/word2vec text
+  # format). Null → that anchor kind is rejected at the game boundary.
+  vectors_path: null
+  clue_word_max_len: 20
+  # Controlled mode seats 1 candidate + exactly 3 frozen anchors across the
+  # four fixed seats (spymaster + operative per team).
+  #
+  # The shipped pool uses only anchors that work out of the box. The
+  # codenames-embedding anchor is deliberately NOT here: it requires
+  # vectors_path above, which ships null, so including it would make the
+  # default controlled run fail at seat construction before a run row exists.
+  # To use it, point vectors_path at a GloVe/word2vec text file and swap one
+  # anchor for the commented line below.
+  pools:
+    pool-a:
+      - { name: random-a, kind: codenames-random }
+      - { name: random-b, kind: codenames-random }
+      # - { name: embed, kind: codenames-embedding }   # needs vectors_path
+      - { name: llm-cheap, kind: llm, model: openrouter/mistralai/mistral-small-3.1-24b-instruct }
+  # Arena model sets: exactly 4 seat specs per set.
+  model_sets:
+    cheap:
+      - openrouter/mistralai/mistral-small-3.1-24b-instruct
       - gemini/gemini-3-flash-preview
       - openrouter/deepseek/deepseek-v4-pro
       - openrouter/qwen/qwen3-32b

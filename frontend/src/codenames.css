@@ -1,0 +1,672 @@
+/* Codenames theme — "the table": a clean, cool light desk with ivory word
+ * cards carrying bold dark uppercase type. Deliberately distinct from the
+ * Secret Hitler propaganda parchment/red-orange and from Catan's warm terrain
+ * tones, and entirely original — no Codenames (CGE) artwork, logo, or trade
+ * dress; only the generic information design of a word-grid game.
+ *
+ * Identity palette, shared 1:1 with the offline game report template:
+ *   Team A = vivid red  #cc372c     Team B = vivid blue #2270b8
+ *   Bystander = tan     #cdb182     Assassin = near-black #15171b
+ * Color is never the only signal: every identity also carries a letter tag. */
+
+.cn-root {
+	--cn-felt: #e8ebee; /* the desk the grid sits on */
+	--cn-felt-deep: #f7f8fa; /* raised panels read lighter than the desk */
+	--cn-rule: #d5dae0;
+	--cn-card: #faf5e8;
+	--cn-card-edge: #ddd2b9;
+	--cn-ink: #17191d;
+	--cn-paper-ink: #191d22;
+	--cn-dim: #64707c;
+	--cn-brass: #33404c; /* neutral graphite accent — the teams carry the color */
+	--cn-a: #cc372c;
+	--cn-a-soft: #f8dcd7;
+	--cn-a-deep: #96261c;
+	--cn-a-ink: #96261c; /* team red legible as text on the light desk */
+	--cn-b: #2270b8;
+	--cn-b-soft: #d7e6f4;
+	--cn-b-deep: #16507f;
+	--cn-b-ink: #16507f;
+	--cn-card-hi: #fffcf3; /* the lit top edge of a face-down word card */
+	--cn-bystander: #cdb182;
+	--cn-bystander-edge: #b3945f;
+	--cn-bystander-ink: #33291a; /* dark type ON a tan card */
+	--cn-bystander-text: #87703f; /* tan as running text on the page */
+	--cn-assassin: #15171b;
+	--cn-bone: #f2efe6;
+	--cn-alarm: #b4241a;
+
+	background: var(--cn-felt);
+	color: var(--cn-paper-ink);
+	padding: 1rem 1.25rem 3rem;
+	min-height: 100vh;
+	font-family: var(--font-sans);
+}
+
+/* Same identity on a dark neutral desk: the teams stay vivid, the word cards
+ * only deepen to a warmer ivory. Mirrors the report's token triple. */
+:root.dark .cn-root,
+:root[data-theme="dark"] .cn-root {
+	--cn-felt: #131619;
+	--cn-felt-deep: #1c2026;
+	--cn-rule: #333a43;
+	--cn-card: #ece5d2;
+	--cn-card-edge: #b9ac90;
+	--cn-ink: #16181c;
+	--cn-paper-ink: #e6eaee;
+	--cn-dim: #96a2ae;
+	--cn-brass: #93a3b2;
+	--cn-a: #d33a2f;
+	--cn-a-soft: #3d1a14;
+	--cn-a-deep: #93251b;
+	--cn-a-ink: #ef7a68;
+	--cn-b: #2c6fd6;
+	--cn-b-soft: #132c48;
+	--cn-b-deep: #1a4a9c;
+	--cn-b-ink: #6ea8ea;
+	--cn-card-hi: #f4eeda;
+	--cn-bystander: #cdb182;
+	--cn-bystander-edge: #ac8e59;
+	--cn-bystander-text: #cdb182;
+	--cn-assassin: #0d0f12;
+	--cn-alarm: #f0836f;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not(.light):not([data-theme="light"]) .cn-root {
+		--cn-felt: #131619;
+		--cn-felt-deep: #1c2026;
+		--cn-rule: #333a43;
+		--cn-card: #ece5d2;
+		--cn-card-edge: #b9ac90;
+		--cn-ink: #16181c;
+		--cn-paper-ink: #e6eaee;
+		--cn-dim: #96a2ae;
+		--cn-brass: #93a3b2;
+		--cn-a: #d33a2f;
+		--cn-a-soft: #3d1a14;
+		--cn-a-deep: #93251b;
+		--cn-a-ink: #ef7a68;
+		--cn-b: #2c6fd6;
+		--cn-b-soft: #132c48;
+		--cn-b-deep: #1a4a9c;
+		--cn-b-ink: #6ea8ea;
+		--cn-card-hi: #f4eeda;
+		--cn-bystander: #cdb182;
+		--cn-bystander-edge: #ac8e59;
+		--cn-bystander-text: #cdb182;
+		--cn-assassin: #0d0f12;
+		--cn-alarm: #f0836f;
+	}
+}
+
+/* ─── Controls ──────────────────────────────────────────────────────────── */
+
+.cn-toolbar {
+	display: flex;
+	gap: 1.25rem;
+	align-items: center;
+	flex-wrap: wrap;
+	margin-bottom: 0.75rem;
+}
+
+.cn-root select,
+.cn-root input[type="text"],
+.cn-adhoc input {
+	background: var(--cn-felt-deep);
+	color: var(--cn-paper-ink);
+	border: 1px solid var(--cn-rule);
+	border-radius: 2px;
+	padding: 0.3rem 0.5rem;
+	font-family: inherit;
+}
+
+.cn-btn,
+.cn-toggle {
+	background: none;
+	border: 1px solid var(--cn-rule);
+	border-radius: 2px;
+	color: var(--cn-paper-ink);
+	padding: 0.3rem 0.8rem;
+	cursor: pointer;
+	font-family: var(--font-display);
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+
+.cn-btn:hover,
+.cn-toggle:hover {
+	border-color: var(--cn-brass);
+}
+
+.cn-btn[disabled] {
+	opacity: 0.5;
+	cursor: progress;
+}
+
+.cn-toggle-on {
+	background: var(--cn-brass);
+	border-color: var(--cn-brass);
+	color: var(--cn-felt-deep);
+}
+
+.cn-viewbar {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	margin-top: 0.6rem;
+	flex-wrap: wrap;
+}
+
+.cn-scrub {
+	display: flex;
+	gap: 0.75rem;
+	align-items: center;
+	margin-top: 0.75rem;
+}
+
+.cn-scrub input[type="range"] {
+	flex: 1;
+	accent-color: var(--cn-a);
+}
+
+/* ─── Stage ─────────────────────────────────────────────────────────────── */
+
+.cn-stage {
+	display: grid;
+	grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+	gap: 1.25rem;
+	align-items: start;
+}
+
+@media (max-width: 900px) {
+	.cn-stage {
+		grid-template-columns: 1fr;
+	}
+}
+
+.cn-scoreline {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	flex-wrap: wrap;
+	margin-bottom: 0.6rem;
+	font-family: var(--font-display);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	font-size: 0.85rem;
+}
+
+/* Each side's agent count sits on a soft tint of its own team color, so the
+ * score reads at a glance the way the board does. */
+.cn-score {
+	border-radius: 3px;
+	padding: 0.1rem 0.45rem;
+}
+
+.cn-score.cn-side-a {
+	background: var(--cn-a-soft);
+}
+
+.cn-score.cn-side-b {
+	background: var(--cn-b-soft);
+}
+
+.cn-score b {
+	font-size: 1.1rem;
+}
+
+.cn-side-a {
+	color: var(--cn-a-ink);
+}
+
+.cn-side-b {
+	color: var(--cn-b-ink);
+}
+
+.cn-now {
+	margin-left: auto;
+	color: var(--cn-brass);
+}
+
+.cn-now-fresh {
+	animation: cn-pulse 1s ease-in-out 2;
+}
+
+/* ─── Word grid ─────────────────────────────────────────────────────────── */
+
+.cn-grid {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 0.5rem;
+}
+
+.cn-card-slot {
+	position: relative;
+	padding-top: 62%; /* card aspect, so the grid stays square-ish */
+}
+
+/* Snapshot scale: identical markup and colors as the main grid, only smaller,
+ * so a turn block can carry its own board without shouting over the transcript. */
+.cn-grid-mini {
+	gap: 2px;
+}
+
+.cn-grid-mini .cn-card {
+	padding: 0.1rem;
+	border-radius: 3px;
+	box-shadow: none;
+}
+
+.cn-grid-mini .cn-card-word {
+	font-size: clamp(0.34rem, 0.72vw, 0.5rem);
+	letter-spacing: 0.02em;
+}
+
+.cn-grid-mini .cn-card-tag,
+.cn-grid-mini .cn-card-pip {
+	top: 1px;
+	left: 2px;
+	font-size: 0.4rem;
+}
+
+.cn-grid-mini .cn-key {
+	border-width: 2px;
+}
+
+.cn-card {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.35rem;
+	border-radius: 4px;
+	border: 1px solid var(--cn-card-edge);
+	background: var(--cn-card);
+	color: var(--cn-ink);
+	box-shadow:
+		0 1px 0 rgba(23, 33, 43, 0.12),
+		0 3px 8px rgba(23, 33, 43, 0.1);
+	text-align: center;
+	transition:
+		background 160ms ease,
+		color 160ms ease;
+}
+
+/* Screen-reader-only card state: color and the letter tag carry the identity
+ * visually, this spells it out for assistive tech. */
+.cn-sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.cn-card-word {
+	font-family: var(--font-display);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	font-size: clamp(0.6rem, 1.15vw, 0.9rem);
+	line-height: 1.1;
+	word-break: break-word;
+}
+
+/* Face-down cards keep an ivory face with a hairline base rule — the
+ * "word card on the table" look before anyone commits. */
+.cn-card-down {
+	background: linear-gradient(
+		180deg,
+		var(--cn-card-hi) 0%,
+		var(--cn-card) 100%
+	);
+}
+
+.cn-card-down::after {
+	content: "";
+	position: absolute;
+	left: 8%;
+	right: 8%;
+	bottom: 5px;
+	border-bottom: 1px solid var(--cn-card-edge);
+}
+
+/* Flipped identities: vivid red and blue take white type, the tan bystander
+ * takes dark type — the way the cards read across a real table. */
+.cn-id-agent-a {
+	background: var(--cn-a);
+	border-color: var(--cn-a-deep);
+	color: #fff;
+}
+
+.cn-id-agent-b {
+	background: var(--cn-b);
+	border-color: var(--cn-b-deep);
+	color: #fff;
+}
+
+.cn-id-bystander {
+	background: var(--cn-bystander);
+	border-color: var(--cn-bystander-edge);
+	color: var(--cn-bystander-ink);
+}
+
+/* The assassin is unmistakable: near-black face, bone type, doubled edge. */
+.cn-id-assassin {
+	background: var(--cn-assassin);
+	border: 2px solid var(--cn-bone);
+	outline: 2px solid var(--cn-assassin);
+	color: var(--cn-bone);
+}
+
+.cn-card-tag,
+.cn-card-pip {
+	position: absolute;
+	top: 3px;
+	left: 5px;
+	font-family: var(--font-mono);
+	font-size: 0.6rem;
+	opacity: 0.85;
+}
+
+.cn-card-turn {
+	margin-left: 0.25rem;
+	opacity: 0.7;
+}
+
+/* Spymaster overlay: the key tints the edge of a still-face-down card. */
+.cn-key {
+	border-width: 3px;
+}
+
+.cn-key-agent-a {
+	border-color: var(--cn-a);
+	background: linear-gradient(180deg, #f9ddd8 0%, var(--cn-card) 75%);
+}
+
+.cn-key-agent-b {
+	border-color: var(--cn-b);
+	background: linear-gradient(180deg, #dbe9f6 0%, var(--cn-card) 75%);
+}
+
+.cn-key-bystander {
+	border-color: var(--cn-bystander-edge);
+}
+
+.cn-key-assassin {
+	border-color: var(--cn-assassin);
+	background: repeating-linear-gradient(
+		135deg,
+		#d6d1c2 0 6px,
+		var(--cn-card) 6px 12px
+	);
+}
+
+.cn-key-unknown {
+	border-style: dashed;
+}
+
+.cn-card-active {
+	animation: cn-pulse 1.1s ease-in-out 2;
+	box-shadow: 0 0 0 3px var(--cn-brass);
+}
+
+@keyframes cn-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.55;
+	}
+}
+
+/* ─── Panels, history, tables ───────────────────────────────────────────── */
+
+.cn-panel {
+	background: var(--cn-felt-deep);
+	border: 1px solid var(--cn-rule);
+	border-radius: 4px;
+	padding: 0.75rem 1rem;
+	margin-top: 1rem;
+}
+
+.cn-panel h3 {
+	margin: 0 0 0.5rem;
+	font-family: var(--font-display);
+	font-size: 0.95rem;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: var(--cn-brass);
+	border-bottom: 1px solid var(--cn-rule);
+	padding-bottom: 0.3rem;
+}
+
+.cn-history {
+	margin-top: 0;
+	max-height: 34rem;
+	overflow-y: auto;
+}
+
+.cn-turn {
+	border-left: 3px solid var(--cn-rule);
+	padding: 0.3rem 0 0.4rem 0.55rem;
+	margin-bottom: 0.5rem;
+}
+
+.cn-turn-active {
+	border-left-color: var(--cn-brass);
+}
+
+.cn-turn-head {
+	display: flex;
+	gap: 0.5rem;
+	align-items: baseline;
+	font-family: var(--font-display);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	font-size: 0.75rem;
+}
+
+.cn-turn-no {
+	color: var(--cn-dim);
+}
+
+.cn-clue {
+	font-family: var(--font-display);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--cn-brass);
+}
+
+.cn-guesses {
+	list-style: none;
+	margin: 0.15rem 0 0;
+	padding: 0;
+	font-size: 0.85rem;
+}
+
+.cn-guesses li {
+	padding: 0.05rem 0;
+}
+
+.cn-guess-word {
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.cn-outcome {
+	font-weight: 700;
+}
+
+.cn-out-agent-a {
+	color: var(--cn-a-ink);
+}
+
+.cn-out-agent-b {
+	color: var(--cn-b-ink);
+}
+
+.cn-out-bystander {
+	color: var(--cn-bystander-text);
+}
+
+.cn-out-assassin {
+	color: var(--cn-alarm);
+}
+
+.cn-line {
+	display: block;
+	margin: 0;
+	text-align: left;
+}
+
+/* Per-turn board snapshot: the toggle sits at the end of the turn header, the
+ * board itself unfolds under the guesses. */
+.cn-snapbtn {
+	margin-left: auto;
+	background: none;
+	border: 1px solid var(--cn-rule);
+	border-radius: 3px;
+	padding: 0 0.3rem;
+	color: var(--cn-dim);
+	font: inherit;
+	font-size: 0.65rem;
+	letter-spacing: 0.04em;
+	cursor: pointer;
+}
+
+.cn-snapbtn:hover,
+.cn-snapbtn[aria-expanded="true"] {
+	border-color: var(--cn-brass);
+	color: var(--cn-brass);
+}
+
+.cn-snap {
+	margin: 0.35rem 0 0.2rem;
+	max-width: 20rem;
+}
+
+.cn-snap p {
+	margin: 0.25rem 0 0;
+	font-size: 0.7rem;
+}
+
+.cn-forced {
+	color: var(--cn-dim);
+	font-style: italic;
+}
+
+.cn-thought {
+	margin: 0.15rem 0 0.25rem 0.8rem;
+	font-size: 0.8rem;
+}
+
+.cn-thought summary {
+	cursor: pointer;
+	color: var(--cn-dim);
+}
+
+.cn-thought p {
+	margin: 0.2rem 0 0.3rem;
+	color: var(--cn-paper-ink);
+	font-family: var(--sh-font-typewriter);
+	opacity: 0.85;
+}
+
+.cn-seats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 0.6rem;
+}
+
+.cn-seat {
+	border-top: 3px solid var(--cn-rule);
+	padding-top: 0.35rem;
+}
+
+.cn-seat.cn-side-a {
+	border-top-color: var(--cn-a);
+}
+
+.cn-seat.cn-side-b {
+	border-top-color: var(--cn-b);
+}
+
+.cn-seat-role {
+	font-family: var(--font-display);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	font-size: 0.8rem;
+}
+
+.cn-seat-model {
+	font-family: var(--font-mono);
+	font-size: 0.8rem;
+}
+
+.cn-roleline {
+	font-size: 0.85rem;
+}
+
+.cn-role-name {
+	display: inline-block;
+	min-width: 5.5rem;
+	color: var(--cn-dim);
+	text-transform: uppercase;
+	font-size: 0.7rem;
+	letter-spacing: 0.06em;
+}
+
+.cn-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.85rem;
+}
+
+.cn-table th,
+.cn-table td {
+	border-bottom: 1px solid var(--cn-rule);
+	padding: 0.35rem 0.5rem;
+	text-align: left;
+	vertical-align: top;
+}
+
+.cn-table th {
+	font-family: var(--font-display);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	font-size: 0.7rem;
+	color: var(--cn-dim);
+}
+
+.cn-chip {
+	display: inline-block;
+	margin-left: 0.35rem;
+	padding: 0 0.35rem;
+	border: 1px solid var(--cn-rule);
+	border-radius: 2px;
+	font-size: 0.65rem;
+	text-transform: uppercase;
+	color: var(--cn-dim);
+	vertical-align: middle;
+}
+
+.cn-chip-warn {
+	border-color: var(--cn-brass);
+	color: var(--cn-brass);
+}
+
+.cn-dim {
+	color: var(--cn-dim);
+	font-size: 0.85rem;
+}
+
+.cn-error {
+	color: var(--cn-alarm);
+	font-weight: 700;
+}

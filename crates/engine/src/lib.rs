@@ -7,6 +7,7 @@
 //! MCP.
 
 pub mod catan;
+pub mod codenames;
 pub mod commands;
 pub mod context;
 pub mod doctor;

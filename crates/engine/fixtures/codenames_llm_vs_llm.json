@@ -1,0 +1,910 @@
+{
+ "game_id": "codenames-llm-seed11",
+ "seed": 11,
+ "rules_version": "codenames-v1",
+ "wordlist_hash": "677947660a67c81b4d8566a31d8cfd26a070776ab5383973dc413133b4b3183c",
+ "schedule_label": "adhoc",
+ "winner": "b",
+ "end_reason": "agents-found",
+ "turns": 10,
+ "seats": [
+  {
+   "seat": 0,
+   "role": "spymaster",
+   "team": "a",
+   "model_id": "openrouter/qwen/qwen3-32b",
+   "agent_kind": "llm",
+   "scaffold_version": "sc-8a6e1591",
+   "temperature": null,
+   "is_anchor": false,
+   "won": false,
+   "reliability": {
+    "malformed_outputs": 0,
+    "illegal_moves": 0,
+    "forced_defaults": 0,
+    "transport_failures": 0
+   },
+   "thoughts": [
+    {
+     "round": 1,
+     "at_event": 4,
+     "decision": "give-clue",
+     "text": "The clue 'structure' connects two of our agents: 'roof' (r0c3) and 'tunnel' (r1c3). This avoids the assassin (sock at r1c0) and opposing agents. The number 2 allows guessing both safely without risking bystanders or enemies."
+    },
+    {
+     "round": 3,
+     "at_event": 12,
+     "decision": "give-clue",
+     "text": "The clue 'animal' directly targets 'sheep' (team A agent) without overlapping with any opposing agents or bystanders. The number 1 ensures only one guess, minimizing risk. This avoids the assassin 'sock' and team B's agents like 'jacket' or 'storm' in the same row."
+    },
+    {
+     "round": 5,
+     "at_event": 21,
+     "decision": "give-clue",
+     "text": "The clue 'construction' can link to 'roof' and 'tunnel' (both my agents), avoiding the assassin (sock) and opposing agents. It allows up to 3 guesses, giving the operative flexibility to find both targets safely. This clue maximizes progress without high risk."
+    },
+    {
+     "round": 7,
+     "at_event": 30,
+     "decision": "give-clue",
+     "text": "The clue 'fruit' connects plum and pepper, which are both Team A's agents. This avoids the assassin (sock is already revealed) and opposing agents (flower and newspaper). Bystanders like pumpkin might be recognized as non-agents. The clue is safe and allows two correct guesses without risk."
+    },
+    {
+     "round": 9,
+     "at_event": 38,
+     "decision": "give-clue",
+     "text": "Clue 'black' for 2 agents: 'shadow' (black shadow) and 'pepper' (black pepper). Avoids assassin (sock) and bystanders. Safe and clear connection."
+    }
+   ],
+   "usage": {
+    "prompt_tokens": 6629,
+    "completion_tokens": 17199
+   }
+  },
+  {
+   "seat": 1,
+   "role": "operative",
+   "team": "a",
+   "model_id": "gemini/gemini-3-flash-preview",
+   "agent_kind": "llm",
+   "scaffold_version": "sc-8a6e1591",
+   "temperature": null,
+   "is_anchor": false,
+   "won": false,
+   "reliability": {
+    "malformed_outputs": 0,
+    "illegal_moves": 0,
+    "forced_defaults": 0,
+    "transport_failures": 0
+   },
+   "thoughts": [
+    {
+     "round": 2,
+     "at_event": 6,
+     "decision": "guess-or-pass",
+     "text": "The clue 'structure' 2 points towards words that represent physical constructions. Pyramid, roof, and tunnel are the strongest candidates. Pyramid is a very distinct type of structure, so I'll start there."
+    },
+    {
+     "round": 3,
+     "at_event": 13,
+     "decision": "guess-or-pass",
+     "text": "The clue is 'animal' 1. Looking at the board, 'sheep' is the most direct and obvious animal among the remaining words. Other words like 'sailor' or 'lawyer' refer to people, and words like 'plum' or 'garlic' refer to plants/food. 'Sheep' is the only clear fit."
+    },
+    {
+     "round": 4,
+     "at_event": 15,
+     "decision": "guess-or-pass",
+     "text": "I have already correctly identified 'sheep' for the clue 'animal' 1. Although I have one bonus guess remaining (from the 'number + 1' rule), the only previous clue was 'structure' 2, which led to an incorrect guess ('pyramid' was agent-b). While 'roof' and 'tunnel' are potential structures, I don't have enough certainty to risk another incorrect guess or hitting the assassin, especially since 'pyramid' (a very strong candidate for 'structure') belonged to the other team. It is safer to pass and wait for a new clue."
+    },
+    {
+     "round": 5,
+     "at_event": 22,
+     "decision": "guess-or-pass",
+     "text": "The clue 'construction' 2 strongly points towards 'roof', 'tunnel', and 'bedroom'. 'Roof' is a fundamental part of building construction, and 'tunnel' is a major type of civil engineering construction. In Turn 1, the spymaster used 'structure' 2, which resulted in the operative guessing 'pyramid' (an opposing agent). It's highly likely that 'roof' or 'tunnel' was the intended target for 'structure' as well, and the spymaster is now trying to redirect with 'construction'."
+    },
+    {
+     "round": 5,
+     "at_event": 23,
+     "decision": "guess-or-pass",
+     "text": "The clue 'construction' 2 has already led to 'roof'. Among the remaining words, 'tunnel' is the most plausible second target for 'construction', as it refers to a major civil engineering project. 'Bedroom' is part of a building but 'tunnel' fits the engineering connotation of 'construction' better. 'Ship' is also a possibility (shipbuilding), but 'tunnel' is a more common association in this context."
+    },
+    {
+     "round": 6,
+     "at_event": 25,
+     "decision": "guess-or-pass",
+     "text": "The spymaster gave the clue 'construction' for 2 words. I have already successfully identified 'roof' and 'tunnel' as those two words. While I have a bonus guess available, the previous missed clue was 'structure' 2 from Turn 1, where the operative guessed 'pyramid' (a Team B agent). It is highly likely that 'structure' was also intended for 'roof' or 'tunnel'. Since all likely candidates for both 'structure' and 'construction' have been revealed, and the remaining words (like 'bedroom', 'ship', or 'swing') are not strong enough links to justify the risk of hitting the assassin or an opponent's agent, passing is the safest move to maintain the turn and wait for a new clue."
+    },
+    {
+     "round": 7,
+     "at_event": 31,
+     "decision": "guess-or-pass",
+     "text": "The clue 'fruit' 2 points most clearly to 'plum'. Other potential candidates are 'pepper' and 'pumpkin', which are botanically fruits even if commonly treated as vegetables. I will start with the most obvious one, 'plum'."
+    },
+    {
+     "round": 8,
+     "at_event": 33,
+     "decision": "guess-or-pass",
+     "text": "The spymaster gave the clue 'fruit' for 2 words. 'plum' was already correctly guessed as the first word. Among the remaining face-down words (shadow, bedroom, lawyer, sock, flower, sailor, pepper, pumpkin, garlic, fork, newspaper, clock, ship, cross, swing), both 'pumpkin' and 'pepper' are botanically fruits, though often treated as vegetables in culinary contexts. 'pumpkin' is slightly more commonly associated with the 'fruit' category in a casual or trivia context (e.g., pumpkin pie) than 'pepper' is. Additionally, 'plum' and 'pumpkin' are in the same column (c2) on the board, which might have made the connection more apparent to the spymaster. 'garlic' is a bulb/vegetable and less likely to be the intended word. Therefore, 'pumpkin' is the most plausible second target for the clue 'fruit'."
+    },
+    {
+     "round": 9,
+     "at_event": 39,
+     "decision": "guess-or-pass",
+     "text": "The clue 'black' 2 strongly suggests 'shadow' and 'pepper' (black pepper). 'Sock' is also a possibility (black socks), but 'shadow' and 'pepper' are more common associations."
+    },
+    {
+     "round": 9,
+     "at_event": 40,
+     "decision": "guess-or-pass",
+     "text": "The spymaster gave the clue 'black' for 2 words. 'Shadow' was already correctly identified as the first word. Among the remaining face-down words (bedroom, lawyer, sock, flower, sailor, pepper, garlic, fork, clock, cross, swing), 'pepper' is the most plausible second word because 'black pepper' is a very common compound noun. 'Sock' is also a possibility (black socks), but 'pepper' is a stronger association."
+    },
+    {
+     "round": 10,
+     "at_event": 42,
+     "decision": "guess-or-pass",
+     "text": "I have already successfully found two words ('shadow' and 'pepper') for the clue 'black' 2. While I could use the extra guess to try and find the remaining three agents, the risk of hitting the assassin or the opponent's final agent is high. Team B only needs one more word to win, and their most likely remaining word is 'garlic' (from the clue 'press' 2, as in garlic press). However, without a clear connection for the remaining agents to previous clues ('structure' 2 and 'fruit' 2), passing is the safest move to avoid an immediate loss and hope the opponent fails to find their last word."
+    }
+   ],
+   "usage": {
+    "prompt_tokens": 14204,
+    "completion_tokens": 31560
+   }
+  },
+  {
+   "seat": 2,
+   "role": "spymaster",
+   "team": "b",
+   "model_id": "gemini/gemini-3-flash-preview",
+   "agent_kind": "llm",
+   "scaffold_version": "sc-8a6e1591",
+   "temperature": null,
+   "is_anchor": false,
+   "won": true,
+   "reliability": {
+    "malformed_outputs": 1,
+    "illegal_moves": 0,
+    "forced_defaults": 0,
+    "transport_failures": 0
+   },
+   "thoughts": [
+    {
+     "round": 2,
+     "at_event": 7,
+     "decision": "give-clue",
+     "text": "I want to link 'knight' and 'zebra'. In chess, the knight piece is represented by a horse's head, and knights historically are mounted warriors. A zebra is a member of the Equidae family, closely related to the horse. This clue avoids the assassin 'sock' and the opponent's animal 'sheep'."
+    },
+    {
+     "round": 4,
+     "at_event": 16,
+     "decision": "give-clue",
+     "text": "I want to link 'jacket' and 'flower' (as in a boutonniere). 'Tie' is also a strong secondary association for 'lapel' since they are both part of formal wear, and 'tie' is also one of my agents. This clue avoids the assassin 'sock' (which is clothing but doesn't have a lapel) and the opponent's agents better than more general words like 'suit' or 'clothing'."
+    },
+    {
+     "round": 6,
+     "at_event": 26,
+     "decision": "give-clue",
+     "text": "I have three agents left: flower, storm, and newspaper. I need a clear clue for at least one of them. 'Thunder' is a very strong and specific clue for 'storm'. I considered 'nature' for flower and storm, but there are too many other nature-related words on the board (plum, pepper, pumpkin, garlic) that could confuse my operative. 'Journalism' or 'gazette' could work for newspaper, and 'petal' or 'blossom' for flower. Given the score and the presence of the assassin (sock), I'll play it safe with a strong 1-word clue for storm."
+    },
+    {
+     "round": 8,
+     "at_event": 34,
+     "decision": "give-clue",
+     "text": "I have two agents left: flower and newspaper. 'Press' is a strong link for both: 'the press' is a common term for the newspaper industry, and 'pressed flowers' is a well-known hobby. I also considered 'clipping', but 'press' is more common. The main risks for 'press' are 'garlic' (garlic press) and 'lawyer' (the press/legal press), both of which are bystanders, not the assassin. The assassin is 'sock', which has a very weak connection to 'press' (ironing/pressing clothes), but 'jacket' and 'tie' are already revealed, so the operative is less likely to be thinking about clothing."
+    },
+    {
+     "round": 10,
+     "at_event": 43,
+     "decision": "give-clue",
+     "text": "I have only one agent left: 'flower'. I need a clue that points directly to it while avoiding the assassin 'sock' and the opponent's agents ('sailor', 'fork', 'clock'). 'Blossom' is a strong synonym for flower and doesn't have any obvious connections to the other words on the board, especially the assassin."
+    }
+   ],
+   "usage": {
+    "prompt_tokens": 8235,
+    "completion_tokens": 48151
+   }
+  },
+  {
+   "seat": 3,
+   "role": "operative",
+   "team": "b",
+   "model_id": "openrouter/qwen/qwen3-32b",
+   "agent_kind": "llm",
+   "scaffold_version": "sc-8a6e1591",
+   "temperature": null,
+   "is_anchor": false,
+   "won": true,
+   "reliability": {
+    "malformed_outputs": 0,
+    "illegal_moves": 0,
+    "forced_defaults": 0,
+    "transport_failures": 0
+   },
+   "thoughts": [
+    {
+     "round": 2,
+     "at_event": 8,
+     "decision": "guess-or-pass",
+     "text": "The spymaster's clue 'horse' likely refers to chess terminology, where 'knight' is represented by a horse symbol. This is a common Codenames clue pattern. The second word could be 'sock' (as in 'horse sock'), but the first guess must be made. 'Knight' is the strongest candidate."
+    },
+    {
+     "round": 2,
+     "at_event": 9,
+     "decision": "guess-or-pass",
+     "text": "The spymaster's clue 'horse' (2) has already revealed 'knight' (a chess piece associated with a horse). 'Zebra' is a direct equine-related word still face-down, making it the likely second agent for team B."
+    },
+    {
+     "round": 3,
+     "at_event": 11,
+     "decision": "guess-or-pass",
+     "text": "The spymaster's clue 'horse' 2 has already led us to two correct agents (knight and zebra). Since the number indicates how many cards the clue points to, there are no additional agents to find under this clue. Guessing further risks revealing a bystander or an opponent's agent, so passing is the safest move to preserve our turn."
+    },
+    {
+     "round": 4,
+     "at_event": 17,
+     "decision": "guess-or-pass",
+     "text": "The clue 'lapel' suggests clothing-related words. 'Jacket' is directly related to a lapel, and 'tie' could be a secondary clothing item. Prior clues for team B focused on clothing (e.g., 'knight' and 'zebra' as part of chess or uniforms). Guessing 'jacket' first aligns with the lapel-jacket connection."
+    },
+    {
+     "round": 4,
+     "at_event": 18,
+     "decision": "guess-or-pass",
+     "text": "The clue 'lapel' is related to clothing accessories. Since 'jacket' was already revealed as an agent for team B, 'tie' is a direct clothing-related term that pairs with lapel. Other possibilities like 'sock' or 'flower' are less connected. Prioritizing 'tie' as the most logical second guess under the 'lapel' clue."
+    },
+    {
+     "round": 5,
+     "at_event": 20,
+     "decision": "guess-or-pass",
+     "text": "The spymaster's clue 'lapel' 2 has already resulted in two correct guesses (jacket and tie). Since the number indicates two targets and both have been found, any further guesses would risk revealing a bystander or opponent's agent. Passing ends the turn safely."
+    },
+    {
+     "round": 6,
+     "at_event": 27,
+     "decision": "guess-or-pass",
+     "text": "The clue 'thunder' directly associates with 'storm' as a synonym. 'Storm' is face-down at r3c3. Previous clues for team B (e.g., 'horse' \u2192 knight/zebra, 'lapel' \u2192 jacket/tie) have used literal or categorical links. 'Thunder' (weather) strongly implies 'storm' (weather event). Team B needs 3 more agents; revealing 'storm' would progress our score without risking assassin or opponent's agents."
+    },
+    {
+     "round": 7,
+     "at_event": 29,
+     "decision": "guess-or-pass",
+     "text": "The spymaster's clue 'thunder' 1 has already been satisfied by the correct guess 'storm' (agent-b). Since the clue number was 1, there are no more agents to find under this clue. Passing ensures the turn ends safely without risking an incorrect guess."
+    },
+    {
+     "round": 8,
+     "at_event": 35,
+     "decision": "guess-or-pass",
+     "text": "The clue 'press' likely refers to a printing press or media, directly pointing to 'newspaper'. Given team B's remaining agents, 'newspaper' is a strong candidate. Other possibilities are less direct."
+    },
+    {
+     "round": 9,
+     "at_event": 37,
+     "decision": "guess-or-pass",
+     "text": "The spymaster's clue 'press' 2 has already revealed 'newspaper'. 'Ship' could be part of a compound word like 'newspaper ship' or relate to media distribution. Given the remaining options, 'ship' is the most plausible second guess under this clue."
+    },
+    {
+     "round": 10,
+     "at_event": 45,
+     "decision": "guess-or-pass",
+     "text": "The clue 'blossom' directly relates to 'flower', making it the most logical first guess. Given Team B's remaining agent status, confirming 'flower' as an agent would secure victory. The risk is minimal as the alternative is a bystander or opposing agent, but the direct semantic link justifies the attempt."
+    }
+   ],
+   "usage": {
+    "prompt_tokens": 13529,
+    "completion_tokens": 12505
+   }
+  }
+ ],
+ "events": [
+  {
+   "idx": 0,
+   "round": 0,
+   "visibility": "Public",
+   "event": {
+    "type": "GameStarted",
+    "starting_team": "a",
+    "wordlist_hash": "677947660a67c81b4d8566a31d8cfd26a070776ab5383973dc413133b4b3183c",
+    "rules_version": "codenames-v1"
+   }
+  },
+  {
+   "idx": 1,
+   "round": 0,
+   "visibility": "Public",
+   "event": {
+    "type": "BoardLaid",
+    "words": [
+     "shadow",
+     "tie",
+     "bedroom",
+     "roof",
+     "lawyer",
+     "sock",
+     "flower",
+     "plum",
+     "tunnel",
+     "sailor",
+     "pepper",
+     "pyramid",
+     "pumpkin",
+     "zebra",
+     "garlic",
+     "sheep",
+     "jacket",
+     "fork",
+     "storm",
+     "newspaper",
+     "clock",
+     "ship",
+     "cross",
+     "knight",
+     "swing"
+    ]
+   }
+  },
+  {
+   "idx": 2,
+   "round": 1,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 1
+   }
+  },
+  {
+   "idx": 3,
+   "round": 1,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "structure",
+     "number": 2
+    }
+   }
+  },
+  {
+   "idx": 4,
+   "round": 1,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "pyramid",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 5,
+   "round": 2,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 2
+   }
+  },
+  {
+   "idx": 6,
+   "round": 2,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "horse",
+     "number": 2
+    }
+   }
+  },
+  {
+   "idx": 7,
+   "round": 2,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "knight",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 8,
+   "round": 2,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "zebra",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 9,
+   "round": 2,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnPassed",
+    "seat": 3,
+    "team": "b"
+   }
+  },
+  {
+   "idx": 10,
+   "round": 3,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 3
+   }
+  },
+  {
+   "idx": 11,
+   "round": 3,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "animal",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 12,
+   "round": 3,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "sheep",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 13,
+   "round": 3,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnPassed",
+    "seat": 1,
+    "team": "a"
+   }
+  },
+  {
+   "idx": 14,
+   "round": 4,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 4
+   }
+  },
+  {
+   "idx": 15,
+   "round": 4,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "lapel",
+     "number": 2
+    }
+   }
+  },
+  {
+   "idx": 16,
+   "round": 4,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "jacket",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 17,
+   "round": 4,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "tie",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 18,
+   "round": 4,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnPassed",
+    "seat": 3,
+    "team": "b"
+   }
+  },
+  {
+   "idx": 19,
+   "round": 5,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 5
+   }
+  },
+  {
+   "idx": 20,
+   "round": 5,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "construction",
+     "number": 2
+    }
+   }
+  },
+  {
+   "idx": 21,
+   "round": 5,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "roof",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 22,
+   "round": 5,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "tunnel",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 23,
+   "round": 5,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnPassed",
+    "seat": 1,
+    "team": "a"
+   }
+  },
+  {
+   "idx": 24,
+   "round": 6,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 6
+   }
+  },
+  {
+   "idx": 25,
+   "round": 6,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "thunder",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 26,
+   "round": 6,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "storm",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 27,
+   "round": 6,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnPassed",
+    "seat": 3,
+    "team": "b"
+   }
+  },
+  {
+   "idx": 28,
+   "round": 7,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 7
+   }
+  },
+  {
+   "idx": 29,
+   "round": 7,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "fruit",
+     "number": 2
+    }
+   }
+  },
+  {
+   "idx": 30,
+   "round": 7,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "plum",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 31,
+   "round": 7,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "pumpkin",
+    "identity": {
+     "kind": "bystander"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 32,
+   "round": 8,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 8
+   }
+  },
+  {
+   "idx": 33,
+   "round": 8,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "press",
+     "number": 2
+    }
+   }
+  },
+  {
+   "idx": 34,
+   "round": 8,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "newspaper",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 35,
+   "round": 8,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "ship",
+    "identity": {
+     "kind": "bystander"
+    },
+    "ends_turn": true
+   }
+  },
+  {
+   "idx": 36,
+   "round": 9,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "a",
+    "turn": 9
+   }
+  },
+  {
+   "idx": 37,
+   "round": 9,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 0,
+    "team": "a",
+    "clue": {
+     "word": "black",
+     "number": 2
+    }
+   }
+  },
+  {
+   "idx": 38,
+   "round": 9,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "shadow",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 39,
+   "round": 9,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 1,
+    "team": "a",
+    "word": "pepper",
+    "identity": {
+     "kind": "agent",
+     "team": "a"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 40,
+   "round": 9,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnPassed",
+    "seat": 1,
+    "team": "a"
+   }
+  },
+  {
+   "idx": 41,
+   "round": 10,
+   "visibility": "Public",
+   "event": {
+    "type": "TurnStarted",
+    "team": "b",
+    "turn": 10
+   }
+  },
+  {
+   "idx": 42,
+   "round": 10,
+   "visibility": "Public",
+   "event": {
+    "type": "ClueGiven",
+    "seat": 2,
+    "team": "b",
+    "clue": {
+     "word": "blossom",
+     "number": 1
+    }
+   }
+  },
+  {
+   "idx": 43,
+   "round": 10,
+   "visibility": "Public",
+   "event": {
+    "type": "GuessRevealed",
+    "seat": 3,
+    "team": "b",
+    "word": "flower",
+    "identity": {
+     "kind": "agent",
+     "team": "b"
+    },
+    "ends_turn": false
+   }
+  },
+  {
+   "idx": 44,
+   "round": 10,
+   "visibility": "Public",
+   "event": {
+    "type": "GameEnded",
+    "winner": "b",
+    "reason": "agents-found",
+    "turns": 10
+   }
+  }
+ ],
+ "duration_ms": 0
+}

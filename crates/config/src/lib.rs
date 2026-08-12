@@ -33,6 +33,8 @@ pub struct AppConfig {
     pub secret_hitler: SecretHitlerConfig,
     #[serde(default)]
     pub catan: CatanConfig,
+    #[serde(default)]
+    pub codenames: CodenamesConfig,
 
     // Secret credentials — never serialized (`skip_serializing` = the security
     // boundary; see the sanitization test). Read via the accessors below.
@@ -430,6 +432,9 @@ fn load_config() -> Result<AppConfig, ConfigError> {
 
 mod catan;
 pub use catan::{CatanAnchorSpec, CatanConfig};
+
+mod codenames;
+pub use codenames::{CodenamesAnchorSpec, CodenamesConfig};
 
 #[cfg(test)]
 mod tests;
